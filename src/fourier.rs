@@ -61,6 +61,14 @@ impl<T: FftNum> FftPlan<T> {
         false
     }
 
+    pub(crate) fn inverse_unnormalized(&mut self, values: &mut [Complex<T>]) -> Result<(), Error> {
+        if values.len() != self.length {
+            return Err(Error("FFT input length differs from the plan"));
+        }
+        self.inverse.process_with_scratch(values, &mut self.scratch);
+        Ok(())
+    }
+
     /// Transform one interleaved complex buffer in place, without allocating.
     pub fn process(
         &mut self,
