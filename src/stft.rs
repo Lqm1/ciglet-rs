@@ -1,6 +1,6 @@
 //! Centered short-time Fourier analysis with reusable transform storage.
 use crate::{
-    Error,
+    Error, approximation,
     fourier::{Complex, Direction, FftPlan},
     window::{Precision, Window},
 };
@@ -171,4 +171,202 @@ fn filled<T: Clone>(length: usize, value: T) -> Result<Vec<T>, Error> {
         .map_err(|_| Error("STFT allocation failed"))?;
     values.resize(length, value);
     Ok(values)
+}
+
+/// Nyquist reconstruction policy. Preserve fixes the upstream overwrite;
+/// Legacy reproduces the preceding-bin substitution for existing workflows.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum NyquistPolicy {
+    #[default]
+    Preserve,
+    Legacy,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SynthesisOptions<T> {
+    pub hop: usize,
+    pub offset: i32,
+    pub fade_samples: usize,
+    pub normalization: T,
+    pub nyquist: NyquistPolicy,
+}
+
+impl<T: FftNum + Into<f64>> StftPlan<T> {
+    /// Reconstruct half-spectrum frames using upstream level-two polar
+    /// conversion, normalized inverse FFT, Hann endpoint fades and overlap-add.
+    /// Output length is hop * frame count + offset. Input arrays are frame-major.
+    pub fn synthesize(
+        &mut self,
+        magnitude: &[T],
+        phase: &[T],
+        options: SynthesisOptions<T>,
+    ) -> Result<Vec<T>, Error> {
+        let length = self.fft.len();
+        let bins = length / 2 + 1;
+        if magnitude.len() != phase.len() || !magnitude.len().is_multiple_of(bins) {
+            return Err(Error("inverse STFT spectral shapes differ"));
+        }
+        if options.hop == 0
+            || options.hop > i32::MAX as usize
+            || options.fade_samples > length
+            || (options.nyquist == NyquistPolicy::Legacy && length < 2)
+        {
+            return Err(Error(
+                "invalid inverse STFT spacing, fade, or legacy transform length",
+            ));
+        }
+        let normalization: f64 = options.normalization.into();
+        if !normalization.is_finite() || normalization == 0.0 {
+            return Err(Error(
+                "inverse STFT normalization must be finite and nonzero",
+            ));
+        }
+        if magnitude
+            .iter()
+            .chain(phase)
+            .any(|&value| !value.into().is_finite())
+        {
+            return Err(Error("inverse STFT spectra must be finite"));
+        }
+        let frames = magnitude.len() / bins;
+        let span = options
+            .hop
+            .checked_mul(frames)
+            .ok_or(Error("inverse STFT output size overflow"))?;
+        let output_length = i64::try_from(span)
+            .ok()
+            .and_then(|n| n.checked_add(i64::from(options.offset)))
+            .filter(|&n| (0..=i64::from(i32::MAX)).contains(&n))
+            .ok_or(Error("inverse STFT output length exceeds the legacy range"))?
+            as usize;
+        let mut output = filled(output_length, T::zero())?;
+        let fade = Window::Hann.generate_with::<T>(
+            options
+                .fade_samples
+                .checked_mul(2)
+                .ok_or(Error("inverse STFT fade length overflow"))?,
+            Precision::Accurate,
+        )?;
+        for frame in 0..frames {
+            for bin in 0..bins {
+                let index = frame * bins + bin;
+                let angle = phase[index].into() as f32;
+                let cosine = T::from_f32(approximation::cosine(angle)?)
+                    .ok_or(Error("inverse STFT cosine cannot be represented"))?;
+                let sine = T::from_f32(approximation::sine(angle)?)
+                    .ok_or(Error("inverse STFT sine cannot be represented"))?;
+                self.spectrum[bin] =
+                    Complex::new(magnitude[index] * cosine, magnitude[index] * sine);
+            }
+            match options.nyquist {
+                NyquistPolicy::Legacy => self.spectrum[length / 2] = self.spectrum[length / 2 - 1],
+                NyquistPolicy::Preserve => {
+                    self.spectrum[0].im = T::zero();
+                    if length > 1 {
+                        self.spectrum[length / 2].im = T::zero();
+                    }
+                }
+            }
+            for bin in bins..length {
+                self.spectrum[bin] = self.spectrum[length - bin].conj();
+            }
+            self.fft.process(&mut self.spectrum, Direction::Inverse)?;
+            self.spectrum.rotate_right(length / 2);
+            for (index, value) in self.frame.iter_mut().enumerate() {
+                *value = self.spectrum[index].re;
+            }
+            for (index, &weight) in fade[..options.fade_samples].iter().enumerate() {
+                self.frame[index] = self.frame[index] * weight;
+                self.frame[length - index - 1] = self.frame[length - index - 1] * weight;
+            }
+            let center = (frame * options.hop) as i64 + i64::from(options.offset);
+            for (index, &sample) in self.frame.iter().enumerate() {
+                let position = center + index as i64 - (length / 2) as i64;
+                if let Ok(position) = usize::try_from(position)
+                    && let Some(value) = output.get_mut(position)
+                {
+                    *value = *value + sample / options.normalization;
+                }
+            }
+        }
+        Ok(output)
+    }
+}
+
+/// Parameters of the original Blackman-window STFT convenience functions.
+#[derive(Debug, Clone, Copy)]
+pub struct FrameGrid {
+    pub hop: usize,
+    pub frames: usize,
+    pub window_factor: usize,
+    pub zero_padding_factor: usize,
+}
+impl FrameGrid {
+    fn lengths(self) -> Result<(usize, usize), Error> {
+        if self.hop == 0
+            || self.window_factor == 0
+            || self.zero_padding_factor == 0
+            || self.frames > i32::MAX as usize
+        {
+            return Err(Error(
+                "STFT grid factors must be positive and frame count bounded",
+            ));
+        }
+        let window = self
+            .hop
+            .checked_mul(self.window_factor)
+            .ok_or(Error("STFT window size overflow"))?;
+        let fft = window
+            .checked_mul(self.zero_padding_factor)
+            .ok_or(Error("STFT transform size overflow"))?;
+        Ok((window, fft))
+    }
+}
+
+/// Equivalent to stft/stft_2, selecting their level with precision.
+pub fn analyze_regular<T: FftNum + Into<f64>>(
+    signal: &[T],
+    grid: FrameGrid,
+    precision: Precision,
+    mut options: AnalysisOptions,
+) -> Result<Analysis<T>, Error> {
+    let (window, fft) = grid.lengths()?;
+    let mut plan = StftPlan::new(fft, Window::Blackman, precision)?;
+    let mut centers = filled(grid.frames, 0i32)?;
+    for (frame, center) in centers.iter_mut().enumerate() {
+        *center = frame
+            .checked_mul(grid.hop)
+            .and_then(|n| i32::try_from(n).ok())
+            .ok_or(Error("STFT center exceeds the legacy range"))?;
+    }
+    let lengths = filled(grid.frames, window)?;
+    options.normalization_hop = Some(grid.hop);
+    plan.analyze(signal, &centers, &lengths, options)
+}
+
+/// Equivalent to istft: zero offset and a 32-sample endpoint fade.
+/// Choose Legacy explicitly to reproduce the original Nyquist overwrite.
+pub fn synthesize_regular<T: FftNum + Into<f64>>(
+    magnitude: &[T],
+    phase: &[T],
+    grid: FrameGrid,
+    normalization: T,
+    nyquist: NyquistPolicy,
+) -> Result<Vec<T>, Error> {
+    let (_, fft) = grid.lengths()?;
+    let bins = fft / 2 + 1;
+    if grid.frames.checked_mul(bins) != Some(magnitude.len()) {
+        return Err(Error("inverse STFT grid differs from spectrum"));
+    }
+    StftPlan::new(fft, Window::Blackman, Precision::Accurate)?.synthesize(
+        magnitude,
+        phase,
+        SynthesisOptions {
+            hop: grid.hop,
+            offset: 0,
+            fade_samples: 32,
+            normalization,
+            nyquist,
+        },
+    )
 }
