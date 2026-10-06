@@ -6,6 +6,7 @@ pub mod chirp_z;
 pub mod cosine;
 pub mod fourier;
 pub mod frame;
+pub mod frequency;
 pub mod statistics;
 pub mod stft;
 pub mod synthesis;

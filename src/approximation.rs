@@ -27,3 +27,46 @@ pub fn sine(angle: f32) -> Result<f32, Error> {
 pub fn cosine(angle: f32) -> Result<f32, Error> {
     sine(angle + std::f32::consts::FRAC_PI_2)
 }
+
+/// Upstream level-two base-two logarithm. Internal arithmetic remains f32.
+pub fn logarithm2(value: f32) -> Result<f32, Error> {
+    if !value.is_finite() || value <= 0.0 {
+        return Err(Error(
+            "approximate logarithm requires a positive finite value",
+        ));
+    }
+    let mantissa = f32::from_bits((value.to_bits() & 0x007f_ffff) | 0x3f00_0000);
+    let exponent = value.to_bits() as f32 * 1.192_092_9e-7;
+    Ok(exponent - 124.225_52 - 1.498_030_3 * mantissa - 1.725_88 / (0.352_088_72 + mantissa))
+}
+
+pub fn logarithm(value: f32) -> Result<f32, Error> {
+    Ok(std::f32::consts::LN_2 * logarithm2(value)?)
+}
+
+/// Upstream level-two base-two exponential with its -126 underflow clamp.
+/// Out-of-range exponents return an error instead of casting invalid integers.
+pub fn exponential2(exponent: f32) -> Result<f32, Error> {
+    if !exponent.is_finite() || exponent >= 128.0 {
+        return Err(Error("approximate exponential exceeds the legacy range"));
+    }
+    let offset = if exponent < 0.0 { 1.0 } else { 0.0 };
+    let clipped = exponent.max(-126.0);
+    let fraction = clipped - (clipped as i32) as f32 + offset;
+    let bits = 8_388_608.0
+        * (clipped + 121.274_055 + 27.728_024 / (4.842_525_5 - fraction) - 1.490_129_1 * fraction);
+    if !(0.0..4_294_967_296.0).contains(&bits) {
+        return Err(Error(
+            "approximate exponential bit conversion exceeds the legacy range",
+        ));
+    }
+    Ok(f32::from_bits(bits as u32))
+}
+
+pub fn exponential(exponent: f32) -> Result<f32, Error> {
+    exponential2(std::f32::consts::LOG2_E * exponent)
+}
+
+pub fn power(value: f32, exponent: f32) -> Result<f32, Error> {
+    exponential2(exponent * logarithm2(value)?)
+}
