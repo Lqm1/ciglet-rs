@@ -17,3 +17,11 @@ In FP_TYPE=float builds, 32-bit PCM uses float accumulation of an unsigned magni
 On header failure wavread_fp closes its caller's FILE pointer, and wavread then closes it again. Rust borrows Read+Seek streams, propagates I/O errors, and does not close borrowed objects. Truncation, invalid metadata, partial frames, duplicate chunks, and missing interior padding return errors. Unknown chunks are skipped by their declared lengths rather than scanning payloads for fmt/data strings. The original writer's unpadded odd final data chunk is still readable.
 
 Source references: https://learn.microsoft.com/en-us/windows/win32/multimedia/devices-and-data-types and https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible. These corrections are intentional behavior differences; unchanged-C comparisons are reported separately.
+
+## WAVE output quantization and padding
+
+The original PCM8 writer maps silence to byte 127 with (sample + 1) * 127, although the unsigned PCM midpoint is 128. The default Rust writer uses the correct midpoint; Pcm8Quantization::Legacy retains original quantization when explicitly requested. The original writer also omits RIFF padding for odd data lengths. Default output adds one zero pad byte and includes it in the RIFF size, while the data chunk size continues to count valid sample bytes only. WriteOptions::legacy preserves original files for compatibility comparisons.
+
+Signed PCM quantization converts to int before clipping. For FP_TYPE=float, the PCM32 maximum 2147483647 rounds to 2147483648 in multiplication, making the subsequent positive-unit float-to-int cast out of range. Larger magnitudes at every depth can likewise leave the conversion domain. Rust clips the product before the cast, rejects nonfinite input before output, and propagates write/flush failures. The C fixtures only exercise defined conversion inputs. Existing destination files are not truncated on validation failure.
+
+Specification references: https://learn.microsoft.com/en-us/windows/win32/multimedia/devices-and-data-types and https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff-.

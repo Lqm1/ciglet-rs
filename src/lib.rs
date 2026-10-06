@@ -9,6 +9,7 @@ pub mod frame;
 pub mod statistics;
 pub mod synthesis;
 pub mod wave;
+pub mod wave_write;
 pub mod window;
 
 /// Invalid DSP input shape or parameters.

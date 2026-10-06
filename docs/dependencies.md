@@ -33,7 +33,7 @@ Primary API references:
 
 The compatible trigonometric approximation is adapted from the pinned bundled fastapprox code, copyright 2011 Paul Mineiro. Its BSD notice is retained in LICENSES/fastapprox-BSD.txt. This adds no Cargo dependency. Sign-bit operations use the safe f32::to_bits/from_bits API documented at https://doc.rust-lang.org/std/primitive.f32.html#method.to_bits and https://doc.rust-lang.org/std/primitive.f32.html#method.from_bits.
 
-Hound was evaluated for WAVE I/O but its documented Sample implementations omit f64, and floating-point decoding supports 32-bit samples. Adopting it alone would remove original IEEE float64 support. The reader therefore implements the small uncompressed RIFF/WAVE subset from primary format documentation without copying the original wavfile.c implementation, whose inspected header lacks a license grant. No new Cargo dependency is added. WAV writing is still pending.
+Hound was evaluated for WAVE I/O but its documented Sample implementations omit f64, and floating-point decoding supports 32-bit samples. Adopting it alone would remove original IEEE float64 support. The reader therefore implements the small uncompressed RIFF/WAVE subset from primary format documentation without copying the original wavfile.c implementation, whose inspected header lacks a license grant. No new Cargo dependency is added. Mono PCM writing is now implemented with explicit legacy compatibility and corrected defaults.
 
 Primary references:
 - https://docs.rs/hound/3.5.1/hound/trait.Sample.html
@@ -42,3 +42,5 @@ Primary references:
 - https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ksmedia/ns-ksmedia-waveformatextensible
 - https://doc.rust-lang.org/std/io/trait.Read.html#method.read_exact
 - https://doc.rust-lang.org/std/io/trait.Seek.html
+
+Output follows standard Write::write_all error propagation and explicit BufWriter flushing. Primary references: https://doc.rust-lang.org/std/io/trait.Write.html#method.write_all and https://doc.rust-lang.org/std/io/struct.BufWriter.html.
