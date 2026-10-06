@@ -7,6 +7,7 @@ pub mod cosine;
 pub mod fourier;
 pub mod frame;
 pub mod statistics;
+pub mod stft;
 pub mod synthesis;
 pub mod wave;
 pub mod wave_write;

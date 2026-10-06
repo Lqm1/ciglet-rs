@@ -76,7 +76,7 @@
 "cig_sort","ciglet.h","statistics::sort","implemented; validation scope documented","tests/dsp_reference.rs; Windows MSVC x86_64/i686; review edge cases for complete coverage"
 "cig_spec2env","ciglet.h","","pending",""
 "cig_stft_backward","ciglet.h","","pending",""
-"cig_stft_forward","ciglet.h","","pending",""
+"cig_stft_forward","ciglet.h","stft::StftPlan::analyze","implemented","f32/f64; optional magnitude/phase; variable windows; explicit normalization hop; odd-window and first-window reuse corrections; tests/stft.rs"
 "cig_transpose","ciglet.h","","pending",""
 "cig_winfir","ciglet.h","","pending",""
 "cig_xcorr","ciglet.h","statistics::cross_correlation","implemented; validation scope documented","tests/dsp_reference.rs; Windows MSVC x86_64/i686; review edge cases for complete coverage"
