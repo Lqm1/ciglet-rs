@@ -1,4 +1,4 @@
-use ciglet_rs::fourier::{Complex, Direction, FftPlan, fft_shift, fft_shift_in_place};
+use ciglet_rs::fourier::{Complex, Direction, FftPlan, fft_shift, fft_shift_in_place, inverse_dft};
 use rustfft::FftNum;
 
 fn inputs<T: FftNum>(length: usize, scenario: usize) -> (Vec<T>, Vec<T>) {
@@ -45,12 +45,17 @@ impl Reader<'_> {
     }
 }
 
-fn compare_c<T: FftNum + Into<f64>>(fixture: &[u8], precision: usize, tolerance: f64) {
+fn compare_c<T: FftNum + Into<f64>>(
+    fixture: &[u8],
+    precision: usize,
+    tolerance: f64,
+    direct: bool,
+) {
     let mut reader = Reader(fixture);
-    assert_eq!(&reader.take::<4>(), b"FFT1");
+    assert_eq!(&reader.take::<4>(), if direct { b"IDF1" } else { b"FFT1" });
     assert_eq!(reader.integer(), precision);
     let records = reader.integer();
-    assert_eq!(records, 240);
+    assert_eq!(records, if direct { 120 } else { 240 });
     let mut maximum_normalized_error = 0.0f64;
     let mut maximum_absolute_error = 0.0f64;
     let mut values_checked = 0;
@@ -67,8 +72,15 @@ fn compare_c<T: FftNum + Into<f64>>(fixture: &[u8], precision: usize, tolerance:
         } else {
             Direction::Inverse
         };
-        let mut plan = FftPlan::<T>::new(length).unwrap();
-        let result = plan.transform(real, imaginary, direction).unwrap();
+        let result = if direct {
+            assert_eq!(inverse, 1);
+            inverse_dft(length, real, imaginary).unwrap()
+        } else {
+            FftPlan::<T>::new(length)
+                .unwrap()
+                .transform(real, imaginary, direction)
+                .unwrap()
+        };
         let input_scale = real
             .into_iter()
             .flatten()
@@ -97,18 +109,58 @@ fn compare_c<T: FftNum + Into<f64>>(fixture: &[u8], precision: usize, tolerance:
     }
     assert!(reader.0.is_empty());
     eprintln!(
-        "C FFT {precision}-byte precision: {values_checked} scalar values, maximum absolute error {maximum_absolute_error:e}, normalized error {maximum_normalized_error:e}"
+        "C {} {precision}-byte precision: {values_checked} scalar values, maximum absolute error {maximum_absolute_error:e}, normalized error {maximum_normalized_error:e}",
+        if direct { "IDFT" } else { "FFT" }
     );
 }
 
 #[test]
 fn float_fft_matches_c() {
-    compare_c::<f32>(include_bytes!("fixtures/c-fft-f32.bin"), 4, 2e-7);
+    compare_c::<f32>(include_bytes!("fixtures/c-fft-f32.bin"), 4, 2e-7, false);
 }
 
 #[test]
 fn double_fft_matches_c() {
-    compare_c::<f64>(include_bytes!("fixtures/c-fft-f64.bin"), 8, 1e-15);
+    compare_c::<f64>(include_bytes!("fixtures/c-fft-f64.bin"), 8, 1e-15, false);
+}
+
+#[test]
+fn float_direct_inverse_matches_c() {
+    compare_c::<f32>(include_bytes!("fixtures/c-idft-f32.bin"), 4, 2e-7, true);
+}
+
+#[test]
+fn double_direct_inverse_matches_c() {
+    compare_c::<f64>(include_bytes!("fixtures/c-idft-f64.bin"), 8, 1e-15, true);
+}
+
+#[test]
+fn direct_inverse_handles_shapes_and_known_phase() {
+    for length in [1, 3, 5, 8, 11] {
+        let constant = vec![1.0f64; length];
+        let result = inverse_dft(length, Some(&constant), None).unwrap();
+        assert!((result[0].re - 1.0).abs() < 1e-14);
+        for value in &result[1..] {
+            assert!(value.norm() < 1e-14);
+        }
+        assert_eq!(
+            inverse_dft::<f64>(length, None, None).unwrap(),
+            vec![Complex::new(0.0, 0.0); length]
+        );
+    }
+    let result = inverse_dft(4, Some(&[0.0f64, 4.0, 0.0, 0.0]), None).unwrap();
+    for (actual, expected) in result.iter().zip([
+        Complex::new(1.0, 0.0),
+        Complex::new(0.0, 1.0),
+        Complex::new(-1.0, 0.0),
+        Complex::new(0.0, -1.0),
+    ]) {
+        assert!((*actual - expected).norm() < 1e-14);
+    }
+    assert!(inverse_dft::<f32>(0, None, None).is_err());
+    assert!(inverse_dft::<f32>(usize::MAX, None, None).is_err());
+    assert!(inverse_dft(3, Some(&[1.0f32; 2]), None).is_err());
+    assert!(inverse_dft(3, None, Some(&[1.0f32; 4])).is_err());
 }
 
 #[test]
