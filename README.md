@@ -2,7 +2,7 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
-The port is in progress. Statistics, precise window functions, centered zero-padded frame extraction, and reusable f32/f64 complex FFTs are implemented. FftPlan preserves unnormalized forward and length-normalized inverse transforms, optional zero input components, and in-place operation. FFT frequency shifting supports odd and even lengths. A direct normalized inverse DFT supports arbitrary positive lengths, preserving upstream scalar phase precision and accumulation order. RustFFT provides reusable plans, preallocated scratch storage, and CPU-selected SIMD with scalar fallback. The remaining DSP algorithms, approximation variants, audio I/O, synthesis, and plotting integrations are pending.
+The port is in progress. Statistics, precise window functions, centered zero-padded frame extraction, and reusable f32/f64 complex FFTs are implemented. FftPlan preserves unnormalized forward and length-normalized inverse transforms, optional zero input components, and in-place operation. FFT frequency shifting supports odd and even lengths. A direct normalized inverse DFT supports arbitrary positive lengths, preserving upstream scalar phase precision and accumulation order. RustFFT provides reusable plans, preallocated scratch storage, and CPU-selected SIMD with scalar fallback. The original approximate-cosine DCT-II and level-two sine/cosine approximations are also implemented, including the original small deviation at cos(0). The remaining DSP algorithms, other approximation variants, audio I/O, synthesis, and plotting integrations are pending.
 
 ```powershell
 cargo test

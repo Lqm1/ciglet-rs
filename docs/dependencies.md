@@ -30,3 +30,5 @@ Primary API references:
 
 - https://docs.rs/rustfft/6.4.1/rustfft/struct.FftPlanner.html
 - https://docs.rs/rustfft/6.4.1/rustfft/trait.Fft.html
+
+The compatible trigonometric approximation is adapted from the pinned bundled fastapprox code, copyright 2011 Paul Mineiro. Its BSD notice is retained in LICENSES/fastapprox-BSD.txt. This adds no Cargo dependency. Sign-bit operations use the safe f32::to_bits/from_bits API documented at https://doc.rust-lang.org/std/primitive.f32.html#method.to_bits and https://doc.rust-lang.org/std/primitive.f32.html#method.from_bits.
