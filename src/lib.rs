@@ -1,6 +1,7 @@
 //! Signal-processing operations reimplemented from ciglet.
 //! The complete public upstream API is being ported in stages.
 #![forbid(unsafe_code)]
+pub mod fourier;
 pub mod frame;
 pub mod statistics;
 pub mod window;

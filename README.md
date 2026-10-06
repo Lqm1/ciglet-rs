@@ -2,7 +2,7 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
-The port is in progress. Statistics, precise window functions, and centered zero-padded frame extraction are implemented. The remaining DSP algorithms, approximation variants, audio I/O, synthesis, and plotting integrations are pending.
+The port is in progress. Statistics, precise window functions, centered zero-padded frame extraction, and reusable f32/f64 complex FFTs are implemented. FftPlan preserves unnormalized forward and length-normalized inverse transforms, optional zero input components, and in-place operation. FFT frequency shifting supports odd and even lengths. RustFFT provides reusable plans, preallocated scratch storage, and CPU-selected SIMD with scalar fallback. The remaining DSP algorithms, approximation variants, audio I/O, synthesis, and plotting integrations are pending.
 
 ```powershell
 cargo test
@@ -11,3 +11,5 @@ cargo clippy --all-targets -- -D warnings
 ```
 
 This Rust project uses GPL-3.0-or-later as requested for the three-project port. The original ciglet BSD 3-Clause attribution and license are retained in `LICENSES/ciglet-BSD-3-Clause.txt`. No original C implementation is linked into the Rust library.
+
+FFT API references: https://docs.rs/rustfft/6.4.1/rustfft/struct.FftPlanner.html and https://docs.rs/rustfft/6.4.1/rustfft/trait.Fft.html. The native FFT API retains the positive power-of-two size domain documented by upstream external/fftsg_h.c. See tests/fixtures/README.md for measured comparison tolerances and docs/dependencies.md for retained dependency notices.

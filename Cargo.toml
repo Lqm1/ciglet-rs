@@ -6,3 +6,4 @@ license = "GPL-3.0-or-later"
 rust-version = "1.94"
 
 [dependencies]
+rustfft = "6.4.1"
