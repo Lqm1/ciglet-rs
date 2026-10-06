@@ -18,7 +18,7 @@ pub fn sine(angle: f32) -> Result<f32, Error> {
     let square = base * base;
     let linear = f32::from_bits(0.203_639_37f32.to_bits() | sign);
     let cubic = f32::from_bits(0.015_124_941f32.to_bits() | sign);
-    let quintic = f32::from_bits((-0.003_222_590_2f32).to_bits() ^ sign);
+    let quintic = f32::from_bits((-0.003_222_59f32).to_bits() ^ sign);
     Ok(0.784_444_87 * base + square * (linear + square * (cubic + square * quintic)))
 }
 
