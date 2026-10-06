@@ -8,6 +8,7 @@ pub mod fourier;
 pub mod frame;
 pub mod statistics;
 pub mod synthesis;
+pub mod wave;
 pub mod window;
 
 /// Invalid DSP input shape or parameters.
