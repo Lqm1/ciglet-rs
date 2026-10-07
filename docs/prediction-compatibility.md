@@ -23,9 +23,9 @@ Allocation failures, nonfinite data, excessive lengths, negative energy,
 inconsistent zero-energy lags and nonpositive/nonfinite recursion residuals
 return errors. Waveform order must be smaller than its sample count. These
 checks do not claim a solver for every ill-conditioned autocorrelation. The
-original waveform correlation and magnitude-squaring stages still require
-separate range handling; Stable recursion cannot recover information already
-lost or rejected by those stages.
+waveform and magnitude entry points now retain scaled correlations before
+recursion. Ordinary-result conversion still requires each nonzero correlation
+to survive conversion to the selected scalar; use ScaledPrediction otherwise.
 
 The source unconditionally reads lag one and writes coefficient one, even for
 an empty/singleton autocorrelation or order-zero prediction. Rust rejects empty
@@ -117,3 +117,51 @@ maximum bound is checked. The final bound follows the observed five-target data.
 
 Primary Rust arithmetic reference:
 [f64::mul_add](https://doc.rust-lang.org/std/primitive.f64.html#method.mul_add).
+
+## Scaled waveform correlations
+
+Stable `from_samples` now uses compensated scaled products for each lag rather
+than selected-scalar cross-correlation. Explicit Legacy retains the original
+correlation and coefficient arithmetic. Ordinary results continue to contain
+unnormalized correlations in the original units. A nonzero correlation that
+overflows or rounds to zero during conversion returns an error, rather than
+turning a nonzero waveform into silence.
+
+`from_samples_scaled` returns `ScaledPrediction<T>`. Its coefficients are
+borrowed through `coefficients()`, and `autocorrelation_parts()` returns a
+borrowed exact-size iterator of `(binary64_significand, signed_exponent)`.
+Nonzero significands have absolute value in [1, 2); each lag has its own exponent,
+so cancellation and differing lag scales are retained. The storage is private
+and cannot be mutated into an inconsistent coefficient/correlation pair.
+`into_prediction()` consumes the result and checks every lag's scalar conversion.
+No exponent is silently dropped or hidden in an ordinary correlation vector.
+
+`gain_parts()` normalizes by scaled lag-zero energy, accumulates the returned
+selected-precision coefficients against normalized correlations, and restores
+the energy exponent before taking a scaled root. It returns a normalized
+significand/exponent pair, including gains outside the scalar range. `gain()`
+checks conversion to T and reports nonzero underflow or overflow. These remain
+rounded numerical estimates, not arbitrary-precision results or guaranteed
+accurate gains for every ill-conditioned rounded coefficient set.
+
+Independent impulse, cancellation and silence tests cover maximum values,
+minimum subnormals, representable gains with unrepresentable powers and gain
+exponents above/below binary64 range. A test of ordinary conversion confirms
+that a minimum-subnormal waveform is not misreported as silence.
+`tests/generate_scaled_waveform_reference.py --check` derives exact-rational
+correlations and solves regularized coefficient systems using Gaussian
+elimination. Each precision covers 64 waveforms, 176 correlations and 176
+coefficients across singleton/two/three/nine samples, four energy scales and
+constant/alternating/impulse/ramp shapes. Primary Windows float agrees with
+all reference correlations and coefficients. Maximum double relative correlation
+error is 1.1102230246251565e-16, and maximum normalized coefficient error is
+1.1545898405340574e-15 across the five required native targets (GNU's coefficient
+maximum is slightly smaller). Every float reference agrees on all five targets.
+All 173 integration tests pass on Windows MSVC x86_64/i686, Windows GNU x86_64
+and Linux GNU x86_64/i686, including required Gnuplot rendering. Mathematical
+reference regeneration passes on Windows/Linux; unchanged-C LPC and spectrum
+regeneration passes on Linux. Formatting, Clippy and warning-as-error Rustdoc pass.
+
+The accessor follows the primary Rust
+[return-position impl Trait reference](https://doc.rust-lang.org/reference/types/impl-trait.html)
+and borrowing lifetime bounds; it introduces no boxed iterator or accessor allocation.

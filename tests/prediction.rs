@@ -76,7 +76,14 @@ fn reference<T: Scalar>(bytes: &[u8]) {
             gain.into().to_bits()
         );
         let stable = prediction::from_samples(&samples, order).unwrap();
-        assert_eq!(stable.autocorrelation, autocorrelation);
+        for (&actual, &expected) in stable.autocorrelation.iter().zip(&autocorrelation) {
+            let error = (actual.into() - expected.into()).abs() / (1.0 + expected.into().abs());
+            let bound = if reader.width == 4 { 2e-7 } else { 5e-15 };
+            assert!(
+                error <= bound,
+                "stable correlation case={case}, error={error:e}"
+            );
+        }
         let energy: f64 = stable.autocorrelation[0].into();
         if energy > 0.0 {
             for row in 1..stable.autocorrelation.len() {
@@ -189,6 +196,39 @@ fn extreme_energy_and_scaled_gain_remain_representable() {
     );
 }
 
+#[test]
+fn scaled_waveforms_preserve_large_and_tiny_powers_and_gain() {
+    for amplitude in [f64::MAX, f64::from_bits(1)] {
+        let model = prediction::from_samples_scaled(&[amplitude, 0.0], 1).unwrap();
+        assert_eq!(model.coefficients(), [1.0, -0.0]);
+        assert_eq!(model.gain().unwrap(), amplitude);
+        assert_eq!(model.autocorrelation_parts().nth(1).unwrap(), (0.0, 0));
+        assert!(model.into_prediction().is_err());
+    }
+    for amplitude in [f32::MAX, f32::from_bits(1)] {
+        let model = prediction::from_samples_scaled(&[amplitude, 0.0], 1).unwrap();
+        assert_eq!(model.coefficients(), [1.0, -0.0]);
+        assert_eq!(model.gain().unwrap(), amplitude);
+        assert!(model.into_prediction().is_err());
+    }
+    let tiny = f64::from_bits(1);
+    assert!(prediction::from_samples(&[tiny], 0).is_err());
+    let cancelled = prediction::from_samples_scaled(&[f64::MAX, 1.0, -f64::MAX], 2).unwrap();
+    assert_eq!(cancelled.autocorrelation_parts().nth(1).unwrap(), (0.0, 0));
+    assert!(cancelled.gain().is_err());
+    let (fraction, exponent) = cancelled.gain_parts().unwrap();
+    assert!((1.0..2.0).contains(&fraction));
+    assert_eq!(exponent, 1024);
+    let silence = prediction::from_samples_scaled(&[0.0_f64; 4], 3).unwrap();
+    assert_eq!(silence.gain_parts().unwrap(), (0.0, 0));
+    assert_eq!(
+        silence.into_prediction().unwrap().coefficients,
+        [1.0, 0.0, 0.0, 0.0]
+    );
+    assert!(prediction::from_samples_scaled::<f64>(&[], 0).is_err());
+    assert!(prediction::from_samples_scaled(&[f64::NAN], 0).is_err());
+}
+
 fn stable_reference<T: Scalar>(bytes: &[u8], tolerance: f64) {
     assert_eq!(&bytes[..4], b"SLP1");
     let mut reader = Reader {
@@ -238,4 +278,65 @@ fn exact_toeplitz_double_reference() {
         include_bytes!("fixtures/stable-prediction-double.bin"),
         6e-11,
     );
+}
+
+fn scaled_waveform_reference<T: Scalar>(bytes: &[u8]) {
+    assert_eq!(&bytes[..4], b"SWV1");
+    let mut reader = Reader {
+        bytes,
+        cursor: 4,
+        width: 0,
+    };
+    reader.width = reader.integer() as usize;
+    assert_eq!(reader.integer(), 64);
+    let mut maximum = [0.0_f64; 2];
+    let mut outputs = 0;
+    for case in 0..64 {
+        let length = reader.integer() as usize;
+        let order = reader.integer() as usize;
+        let samples = reader.vector::<T>(length);
+        let model = prediction::from_samples_scaled(&samples, order).unwrap();
+        for (actual, exponent) in model.autocorrelation_parts() {
+            let expected =
+                f64::from_le_bytes(bytes[reader.cursor..reader.cursor + 8].try_into().unwrap());
+            reader.cursor += 8;
+            let expected_exponent =
+                i32::from_le_bytes(bytes[reader.cursor..reader.cursor + 4].try_into().unwrap());
+            reader.cursor += 4;
+            let error = if expected == 0.0 {
+                actual.abs()
+            } else {
+                (actual * 2.0_f64.powi(exponent - expected_exponent) / expected - 1.0).abs()
+            };
+            assert!(
+                error <= 2e-15 && (expected != 0.0 || actual == 0.0),
+                "case={case}, scaled correlation error={error:e}"
+            );
+            maximum[0] = maximum[0].max(error);
+            outputs += 1;
+        }
+        let expected = reader.vector::<T>(order + 1);
+        for (&actual, expected) in model.coefficients().iter().zip(expected) {
+            let error = (actual.into() - expected.into()).abs() / (1.0 + expected.into().abs());
+            let bound = if reader.width == 4 { 2e-15 } else { 5e-15 };
+            assert!(error <= bound, "case={case}, coefficient error={error:e}");
+            maximum[1] = maximum[1].max(error);
+        }
+    }
+    assert_eq!(outputs, 176);
+    assert_eq!(reader.cursor, bytes.len());
+    println!(
+        "Scaled waveform {}-byte maxima (correlations, coefficients)={maximum:?}",
+        reader.width
+    );
+}
+
+#[test]
+fn exact_scaled_waveform_float_reference() {
+    scaled_waveform_reference::<f32>(include_bytes!("fixtures/scaled-waveform-float.bin"));
+}
+
+#[test]
+fn exact_scaled_waveform_double_reference() {
+    scaled_waveform_reference::<f64>(include_bytes!("fixtures/scaled-waveform-double.bin"));
 }

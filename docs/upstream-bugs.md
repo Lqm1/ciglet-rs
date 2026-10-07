@@ -213,6 +213,19 @@ Stable recursion normalizes lag-zero energy before solving the regularized
 Toeplitz system in binary64. Gain uses compensated scaled products and a scaled
 root, retaining finite huge-cancellation and tiny-product results. Explicit
 ArithmeticPolicy::Legacy preserves original behavior. Exact-rational Gaussian
-elimination independently checks the coefficients. Waveform correlation and
-magnitude squaring still require their own range audit and are not claimed to
-be corrected by the normalized recursion. See docs/prediction-compatibility.md.
+elimination independently checks the coefficients. Scaled waveform and
+magnitude entry points now handle the preceding power/correlation range;
+ordinary conversion remains limited by the selected scalar representation. See docs/prediction-compatibility.md.
+
+## Waveform and magnitude correlation intermediate range
+
+Selected-scalar waveform products can overflow before cancellation or underflow
+into a false silence model. Stable waveform estimation now uses individually
+scaled compensated lag products. Magnitude squares and the unnormalized inverse
+FFT can also overflow before a representable normalized correlation is formed.
+Exceptional magnitude inputs use scaled compensated inverse sums. The new
+ScaledPrediction APIs retain original power units as significand/exponent pairs;
+ordinary conversion reports lost range explicitly. Legacy preserves original
+arithmetic, including its source limitations. Analytic maximum/subnormal inputs
+and an independent rational waveform corpus validate the corrected paths.
+See docs/prediction-compatibility.md and docs/prediction-spectrum-compatibility.md.

@@ -57,6 +57,10 @@ Linear prediction supports waveform and magnitude inputs, f32/f64 Levinson
 recursion, owned autocorrelation/coefficient results and gain estimation.
 Stable recursion normalizes energy and gain uses compensated scaled products;
 an independent ArithmeticPolicy::Legacy retains original scalar arithmetic.
+ScaledPrediction retains per-lag binary exponents when raw power exceeds the
+scalar range, with borrowed coefficient/correlation access and scaled gain.
+Waveform products use compensated accumulation; exceptional magnitude powers
+use a scaled direct inverse transform while ordinary spectra retain their FFT.
 Reusable spectrum plans support source precision and an explicit Legacy
 Nyquist policy. Resonance estimates pair sorted frequencies with poles and
 report root convergence. Order zero and silence are safe. See

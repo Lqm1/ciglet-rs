@@ -1,5 +1,6 @@
-//! Autoregressive prediction with source-compatible Levinson recursion.
+//! Autoregressive prediction with stable and source-compatible arithmetic.
 pub use crate::phase::NyquistPolicy;
+mod scaled;
 use crate::{
     Error,
     accumulation::{Scaled, Sum},
@@ -8,10 +9,11 @@ use crate::{
     statistics::{self, Scalar},
     vector,
 };
+pub use scaled::ScaledPrediction;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArithmeticPolicy {
-    /// Normalize recursion energy and compensate gain products in binary64.
+    /// Scaled correlations, normalized recursion and compensated gain products.
     Stable,
     /// Preserve source selected-scalar recursion and gain arithmetic.
     Legacy,
@@ -62,6 +64,85 @@ impl<T: Scalar> SpectrumPlan<T> {
         policy: NyquistPolicy,
         arithmetic: ArithmeticPolicy,
     ) -> Result<Prediction<T>, Error> {
+        if arithmetic == ArithmeticPolicy::Stable {
+            return self
+                .estimate_scaled(magnitudes, order, policy)?
+                .into_prediction();
+        }
+        let autocorrelation = self.magnitude_correlations(magnitudes, order, policy)?;
+        let coefficients = levinson_with(&autocorrelation, arithmetic)?;
+        Ok(Prediction {
+            coefficients,
+            autocorrelation,
+        })
+    }
+
+    /// Retain each lag's exponent when squared magnitudes cannot fit the scalar.
+    pub fn estimate_scaled(
+        &mut self,
+        magnitudes: &[T],
+        order: usize,
+        policy: NyquistPolicy,
+    ) -> Result<ScaledPrediction<T>, Error> {
+        let n = self.len();
+        if magnitudes.len() < 2 || magnitudes.len() > n / 2 + 1 {
+            return Err(Error(
+                "magnitude spectrum does not fit the prediction transform",
+            ));
+        }
+        let used = used_magnitudes(magnitudes, n, policy);
+        vector::validate(used)?;
+        let count = order
+            .checked_add(1)
+            .filter(|&count| count <= n)
+            .ok_or(Error("prediction order exceeds the transform lag range"))?;
+        let minimum_normal = if std::mem::size_of::<T>() == 4 {
+            f32::MIN_POSITIVE as f64
+        } else {
+            f64::MIN_POSITIVE
+        };
+        let risky = used.iter().any(|&magnitude| {
+            let square: f64 = (magnitude * magnitude).into();
+            !square.is_finite() || (magnitude != T::zero() && square < minimum_normal)
+        });
+        if !risky {
+            let values = self.magnitude_correlations(magnitudes, order, policy)?;
+            if values.iter().all(|&value| value.into().is_finite())
+                && (values[0].into() >= minimum_normal
+                    || used.iter().all(|&value| value == T::zero()))
+            {
+                let mut scaled = vector::buffer(count)?;
+                scaled.extend(values.into_iter().map(|value| Scaled::new(value.into(), 0)));
+                return ScaledPrediction::new(scaled);
+            }
+        }
+        let mut correlations = vector::buffer(count)?;
+        for lag in 0..count {
+            let mut sum = Sum::new();
+            for bin in 0..=n / 2 {
+                let source_bin = if bin == n / 2 && policy == NyquistPolicy::Legacy {
+                    bin - 1
+                } else {
+                    bin
+                };
+                let Some(&magnitude) = used.get(source_bin) else {
+                    continue;
+                };
+                let weight =
+                    grid_phase(bin, lag, n).1 * if bin == 0 || bin == n / 2 { 1.0 } else { 2.0 };
+                sum.weighted_square(magnitude.into(), weight);
+            }
+            correlations.push(sum.finish(n as f64));
+        }
+        ScaledPrediction::new(correlations)
+    }
+
+    fn magnitude_correlations(
+        &mut self,
+        magnitudes: &[T],
+        order: usize,
+        policy: NyquistPolicy,
+    ) -> Result<Vec<T>, Error> {
         let n = self.len();
         if magnitudes.len() < 2 || magnitudes.len() > n / 2 + 1 {
             return Err(Error(
@@ -90,11 +171,7 @@ impl<T: Scalar> SpectrumPlan<T> {
         self.fft.process(&mut self.workspace, Direction::Inverse)?;
         let mut autocorrelation = vector::buffer(count)?;
         autocorrelation.extend(self.workspace[..count].iter().map(|value| value.re));
-        let coefficients = levinson_with(&autocorrelation, arithmetic)?;
-        Ok(Prediction {
-            coefficients,
-            autocorrelation,
-        })
+        Ok(autocorrelation)
     }
 
     /// Evaluate the full FFT-grid prediction magnitude, retaining signed gain.
@@ -150,23 +227,27 @@ impl<T: Scalar> SpectrumPlan<T> {
 fn scaled_response<T: Scalar>(coefficients: &[T], bin: usize, length: usize) -> Scaled {
     let mut real = Sum::new();
     let mut imaginary = Sum::new();
-    let length = length as u64;
     for (index, &coefficient) in coefficients.iter().enumerate() {
-        let turn = (index as u64 * bin as u64) % length;
-        let (sine, cosine) = if (turn * 4).is_multiple_of(length) {
-            match turn * 4 / length {
-                0 => (0.0, 1.0),
-                1 => (1.0, 0.0),
-                2 => (0.0, -1.0),
-                _ => (-1.0, 0.0),
-            }
-        } else {
-            (std::f64::consts::TAU * turn as f64 / length as f64).sin_cos()
-        };
+        let (sine, cosine) = grid_phase(index, bin, length);
         real.product(Scaled::new(coefficient.into(), 0), Scaled::new(cosine, 0));
         imaginary.product(Scaled::new(coefficient.into(), 0), Scaled::new(-sine, 0));
     }
     real.finish(1.0).hypot(imaginary.finish(1.0))
+}
+
+fn grid_phase(index: usize, bin: usize, length: usize) -> (f64, f64) {
+    let length = length as u64;
+    let turn = (index as u64 * bin as u64) % length;
+    if (turn * 4).is_multiple_of(length) {
+        match turn * 4 / length {
+            0 => (0.0, 1.0),
+            1 => (1.0, 0.0),
+            2 => (0.0, -1.0),
+            _ => (-1.0, 0.0),
+        }
+    } else {
+        (std::f64::consts::TAU * turn as f64 / length as f64).sin_cos()
+    }
 }
 
 /// Source transform sizing: next power of two at least twice bins minus one.
@@ -187,17 +268,28 @@ pub fn from_magnitude_with_arithmetic<T: Scalar>(
     policy: NyquistPolicy,
     arithmetic: ArithmeticPolicy,
 ) -> Result<Prediction<T>, Error> {
-    let length = magnitudes
-        .len()
-        .checked_sub(1)
+    let length = magnitude_length(magnitudes.len())?;
+    vector::validate(used_magnitudes(magnitudes, length, policy))?;
+    SpectrumPlan::new(length)?.estimate_with_arithmetic(magnitudes, order, policy, arithmetic)
+}
+
+pub fn from_magnitude_scaled<T: Scalar>(
+    magnitudes: &[T],
+    order: usize,
+    policy: NyquistPolicy,
+) -> Result<ScaledPrediction<T>, Error> {
+    SpectrumPlan::new(magnitude_length(magnitudes.len())?)?
+        .estimate_scaled(magnitudes, order, policy)
+}
+
+fn magnitude_length(bins: usize) -> Result<usize, Error> {
+    bins.checked_sub(1)
         .filter(|&length| length > 0)
         .and_then(|length| length.checked_mul(2))
         .and_then(usize::checked_next_power_of_two)
         .ok_or(Error(
             "prediction magnitude spectrum requires at least two bounded bins",
-        ))?;
-    vector::validate(used_magnitudes(magnitudes, length, policy))?;
-    SpectrumPlan::new(length)?.estimate_with_arithmetic(magnitudes, order, policy, arithmetic)
+        ))
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -373,6 +465,9 @@ pub fn from_samples_with<T: Scalar>(
     order: usize,
     policy: ArithmeticPolicy,
 ) -> Result<Prediction<T>, Error> {
+    if policy == ArithmeticPolicy::Stable {
+        return from_samples_scaled(samples, order)?.into_prediction();
+    }
     vector::validate(samples)?;
     let count = order
         .checked_add(1)
@@ -384,6 +479,14 @@ pub fn from_samples_with<T: Scalar>(
         coefficients,
         autocorrelation,
     })
+}
+
+/// Preserve individually scaled powers when ordinary correlations cannot fit.
+pub fn from_samples_scaled<T: Scalar>(
+    samples: &[T],
+    order: usize,
+) -> Result<ScaledPrediction<T>, Error> {
+    scaled::waveform(samples, order)
 }
 
 /// Gain from compensated scaled products; unrepresentable results are errors.

@@ -20,7 +20,7 @@ impl Compensated {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct Scaled {
     pub(crate) fraction: f64,
     pub(crate) exponent: i32,

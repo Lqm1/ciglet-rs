@@ -295,3 +295,130 @@ fn overflowing_fft_preserves_representable_prediction_ratios() {
     check(f32::MAX, 2e-7);
     check(f64::MAX, 4e-15);
 }
+
+#[test]
+fn scaled_magnitudes_and_overflowing_inverse_fft_preserve_prediction() {
+    fn check<T: Scalar>(amplitude: T) {
+        let mut plan = SpectrumPlan::<T>::new(4).unwrap();
+        let model = plan
+            .estimate_scaled(&[amplitude; 3], 3, NyquistPolicy::Preserve)
+            .unwrap();
+        assert_eq!(
+            model.coefficients(),
+            [T::one(), T::zero(), T::zero(), T::zero()]
+        );
+        assert!(
+            model
+                .autocorrelation_parts()
+                .skip(1)
+                .all(|parts| parts == (0.0, 0))
+        );
+        assert_eq!(model.gain().unwrap(), amplitude);
+        assert!(model.into_prediction().is_err());
+        let discarded = plan
+            .estimate_scaled(
+                &[amplitude, amplitude, T::from_f64(f64::NAN).unwrap()],
+                3,
+                NyquistPolicy::Legacy,
+            )
+            .unwrap();
+        assert_eq!(discarded.gain().unwrap(), amplitude);
+        assert!(
+            plan.estimate_scaled(&[amplitude; 3], 4, NyquistPolicy::Preserve)
+                .is_err()
+        );
+        assert!(
+            plan.estimate_scaled(
+                &[T::from_f64(f64::NAN).unwrap(); 3],
+                1,
+                NyquistPolicy::Preserve
+            )
+            .is_err()
+        );
+        assert_eq!(
+            plan.estimate(&[T::one(); 3], 1, NyquistPolicy::Preserve)
+                .unwrap()
+                .autocorrelation,
+            [T::one(), T::zero()]
+        );
+    }
+    check(f32::MAX);
+    check(f32::from_bits(1));
+    check(f64::MAX);
+    check(f64::from_bits(1));
+    let amplitude = f64::MAX.sqrt() * 0.5;
+    let model = SpectrumPlan::<f64>::new(16)
+        .unwrap()
+        .estimate(&[amplitude; 9], 3, NyquistPolicy::Preserve)
+        .unwrap();
+    for &coefficient in &model.coefficients[1..] {
+        assert!(coefficient.abs() < 2e-15);
+    }
+    assert!(
+        (prediction::gain(&model.coefficients, &model.autocorrelation).unwrap() / amplitude - 1.0)
+            .abs()
+            < 2e-15
+    );
+    let model =
+        prediction::from_magnitude_scaled(&[f64::from_bits(1); 3], 3, NyquistPolicy::Preserve)
+            .unwrap();
+    assert_eq!(model.gain().unwrap(), f64::from_bits(1));
+    for amplitude in [f64::MAX, f64::from_bits(1)] {
+        let model = prediction::from_magnitude_scaled(
+            &[0.0, amplitude, 0.0, 0.0, 0.0],
+            3,
+            NyquistPolicy::Preserve,
+        )
+        .unwrap();
+        let correlations: Vec<_> = model.autocorrelation_parts().collect();
+        for (lag, expected) in [
+            1.0,
+            std::f64::consts::FRAC_1_SQRT_2,
+            0.0,
+            -std::f64::consts::FRAC_1_SQRT_2,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let ratio = if correlations[lag].0 == 0.0 {
+                0.0
+            } else {
+                correlations[lag].0 / correlations[0].0
+                    * 2.0_f64.powi(correlations[lag].1 - correlations[0].1)
+            };
+            assert!(
+                (ratio - expected).abs() < 4e-15,
+                "amplitude={amplitude:e}, lag={lag}, ratio={ratio:e}, expected={expected:e}"
+            );
+        }
+        let (fraction, exponent) = model.gain_parts().unwrap();
+        assert!((1.0..2.0).contains(&fraction));
+        if amplitude == f64::MAX {
+            assert!(model.gain().unwrap() > 0.0);
+        } else {
+            assert!(exponent < -1074);
+            assert!(model.gain().is_err());
+        }
+    }
+}
+
+#[test]
+fn subnormal_fft_energy_uses_scaled_coefficient_estimation() {
+    let mut magnitudes = [0.0_f32; 33];
+    magnitudes[8] = f32::MIN_POSITIVE.sqrt();
+    let mut plan = SpectrumPlan::<f32>::new(64).unwrap();
+    let expected = -std::f64::consts::FRAC_1_SQRT_2 / 1.000001;
+    let legacy = plan
+        .estimate_with_arithmetic(
+            &magnitudes,
+            1,
+            NyquistPolicy::Preserve,
+            ArithmeticPolicy::Legacy,
+        )
+        .unwrap();
+    assert!((legacy.coefficients[1] as f64 - expected).abs() > 2e-7);
+    let stable = plan
+        .estimate_scaled(&magnitudes, 1, NyquistPolicy::Preserve)
+        .unwrap();
+    assert!((stable.coefficients()[1] as f64 - expected).abs() < 3e-8);
+}

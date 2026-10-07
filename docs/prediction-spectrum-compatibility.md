@@ -112,3 +112,38 @@ reject true poles, and verify zero-gain behavior and reuse. Original-C reference
 bounds remain unchanged. All 165 integration tests pass on Windows MSVC
 x86_64/i686, Windows GNU x86_64 and Linux GNU x86_64/i686. Formatting,
 Clippy and warning-as-error Rustdoc pass.
+
+## Scaled magnitude-domain prediction
+
+`SpectrumPlan::estimate_scaled` and `from_magnitude_scaled` return the shared
+ScaledPrediction result. Normal powers retain the selected-scalar inverse FFT
+and its documented source precision. Nonfinite or subnormal squared magnitudes,
+nonfinite FFT correlations, or subnormal/zero energy from nonzero inputs use a
+direct inverse sum instead. Each squared magnitude is retained in scaled form;
+interior bins are doubled, DC/Nyquist are counted once and the transform-length
+division occurs after compensated accumulation. Each returned lag has its own
+binary exponent. Exact quarter-turn phases retain the relevant zeros. General
+phases retain the documented standard-library trigonometric precision limits.
+
+Default Stable estimation checks conversion to ordinary correlations. Explicit
+ArithmeticPolicy::Legacy preserves original squaring, inverse FFT and recursion.
+Nyquist replacement remains independent, including validation of only the bins
+actually used. The direct fallback costs bin-count times requested-lag-count
+work; ordinary calls retain their existing FFT performance.
+
+Float/double analytic tests cover flat four-point spectra at maximum/minimum
+amplitude, ignored nonfinite Legacy Nyquist, plan reuse, invalid shapes and
+an eight-point single-bin cosine with exact radical correlation ratios. The
+scaled gain exposes a nonzero result below binary64 range. Another regression
+uses finite squared bins whose unnormalized sixteen-point FFT overflows, while
+the normalized correlation and final prediction/gain remain representable.
+Existing original-C bounds remain unchanged. The final 173 integration tests
+pass on Windows MSVC x86_64/i686, Windows GNU x86_64 and Linux GNU x86_64/i686.
+Formatting, Clippy and warning-as-error Rustdoc pass.
+
+A boundary regression uses a normal binary32 squared bin whose sixty-four-point
+inverse transform produces subnormal energy. The selected-scalar FFT lags lose
+enough significant bits to perturb a first-order coefficient by more than 2e-7.
+Stable now recomputes this energy range directly; its coefficient agrees with
+the independent sqrt(1/2) correlation ratio within 3e-8. Legacy retains the
+original rounded result. No comparison threshold was relaxed for this defect.
