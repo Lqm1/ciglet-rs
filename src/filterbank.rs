@@ -1,4 +1,5 @@
 //! Owned mel/PLP responses with validated half-open channel supports.
+//! Custom banks inspect only active bins; their Nyquist value is inert metadata.
 use crate::{Error, approximation, frequency};
 use rustfft::FftNum;
 use std::ops::Range;
@@ -27,13 +28,8 @@ pub struct FilterBank<T> {
 
 impl<T: FftNum + Into<f64>> FilterBank<T> {
     pub fn empty(bins: usize, nyquist_hz: T, channels: usize) -> Result<Self, Error> {
-        if bins == 0
-            || bins > i32::MAX as usize
-            || channels > i32::MAX as usize
-            || !nyquist_hz.into().is_finite()
-            || nyquist_hz.into() <= 0.0
-        {
-            return Err(Error("invalid filterbank dimensions or Nyquist frequency"));
+        if bins > i32::MAX as usize || channels > i32::MAX as usize {
+            return Err(Error("invalid filterbank dimensions"));
         }
         let mut responses = Vec::new();
         let mut supports = Vec::new();
@@ -63,6 +59,11 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
     pub fn nyquist_hz(&self) -> T {
         self.nyquist_hz
     }
+    /// Update metadata without changing responses or application results.
+    /// Custom banks can retain any scalar value, including nonfinite metadata.
+    pub fn set_nyquist_hz(&mut self, nyquist_hz: T) {
+        self.nyquist_hz = nyquist_hz;
+    }
     pub fn response(&self, channel: usize) -> Option<&[T]> {
         self.responses.get(channel).map(Vec::as_slice)
     }
@@ -71,7 +72,7 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
     }
 
     /// Replace an owned channel after validating its shape and support.
-    /// Signed custom weights remain allowed, as in the original public struct.
+    /// Signed weights and nonfinite values outside the support remain allowed.
     pub fn set_channel(
         &mut self,
         channel: usize,
@@ -82,9 +83,14 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
             || response.len() != self.bins
             || support.start > support.end
             || support.end > self.bins
-            || response.iter().any(|&x| !x.into().is_finite())
         {
             return Err(Error("invalid filterbank channel response or support"));
+        }
+        if response[support.clone()]
+            .iter()
+            .any(|&x| !x.into().is_finite())
+        {
+            return Err(Error("active filterbank response is not finite"));
         }
         self.responses[channel].copy_from_slice(response);
         self.supports[channel] = support;
@@ -97,7 +103,10 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
         channels: usize,
         options: MelOptions<T>,
     ) -> Result<Self, Error> {
-        if channels == 0
+        if bins == 0
+            || !nyquist_hz.into().is_finite()
+            || nyquist_hz.into() <= 0.0
+            || channels == 0
             || [
                 options.minimum_hz,
                 options.maximum_hz,
@@ -195,6 +204,9 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
     }
 
     pub fn plp(bins: usize, nyquist_hz: T, channels: usize) -> Result<Self, Error> {
+        if bins != 0 && channels != 0 && !nyquist_hz.into().is_finite() {
+            return Err(Error("invalid PLP Nyquist frequency"));
+        }
         let mut bank = Self::empty(bins, nyquist_hz, channels)?;
         let count = scalar::<T>(bins as f64)?;
         for channel in 0..channels {
@@ -219,10 +231,8 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
     }
 
     pub fn apply(&self, spectrum: &[T], compression: Compression) -> Result<Vec<T>, Error> {
-        if spectrum.len() != self.bins || spectrum.iter().any(|&x| !x.into().is_finite()) {
-            return Err(Error(
-                "filterbank spectrum shape differs or contains nonfinite values",
-            ));
+        if spectrum.len() != self.bins {
+            return Err(Error("filterbank spectrum shape differs"));
         }
         let mut output = zeros(self.channels())?;
         self.apply_validated_into(spectrum, compression, &mut output)?;
@@ -236,6 +246,12 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
         output: &mut [T],
     ) -> Result<(), Error> {
         for (channel, value) in output.iter_mut().enumerate() {
+            if spectrum[self.supports[channel].clone()]
+                .iter()
+                .any(|&x| !x.into().is_finite())
+            {
+                return Err(Error("active filterbank spectrum is not finite"));
+            }
             let sum = self.supports[channel].clone().fold(T::zero(), |sum, bin| {
                 sum + self.responses[channel][bin] * spectrum[bin]
             });
@@ -250,22 +266,37 @@ impl<T: FftNum + Into<f64>> FilterBank<T> {
         spectrum: &[T],
         compression: Compression,
     ) -> Result<Vec<T>, Error> {
-        if !spectrum.len().is_multiple_of(self.bins)
-            || spectrum.iter().any(|&x| !x.into().is_finite())
-        {
+        if self.bins == 0 {
+            return Err(Error(
+                "zero-bin spectrogram requires an explicit frame count",
+            ));
+        }
+        if !spectrum.len().is_multiple_of(self.bins) {
             return Err(Error("filterbank spectrogram shape differs"));
         }
-        let size = (spectrum.len() / self.bins)
+        self.apply_frames(spectrum, spectrum.len() / self.bins, compression)
+    }
+
+    /// Apply to an explicit number of flattened frames, including zero-bin frames.
+    /// An empty slice alone cannot encode how many zero-bin frames it contains.
+    pub fn apply_frames(
+        &self,
+        spectrum: &[T],
+        frames: usize,
+        compression: Compression,
+    ) -> Result<Vec<T>, Error> {
+        if frames.checked_mul(self.bins) != Some(spectrum.len()) {
+            return Err(Error("filterbank spectrogram shape differs"));
+        }
+        let size = frames
             .checked_mul(self.channels())
             .ok_or(Error("filterbank output size overflow"))?;
         let mut output = zeros(size)?;
         if self.channels() == 0 {
             return Ok(output);
         }
-        for (frame, destination) in spectrum
-            .chunks_exact(self.bins)
-            .zip(output.chunks_exact_mut(self.channels()))
-        {
+        for (index, destination) in output.chunks_exact_mut(self.channels()).enumerate() {
+            let frame = &spectrum[index * self.bins..(index + 1) * self.bins];
             self.apply_validated_into(frame, compression, destination)?;
         }
         Ok(output)

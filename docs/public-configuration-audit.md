@@ -26,8 +26,9 @@ num-complex; detector kernels and LF fields are public. Ownership invariants
 may replace raw field writes with checked constructors/mutators, but every
 defined configuration capability must remain available. Figure remains part of
 the owned plotting implementation, with mutable Rust writer access. Verify
-filterbank custom support/response
-configuration independently of construction fixtures.
+filterbank custom support/response, metadata and explicit empty-frame
+configurations are now checked independently of construction fixtures through
+33 unchanged-C records per precision. See filterbank-configuration-audit.md.
 
 This initial audit covers ciglet.h only. A complete audit must also examine
 implementation export locations, build-selected FP_TYPE behavior and bundled
