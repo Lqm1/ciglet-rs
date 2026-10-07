@@ -119,3 +119,7 @@ The original safe_aliased_sinc returns length whenever the rounded sine denomina
 ## Itakura-Saito approximate-log artifacts
 
 The source itakura_saito returns an approximate logarithm of the mean divergence. Its binary32 bit-based logs introduce a nonzero identity baseline and produce finite artifacts for zero, overflowing or NaN intermediate ratios/means. The corrected distance policy uses a factored near-identity series, log-domain extreme ratios and scaled compensated accumulation. Identical positive spectra yield zero mean and negative-infinity log mean; a zero against a positive bin yields infinity; a paired zero is an explicit domain error. Legacy preserves original accumulation and bit-approximation outputs, including the tested artifacts. No implicit input floor is introduced. See docs/distance-compatibility.md.
+
+## Instantaneous frequency invalid resolution and undefined response
+
+The C constructor converts unchecked 4/resolution to int and allocates without validating the result. Zero, negative, nonfinite or excessive resolution can yield undefined conversion or zero/invalid lengths. Rust checks the finite positive resolution and nonzero bounded kernel length before allocation. C estimation divides by zero for silence and can overflow for finite extreme amplitudes. Rust reports undefined response explicitly; Stable scales before convolution and quotient. Legacy retains ordinary source arithmetic. See docs/instantaneous-frequency-compatibility.md.

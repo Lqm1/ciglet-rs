@@ -70,3 +70,4 @@ cargo clippy --all-targets -- -D warnings
 This Rust project uses GPL-3.0-or-later as requested for the three-project port. The original ciglet BSD 3-Clause attribution and license are retained in `LICENSES/ciglet-BSD-3-Clause.txt`. No original C implementation is linked into the Rust library.
 
 FFT API references: https://docs.rs/rustfft/6.4.1/rustfft/struct.FftPlanner.html and https://docs.rs/rustfft/6.4.1/rustfft/trait.Fft.html. The native FFT API retains the positive power-of-two size domain documented by upstream external/fftsg_h.c. See tests/fixtures/README.md for measured comparison tolerances and docs/dependencies.md for retained dependency notices.
+`instantaneous_frequency::Detector` owns the original configurable four-filter detector, with explicit Legacy arithmetic and scaled Stable estimation. See docs/instantaneous-frequency-compatibility.md.

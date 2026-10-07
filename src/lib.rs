@@ -14,6 +14,7 @@ pub mod filtering;
 pub mod fourier;
 pub mod frame;
 pub mod frequency;
+pub mod instantaneous_frequency;
 pub mod interpolation;
 pub mod kalman;
 pub mod matrix;
