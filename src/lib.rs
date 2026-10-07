@@ -1,9 +1,13 @@
 //! Signal-processing operations reimplemented from ciglet.
 //! The complete public upstream API is being ported in stages.
-#![forbid(unsafe_code)]
+#![cfg_attr(not(feature = "c-api"), forbid(unsafe_code))]
+#![cfg_attr(feature = "c-api", deny(unsafe_code))]
 mod accumulation;
 pub mod approximation;
 pub mod array;
+#[cfg(feature = "c-api")]
+#[allow(unsafe_code)]
+pub mod c_api;
 pub mod cepstrum;
 pub mod chirp_z;
 pub mod complex;

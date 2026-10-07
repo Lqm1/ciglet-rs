@@ -5,6 +5,12 @@ edition = "2024"
 license = "GPL-3.0-or-later"
 rust-version = "1.94"
 
+[lib]
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[features]
+c-api = []
+
 [dependencies]
 rand = { version = "0.10.3", default-features = false }
 rand_chacha = { version = "0.10.0", default-features = false, features = ["std"] }
