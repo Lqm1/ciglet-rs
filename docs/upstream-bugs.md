@@ -123,3 +123,7 @@ The source itakura_saito returns an approximate logarithm of the mean divergence
 ## Instantaneous frequency invalid resolution and undefined response
 
 The C constructor converts unchecked 4/resolution to int and allocates without validating the result. Zero, negative, nonfinite or excessive resolution can yield undefined conversion or zero/invalid lengths. Rust checks the finite positive resolution and nonzero bounded kernel length before allocation. C estimation divides by zero for silence and can overflow for finite extreme amplitudes. Rust reports undefined response explicitly; Stable scales before convolution and quotient. Legacy retains ordinary source arithmetic. See docs/instantaneous-frequency-compatibility.md.
+
+## Correlogram DC cancellation and 32bit double mapping allocation
+
+Source prefix-sum ACF can yield a false zero from catastrophic variance subtraction: a unit ramp with DC offset 1e12 returns zero at lag zero. Stable uses centered/scaled paired samples; Legacy retains source reductions. Source cig_invcrgm allocates rows using sizeof(FP_TYPE*) rather than sizeof(FP_TYPE), causing an ASan-confirmed 32bit double heap-buffer-overflow with eight frequency bins. Corrected C copies and Rust typed storage pass the probe. Positive-zero mapping clamps directly to the last sample, matching the original infinite query. Zero lag count and nonpositive windows are rejected before indexing. See docs/correlogram-compatibility.md.

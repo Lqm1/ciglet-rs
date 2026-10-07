@@ -6,6 +6,7 @@ pub mod array;
 pub mod cepstrum;
 pub mod chirp_z;
 pub mod complex;
+pub mod correlogram;
 pub mod cosine;
 pub mod distance;
 pub mod extrema;

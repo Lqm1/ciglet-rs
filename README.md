@@ -71,3 +71,5 @@ This Rust project uses GPL-3.0-or-later as requested for the three-project port.
 
 FFT API references: https://docs.rs/rustfft/6.4.1/rustfft/struct.FftPlanner.html and https://docs.rs/rustfft/6.4.1/rustfft/trait.Fft.html. The native FFT API retains the positive power-of-two size domain documented by upstream external/fftsg_h.c. See tests/fixtures/README.md for measured comparison tolerances and docs/dependencies.md for retained dependency notices.
 `instantaneous_frequency::Detector` owns the original configurable four-filter detector, with explicit Legacy arithmetic and scaled Stable estimation. See docs/instantaneous-frequency-compatibility.md.
+
+Framewise correlograms support ACF, AMDF, squared difference and YIN, with period-to-frequency mapping, selected-scalar Legacy arithmetic and Stable centered ACF. See docs/correlogram-compatibility.md.
