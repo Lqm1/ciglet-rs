@@ -2,6 +2,10 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Aliased DTFT sinc and its angular derivative support f32/f64, source Legacy
+thresholds and corrected small-angle and removable-pole evaluation. See
+[sinc compatibility](docs/sinc-compatibility.md).
+
 Scalar sine/cosine/atan2 expose all source precision levels. Scalar min/max
 retain the original second-operand behavior for ties and NaNs. See
 [scalar math compatibility](docs/scalar-math-compatibility.md).
