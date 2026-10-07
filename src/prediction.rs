@@ -9,6 +9,14 @@ use crate::{
     vector,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArithmeticPolicy {
+    /// Normalize recursion energy and compensate gain products in binary64.
+    Stable,
+    /// Preserve source selected-scalar recursion and gain arithmetic.
+    Legacy,
+}
+
 fn used_magnitudes<T>(values: &[T], length: usize, policy: NyquistPolicy) -> &[T] {
     if policy == NyquistPolicy::Legacy && values.len() == length / 2 + 1 {
         &values[..values.len() - 1]
@@ -44,6 +52,16 @@ impl<T: Scalar> SpectrumPlan<T> {
         order: usize,
         policy: NyquistPolicy,
     ) -> Result<Prediction<T>, Error> {
+        self.estimate_with_arithmetic(magnitudes, order, policy, ArithmeticPolicy::Stable)
+    }
+
+    pub fn estimate_with_arithmetic(
+        &mut self,
+        magnitudes: &[T],
+        order: usize,
+        policy: NyquistPolicy,
+        arithmetic: ArithmeticPolicy,
+    ) -> Result<Prediction<T>, Error> {
         let n = self.len();
         if magnitudes.len() < 2 || magnitudes.len() > n / 2 + 1 {
             return Err(Error(
@@ -72,7 +90,7 @@ impl<T: Scalar> SpectrumPlan<T> {
         self.fft.process(&mut self.workspace, Direction::Inverse)?;
         let mut autocorrelation = vector::buffer(count)?;
         autocorrelation.extend(self.workspace[..count].iter().map(|value| value.re));
-        let coefficients = levinson(&autocorrelation)?;
+        let coefficients = levinson_with(&autocorrelation, arithmetic)?;
         Ok(Prediction {
             coefficients,
             autocorrelation,
@@ -160,6 +178,15 @@ pub fn from_magnitude_with<T: Scalar>(
     order: usize,
     policy: NyquistPolicy,
 ) -> Result<Prediction<T>, Error> {
+    from_magnitude_with_arithmetic(magnitudes, order, policy, ArithmeticPolicy::Stable)
+}
+
+pub fn from_magnitude_with_arithmetic<T: Scalar>(
+    magnitudes: &[T],
+    order: usize,
+    policy: NyquistPolicy,
+    arithmetic: ArithmeticPolicy,
+) -> Result<Prediction<T>, Error> {
     let length = magnitudes
         .len()
         .checked_sub(1)
@@ -170,7 +197,7 @@ pub fn from_magnitude_with<T: Scalar>(
             "prediction magnitude spectrum requires at least two bounded bins",
         ))?;
     vector::validate(used_magnitudes(magnitudes, length, policy))?;
-    SpectrumPlan::new(length)?.estimate(magnitudes, order, policy)
+    SpectrumPlan::new(length)?.estimate_with_arithmetic(magnitudes, order, policy, arithmetic)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -219,6 +246,72 @@ pub struct Prediction<T> {
 /// Estimate coefficients from nonnegative-lag autocorrelation.
 /// The leading coefficient is one; the order is `autocorrelation.len() - 1`.
 pub fn levinson<T: Scalar>(autocorrelation: &[T]) -> Result<Vec<T>, Error> {
+    levinson_with(autocorrelation, ArithmeticPolicy::Stable)
+}
+
+pub fn levinson_with<T: Scalar>(
+    autocorrelation: &[T],
+    policy: ArithmeticPolicy,
+) -> Result<Vec<T>, Error> {
+    if policy == ArithmeticPolicy::Legacy {
+        return legacy_levinson(autocorrelation);
+    }
+    vector::validate(autocorrelation)?;
+    let Some(&energy) = autocorrelation.first() else {
+        return Err(Error(
+            "prediction requires at least one autocorrelation lag",
+        ));
+    };
+    if energy <= T::zero() {
+        return legacy_levinson(autocorrelation);
+    }
+    let n = autocorrelation.len();
+    let energy: f64 = energy.into();
+    let mut correlation = vector::buffer(n)?;
+    for &value in autocorrelation {
+        let normalized = value.into() / energy;
+        if !normalized.is_finite() || normalized.abs() > 1.000001 {
+            return Err(Error("autocorrelation is not positive definite"));
+        }
+        correlation.push(normalized);
+    }
+    let mut coefficients = vector::buffer(n)?;
+    coefficients.resize(n, 0.0_f64);
+    coefficients[0] = 1.0;
+    let mut scratch = vector::buffer(n)?;
+    scratch.resize(n, 0.0_f64);
+    let mut residual = 1.000001;
+    for order in 1..n {
+        let mut sum = Sum::new();
+        sum.scalar(correlation[order], 0);
+        for lag in 1..order {
+            sum.product(
+                Scaled::new(correlation[lag], 0),
+                Scaled::new(coefficients[order - lag], 0),
+            );
+        }
+        let reflection = -sum.finish(1.0).value() / residual;
+        if !reflection.is_finite() || reflection.abs() >= 1.0 {
+            return Err(Error("autocorrelation is not positive definite"));
+        }
+        for lag in 1..order {
+            scratch[lag] = reflection.mul_add(coefficients[order - lag], coefficients[lag]);
+        }
+        coefficients[1..order].copy_from_slice(&scratch[1..order]);
+        coefficients[order] = reflection;
+        residual *= (-reflection).mul_add(reflection, 1.0);
+        if !residual.is_finite() || residual <= 0.0 {
+            return Err(Error("autocorrelation is not positive definite"));
+        }
+    }
+    let mut output = vector::buffer(n)?;
+    for coefficient in coefficients {
+        output.push(vector::scalar(coefficient)?);
+    }
+    Ok(output)
+}
+
+fn legacy_levinson<T: Scalar>(autocorrelation: &[T]) -> Result<Vec<T>, Error> {
     vector::validate(autocorrelation)?;
     let Some(&energy) = autocorrelation.first() else {
         return Err(Error(
@@ -272,25 +365,55 @@ pub fn levinson<T: Scalar>(autocorrelation: &[T]) -> Result<Vec<T>, Error> {
 
 /// Unnormalized waveform autocorrelation followed by Levinson recursion.
 pub fn from_samples<T: Scalar>(samples: &[T], order: usize) -> Result<Prediction<T>, Error> {
+    from_samples_with(samples, order, ArithmeticPolicy::Stable)
+}
+
+pub fn from_samples_with<T: Scalar>(
+    samples: &[T],
+    order: usize,
+    policy: ArithmeticPolicy,
+) -> Result<Prediction<T>, Error> {
     vector::validate(samples)?;
     let count = order
         .checked_add(1)
         .filter(|&count| count <= samples.len())
         .ok_or(Error("prediction order must be smaller than sample count"))?;
     let autocorrelation = statistics::cross_correlation(samples, samples, count)?;
-    let coefficients = levinson(&autocorrelation)?;
+    let coefficients = levinson_with(&autocorrelation, policy)?;
     Ok(Prediction {
         coefficients,
         autocorrelation,
     })
 }
 
-/// Source gain: square root of the sequential coefficient/autocorrelation dot.
+/// Gain from compensated scaled products; unrepresentable results are errors.
 pub fn gain<T: Scalar>(coefficients: &[T], autocorrelation: &[T]) -> Result<T, Error> {
+    gain_with(coefficients, autocorrelation, ArithmeticPolicy::Stable)
+}
+
+pub fn gain_with<T: Scalar>(
+    coefficients: &[T],
+    autocorrelation: &[T],
+    policy: ArithmeticPolicy,
+) -> Result<T, Error> {
     vector::validate(coefficients)?;
     vector::validate(autocorrelation)?;
     if coefficients.is_empty() || coefficients.len() != autocorrelation.len() {
         return Err(Error("prediction gain requires matching nonempty arrays"));
+    }
+    if policy == ArithmeticPolicy::Stable {
+        let mut sum = Sum::new();
+        for (&coefficient, &correlation) in coefficients.iter().zip(autocorrelation) {
+            sum.product(
+                Scaled::new(coefficient.into(), 0),
+                Scaled::new(correlation.into(), 0),
+            );
+        }
+        let energy = sum.finish(1.0);
+        if energy.fraction < 0.0 {
+            return Err(Error("prediction residual energy must be nonnegative"));
+        }
+        return vector::scalar(energy.sqrt());
     }
     let energy = statistics::dot(coefficients, autocorrelation)?;
     if energy < T::zero() {

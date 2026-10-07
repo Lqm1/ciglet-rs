@@ -55,6 +55,8 @@ and invalid participating samples return errors. See
 
 Linear prediction supports waveform and magnitude inputs, f32/f64 Levinson
 recursion, owned autocorrelation/coefficient results and gain estimation.
+Stable recursion normalizes energy and gain uses compensated scaled products;
+an independent ArithmeticPolicy::Legacy retains original scalar arithmetic.
 Reusable spectrum plans support source precision and an explicit Legacy
 Nyquist policy. Resonance estimates pair sorted frequencies with poles and
 report root convergence. Order zero and silence are safe. See

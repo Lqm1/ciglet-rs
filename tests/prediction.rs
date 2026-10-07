@@ -1,4 +1,7 @@
-use ciglet_rs::{prediction, statistics::Scalar};
+use ciglet_rs::{
+    prediction::{self, ArithmeticPolicy},
+    statistics::Scalar,
+};
 struct Reader<'a> {
     bytes: &'a [u8],
     cursor: usize,
@@ -40,7 +43,8 @@ fn reference<T: Scalar>(bytes: &[u8]) {
         let autocorrelation = reader.vector::<T>(order + 1);
         let coefficients = reader.vector::<T>(order + 1);
         let gain = reader.scalar::<T>();
-        let model = prediction::from_samples(&samples, order).unwrap();
+        let model =
+            prediction::from_samples_with(&samples, order, ArithmeticPolicy::Legacy).unwrap();
         for (field, (actual, expected)) in [
             (&model.autocorrelation, &autocorrelation),
             (&model.coefficients, &coefficients),
@@ -57,15 +61,49 @@ fn reference<T: Scalar>(bytes: &[u8]) {
             }
         }
         assert_eq!(
-            prediction::levinson(&autocorrelation).unwrap(),
+            prediction::levinson_with(&autocorrelation, ArithmeticPolicy::Legacy).unwrap(),
             model.coefficients
         );
         assert_eq!(
-            prediction::gain(&model.coefficients, &model.autocorrelation)
+            prediction::gain_with(
+                &model.coefficients,
+                &model.autocorrelation,
+                ArithmeticPolicy::Legacy
+            )
+            .unwrap()
+            .into()
+            .to_bits(),
+            gain.into().to_bits()
+        );
+        let stable = prediction::from_samples(&samples, order).unwrap();
+        assert_eq!(stable.autocorrelation, autocorrelation);
+        let energy: f64 = stable.autocorrelation[0].into();
+        if energy > 0.0 {
+            for row in 1..stable.autocorrelation.len() {
+                let mut residual = stable.autocorrelation[row].into() / energy;
+                let mut scale = 1.0 + residual.abs();
+                for column in 1..stable.coefficients.len() {
+                    let covariance = if row == column {
+                        1.000001
+                    } else {
+                        stable.autocorrelation[row.abs_diff(column)].into() / energy
+                    };
+                    let term = covariance * stable.coefficients[column].into();
+                    residual += term;
+                    scale += term.abs();
+                }
+                let bound = if reader.width == 4 { 2e-7 } else { 5e-15 };
+                assert!(
+                    residual.abs() / scale <= bound,
+                    "stable waveform case={case}, row={row}, residual={residual:e}"
+                );
+            }
+        }
+        assert!(
+            prediction::gain(&stable.coefficients, &stable.autocorrelation)
                 .unwrap()
                 .into()
-                .to_bits(),
-            gain.into().to_bits()
+                .is_finite()
         );
     }
     assert_eq!(reader.cursor, bytes.len());
@@ -122,4 +160,82 @@ fn regularized_toeplitz_equations_and_safe_boundaries() {
     assert!(prediction::from_samples(&[1.0f64; 4], usize::MAX).is_err());
     assert!(prediction::gain(&[1.0f32], &[-1.0]).is_err());
     assert!(prediction::gain(&[1.0f64], &[]).is_err());
+}
+
+#[test]
+fn extreme_energy_and_scaled_gain_remain_representable() {
+    let coefficients = prediction::levinson(&[f64::MAX, f64::MAX * 0.5]).unwrap();
+    assert!((coefficients[1] + 0.5 / 1.000001).abs() < 2e-15);
+    let tiny = f64::from_bits(1);
+    let coefficients = prediction::levinson(&[tiny * 4.0, tiny * 2.0]).unwrap();
+    assert!((coefficients[1] + 0.5 / 1.000001).abs() < 2e-15);
+    let gain = prediction::gain(&[2.0, -1.0], &[f64::MAX, f64::MAX]).unwrap();
+    assert!((gain / f64::MAX.sqrt() - 1.0).abs() < 2e-15);
+    assert_eq!(prediction::gain(&[tiny], &[tiny]).unwrap(), tiny);
+    let tiny = f32::from_bits(1);
+    let coefficients = prediction::levinson(&[tiny * 4.0, tiny * 2.0]).unwrap();
+    assert!((coefficients[1] as f64 + 0.5 / 1.000001).abs() < 2e-8);
+    let gain = prediction::gain(&[2.0_f32, -1.0], &[f32::MAX, f32::MAX]).unwrap();
+    assert!((gain as f64 / (f32::MAX as f64).sqrt() - 1.0).abs() < 1e-7);
+    assert_eq!(prediction::gain(&[tiny], &[tiny]).unwrap(), tiny);
+    assert!(prediction::gain(&[2.0_f64, -3.0], &[f64::MAX, f64::MAX]).is_err());
+    assert!(
+        prediction::gain_with(
+            &[2.0_f64, -1.0],
+            &[f64::MAX, f64::MAX],
+            ArithmeticPolicy::Legacy
+        )
+        .is_err()
+    );
+}
+
+fn stable_reference<T: Scalar>(bytes: &[u8], tolerance: f64) {
+    assert_eq!(&bytes[..4], b"SLP1");
+    let mut reader = Reader {
+        bytes,
+        cursor: 4,
+        width: 0,
+    };
+    reader.width = reader.integer() as usize;
+    assert_eq!(reader.integer(), 100);
+    let mut maximum = 0.0_f64;
+    let mut outputs = 0;
+    for case in 0..100 {
+        let length = reader.integer() as usize;
+        let correlation = reader.vector::<T>(length);
+        let expected = reader.vector::<T>(length);
+        let actual = prediction::levinson(&correlation).unwrap();
+        for (index, (actual, expected)) in actual.into_iter().zip(expected).enumerate() {
+            let error = (actual.into() - expected.into()).abs() / (1.0 + expected.into().abs());
+            assert!(error.is_finite(), "case={case} index={index}");
+            maximum = maximum.max(error);
+            outputs += 1;
+        }
+    }
+    assert_eq!(outputs, 400);
+    assert_eq!(reader.cursor, bytes.len());
+    println!(
+        "Stable prediction {}-byte maximum normalized coefficient error={maximum:e}",
+        reader.width
+    );
+    assert!(
+        maximum <= tolerance,
+        "maximum error={maximum:e}, bound={tolerance:e}"
+    );
+}
+
+#[test]
+fn exact_toeplitz_float_reference() {
+    stable_reference::<f32>(
+        include_bytes!("fixtures/stable-prediction-float.bin"),
+        2e-15,
+    );
+}
+
+#[test]
+fn exact_toeplitz_double_reference() {
+    stable_reference::<f64>(
+        include_bytes!("fixtures/stable-prediction-double.bin"),
+        6e-11,
+    );
 }

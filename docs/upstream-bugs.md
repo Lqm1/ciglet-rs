@@ -203,3 +203,16 @@ now use a scaled direct DFT and divide gain before converting the response.
 Exact quarter-turn phases recover small DC/Nyquist residuals after huge
 cancellation. Actual poles remain errors for nonzero gain. Ordinary source FFT
 arithmetic remains unchanged. See docs/prediction-spectrum-compatibility.md.
+
+## Prediction regularization and gain range loss
+
+Multiplying maximum binary64 autocorrelation energy by 1.000001 overflows
+although the corresponding prediction coefficients are finite. Subnormal
+energy can lose the regularizer and residual factors through scalar rounding.
+Stable recursion normalizes lag-zero energy before solving the regularized
+Toeplitz system in binary64. Gain uses compensated scaled products and a scaled
+root, retaining finite huge-cancellation and tiny-product results. Explicit
+ArithmeticPolicy::Legacy preserves original behavior. Exact-rational Gaussian
+elimination independently checks the coefficients. Waveform correlation and
+magnitude squaring still require their own range audit and are not claimed to
+be corrected by the normalized recursion. See docs/prediction-compatibility.md.

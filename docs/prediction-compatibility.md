@@ -4,10 +4,10 @@
 autocorrelation lags. The leading coefficient is one and the remaining length
 defines the order. `from_samples` computes unnormalized nonnegative-lag
 autocorrelation and returns owned coefficients and autocorrelation in
-`Prediction`. `gain` returns the square root of their sequential dot product.
+`Prediction`. `gain` returns the square root of their compensated scaled dot product.
 All operations support f32 and f64 through the existing sealed Scalar trait.
 
-The recursion preserves source operation order, including its 1.000001
+The explicit `ArithmeticPolicy::Legacy` recursion preserves source operation order, including its 1.000001
 regularizer and mixed-precision expressions. The initial reflection coefficient
 uses a double regularized denominator before scalar conversion. Initial residual
 energy multiplies in double after forming the scalar reflection square and
@@ -22,8 +22,10 @@ update; it never overwrites a coefficient still needed by the current stage.
 Allocation failures, nonfinite data, excessive lengths, negative energy,
 inconsistent zero-energy lags and nonpositive/nonfinite recursion residuals
 return errors. Waveform order must be smaller than its sample count. These
-checks do not claim an overflow-free or compensated solver for every finite
-extreme-scale autocorrelation; that numerical-stability audit is still pending.
+checks do not claim a solver for every ill-conditioned autocorrelation. The
+original waveform correlation and magnitude-squaring stages still require
+separate range handling; Stable recursion cannot recover information already
+lost or rejected by those stages.
 
 The source unconditionally reads lag one and writes coefficient one, even for
 an empty/singleton autocorrelation or order-zero prediction. Rust rejects empty
@@ -66,3 +68,52 @@ and Rustdoc with warnings denied pass. AddressSanitizer reproduces both short
 length errors independently for float and double; the silence driver confirms
 nonfinite coefficients in both precisions. These checks cover the estimation
 core and do not replace separate frequency-domain or full-port acceptance.
+
+## Stable recursion and gain
+
+`levinson` and `gain` now default to `ArithmeticPolicy::Stable`. `levinson_with`
+and `gain_with` retain explicitly selectable Legacy arithmetic. `from_samples_with`,
+`from_magnitude_with_arithmetic` and `SpectrumPlan::estimate_with_arithmetic`
+select recursion arithmetic independently of the spectrum Nyquist policy.
+Original-C tests explicitly select Legacy; their bit comparisons and spectrum
+error bounds are unchanged.
+
+Stable recursion divides autocorrelation lags by positive lag-zero energy and
+solves the same Toeplitz system with its 1.000001 diagonal regularizer. Binary64
+coefficients, compensated reflection numerators, FMA simultaneous coefficient
+updates and residual factors avoid an overflowing regularized input energy or
+an underflowing scaled residual. Coefficients are converted to the selected
+precision after recursion. Impossible matrices, nonfinite/zero residuals and
+unrepresentable output coefficients return errors. This is not a universal
+convergence or forward-accuracy claim for ill-conditioned systems.
+
+Gain accumulates coefficient/correlation products with the shared exponent
+buckets, then takes a scaled square root before conversion. Finite gains survive
+overflowing/cancelling products and below-subnormal squared energy. A genuinely
+negative sum remains an error. Independent float/double tests cover maximum
+energy, subnormal recursion energy, huge gain cancellation and tiny squared
+gain, with explicit Legacy failure preservation.
+
+`tests/generate_stable_prediction_reference.py --check` solves systems by
+exact-rational Gaussian elimination rather than repeating Levinson recursion.
+Each precision contains 100 systems and 400 coefficient outputs, with orders
+0/1/2/4/8, four energy scales and five positive/negative lag decays, including
+near-constant strongly correlated systems. The binary64 1.000001 literal is
+represented exactly in the reference diagonal. On primary Windows x86_64,
+maximum normalized coefficient differences are 9.436895704622536e-16 for float
+and 1.926515763819101e-11 for double. Windows GNU double reaches
+5.39424561899087e-11 in the strongly correlated order-eight case.
+Measured bounds are 2e-15 and 6e-11,
+respectively; this corpus is not a universal error bound.
+
+All 168 integration tests pass on Windows MSVC x86_64/i686, Windows GNU x86_64
+and Linux GNU x86_64/i686, with required Gnuplot rendering. After strengthening
+the normal-waveform equation checks and default magnitude/gain/response paths,
+all ten prediction tests pass again on all five targets. Original-C LPC
+and exact-system reference regeneration pass on Windows and Linux. Formatting,
+Clippy and warning-as-error Rustdoc pass. Initial Windows GNU failures exposed
+a too-tight single-platform bound; all 100 outputs are now measured before the
+maximum bound is checked. The final bound follows the observed five-target data.
+
+Primary Rust arithmetic reference:
+[f64::mul_add](https://doc.rust-lang.org/std/primitive.f64.html#method.mul_add).

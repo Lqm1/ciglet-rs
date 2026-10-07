@@ -1,5 +1,5 @@
 use ciglet_rs::{
-    prediction::{self, NyquistPolicy, SpectrumPlan},
+    prediction::{self, ArithmeticPolicy, NyquistPolicy, SpectrumPlan},
     statistics::Scalar,
 };
 struct Reader<'a> {
@@ -52,14 +52,33 @@ fn reference<T: Scalar>(bytes: &[u8]) {
         let gain = reader.scalar::<T>();
         let spectrum = reader.vector::<T>(length);
         let mut plan = SpectrumPlan::new(length).unwrap();
-        let actual = plan.estimate(&input, order, NyquistPolicy::Legacy).unwrap();
+        let actual = plan
+            .estimate_with_arithmetic(
+                &input,
+                order,
+                NyquistPolicy::Legacy,
+                ArithmeticPolicy::Legacy,
+            )
+            .unwrap();
         assert_eq!(
             actual,
-            prediction::from_magnitude_with(&input, order, NyquistPolicy::Legacy).unwrap()
+            prediction::from_magnitude_with_arithmetic(
+                &input,
+                order,
+                NyquistPolicy::Legacy,
+                ArithmeticPolicy::Legacy
+            )
+            .unwrap()
         );
         assert_eq!(
             actual,
-            plan.estimate(&input, order, NyquistPolicy::Legacy).unwrap()
+            plan.estimate_with_arithmetic(
+                &input,
+                order,
+                NyquistPolicy::Legacy,
+                ArithmeticPolicy::Legacy
+            )
+            .unwrap()
         );
         for (&a, &b) in actual.autocorrelation.iter().zip(&correlation) {
             measure(a, b, &mut maximum[0]);
@@ -67,7 +86,12 @@ fn reference<T: Scalar>(bytes: &[u8]) {
         for (&a, &b) in actual.coefficients.iter().zip(&coefficients) {
             measure(a, b, &mut maximum[1]);
         }
-        let actual_gain = prediction::gain(&actual.coefficients, &actual.autocorrelation).unwrap();
+        let actual_gain = prediction::gain_with(
+            &actual.coefficients,
+            &actual.autocorrelation,
+            ArithmeticPolicy::Legacy,
+        )
+        .unwrap();
         measure(actual_gain, gain, &mut maximum[2]);
         // Use C coefficients/gain to isolate forward FFT/spectrum arithmetic.
         for (&a, &b) in plan
@@ -86,7 +110,23 @@ fn reference<T: Scalar>(bytes: &[u8]) {
         {
             measure(a, b, &mut maximum[4]);
         }
-        assert_eq!(prediction::levinson(&correlation).unwrap(), coefficients);
+        assert_eq!(
+            prediction::levinson_with(&correlation, ArithmeticPolicy::Legacy).unwrap(),
+            coefficients
+        );
+        let stable = plan.estimate(&input, order, NyquistPolicy::Legacy).unwrap();
+        assert_eq!(stable.autocorrelation, actual.autocorrelation);
+        assert_eq!(
+            stable.coefficients,
+            prediction::levinson(&stable.autocorrelation).unwrap()
+        );
+        let stable_gain = prediction::gain(&stable.coefficients, &stable.autocorrelation).unwrap();
+        assert!(
+            plan.spectrum(&stable.coefficients, stable_gain)
+                .unwrap()
+                .iter()
+                .all(|&value| value.into().is_finite())
+        );
     }
     let cases = reader.integer();
     for _ in 0..cases {
