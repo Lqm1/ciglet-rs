@@ -13,6 +13,7 @@ pub mod frequency;
 pub mod interpolation;
 pub mod kalman;
 pub mod resampling;
+pub mod smoothing;
 pub mod statistics;
 pub mod stft;
 pub mod synthesis;
