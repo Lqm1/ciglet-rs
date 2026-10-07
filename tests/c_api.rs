@@ -4,6 +4,73 @@ use ciglet_rs::c_api::*;
 use std::mem::MaybeUninit;
 
 #[test]
+fn statistics_keep_policy_and_transactional_outputs() {
+    let values = [f32::MAX, f32::MAX];
+    let mut output = -71.0_f32;
+    // SAFETY: The buffers have their declared lengths and exclusive output access.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_mean_with_f32(values.as_ptr(), 2, 0, &mut output),
+            0
+        );
+        assert_eq!(output, f32::MAX);
+        assert_eq!(
+            ciglet_rs_mean_with_f32(values.as_ptr(), 2, 1, &mut output),
+            0
+        );
+        assert_eq!(output, f32::INFINITY);
+        output = -71.0;
+        assert_eq!(
+            ciglet_rs_mean_with_f32(values.as_ptr(), 2, u32::MAX, &mut output),
+            3
+        );
+        assert_eq!(output, -71.0);
+        assert_eq!(ciglet_rs_median_f32(std::ptr::null(), 0, &mut output), 3);
+        assert_eq!(output, -71.0);
+        assert_eq!(ciglet_rs_sum_f32(std::ptr::null(), 0, &mut output), 0);
+        assert_eq!(output.to_bits(), 0);
+    }
+    let mut overlapping = [1.0_f64, 3.0, 5.0];
+    let pointer = overlapping.as_mut_ptr();
+    // SAFETY: The output lies in the valid input allocation; overlap is supported.
+    unsafe { assert_eq!(ciglet_rs_mean_f64(pointer, 3, pointer), 0) };
+    assert_eq!(overlapping, [3.0, 3.0, 5.0]);
+}
+
+#[test]
+fn generation_retains_endpoints_and_rejects_overflow() {
+    let mut values = [9.0_f64; 3];
+    let mut integers = [91_i32; 3];
+    // SAFETY: Outputs are exclusive buffers of the specified types and lengths.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_linear_grid_f64(-1.0, 1.0, values.as_mut_ptr(), 3),
+            0
+        );
+        assert_eq!(values, [-1.0, 0.0, 1.0]);
+        assert_eq!(
+            ciglet_rs_linear_grid_f64(f64::NAN, 1.0, values.as_mut_ptr(), 3),
+            3
+        );
+        assert_eq!(values, [-1.0, 0.0, 1.0]);
+        assert_eq!(
+            ciglet_rs_integer_sequence(i32::MAX, 1, integers.as_mut_ptr(), 3),
+            3
+        );
+        assert_eq!(integers, [91; 3]);
+        assert_eq!(
+            ciglet_rs_integer_sequence(-2, 3, integers.as_mut_ptr(), 3),
+            0
+        );
+        assert_eq!(integers, [-2, 1, 4]);
+        assert_eq!(
+            ciglet_rs_linear_grid_f32(-0.0, 1.0, std::ptr::null_mut(), 0),
+            0
+        );
+    }
+}
+
+#[test]
 fn vector_buffers_support_overlap_and_empty_inputs() {
     let mut values = [1.0_f32, 3.0, 6.0, 10.0, 99.0];
     let pointer = values.as_mut_ptr();

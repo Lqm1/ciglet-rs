@@ -7,6 +7,65 @@
 //! Scalar results use output pointers to avoid i686 x87 float-return changes.
 #![deny(unsafe_op_in_unsafe_fn)]
 
+mod statistics;
+pub use statistics::*;
+mod generation;
+pub use generation::*;
+
+unsafe fn generated_result<T: Copy>(
+    output: *mut T,
+    length: usize,
+    compute: impl FnOnce() -> Result<Vec<T>, crate::Error> + std::panic::UnwindSafe,
+) -> u32 {
+    if let Err(status) = range(output.cast_const(), length) {
+        return status;
+    }
+    match boundary(compute) {
+        Ok(values) => {
+            if values.len() != length {
+                return 3;
+            }
+            if length != 0 {
+                // SAFETY: Caller output is valid, aligned and writable. The
+                // separately allocated result cannot overlap caller storage.
+                unsafe { std::ptr::copy_nonoverlapping(values.as_ptr(), output, length) };
+            }
+            0
+        }
+        Err(status) => status,
+    }
+}
+
+unsafe fn scalar_slice_result<T: Copy + std::panic::RefUnwindSafe>(
+    input: *const T,
+    length: usize,
+    output: *mut T,
+    compute: impl FnOnce(&[T]) -> Result<T, crate::Error> + std::panic::UnwindSafe,
+) -> u32 {
+    if let Err(status) = range(input, length).and_then(|()| range(output.cast_const(), 1)) {
+        return status;
+    }
+    let result = boundary(|| {
+        let values = if length == 0 {
+            &[]
+        } else {
+            // SAFETY: The caller provides initialized, stable single-allocation
+            // input; checked alignment and length are required before borrowing.
+            unsafe { std::slice::from_raw_parts(input, length) }
+        };
+        compute(values)
+    });
+    match result {
+        Ok(value) => {
+            // SAFETY: The input borrow has ended and the caller guarantees one
+            // exclusively writable output value, which may overlap the input.
+            unsafe { output.write(value) };
+            0
+        }
+        Err(status) => status,
+    }
+}
+
 fn range<T>(pointer: *const T, length: usize) -> Result<(), u32> {
     if length == 0 {
         return Ok(());

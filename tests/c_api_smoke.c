@@ -3,6 +3,28 @@
 #include <assert.h>
 #include <string.h>
 
+#define CHECK_STATISTICS(type, suffix) do { \
+    type data[] = {1, 3, 5}; \
+    type result = -71; \
+    assert(ciglet_rs_sum_##suffix(data, 3, &result) == 0 && result == 9); \
+    assert(ciglet_rs_sum_squares_##suffix(data, 3, &result) == 0 && result == 35); \
+    assert(ciglet_rs_mean_##suffix(data, 3, &result) == 0 && result == 3); \
+    assert(ciglet_rs_median_##suffix(data, 3, &result) == 0 && result == 3); \
+    assert(ciglet_rs_array_minimum_##suffix(data, 3, &result) == 0 && result == 1); \
+    assert(ciglet_rs_array_maximum_##suffix(data, 3, &result) == 0 && result == 5); \
+    assert(ciglet_rs_variance_##suffix(data, 3, &result) == 0); \
+    assert(result > 2.6666 && result < 2.6667); \
+    for (uint32_t policy = 0; policy < 2; ++policy) { \
+        assert(ciglet_rs_mean_with_##suffix(data, 3, policy, &result) == 0 && result == 3); \
+        assert(ciglet_rs_variance_with_##suffix(data, 3, policy, &result) == 0); \
+        assert(result > 2.6666 && result < 2.6667); \
+    } \
+    result = -71; \
+    assert(ciglet_rs_mean_with_##suffix(data, 3, 2, &result) == 3 && result == -71); \
+    assert(ciglet_rs_linear_grid_##suffix(-1, 1, data, 3) == 0); \
+    assert(data[0] == -1 && data[1] == 0 && data[2] == 1); \
+} while (0)
+
 int main(void) {
     float single = 9.0f;
     double wide = 9.0;
@@ -37,5 +59,12 @@ int main(void) {
     assert(doubles[0] == 6.0 && doubles[2] == 1.0);
     assert(ciglet_rs_difference_f32(NULL, 0, NULL, 0) == 0);
     assert(ciglet_rs_difference_f32(samples, 3, samples, 2) == 2);
+    CHECK_STATISTICS(float, f32);
+    CHECK_STATISTICS(double, f64);
+    int32_t sequence[] = {91, 91, 91};
+    assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
+    assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
+    assert(ciglet_rs_integer_sequence(-2, 3, sequence, 3) == 0);
+    assert(sequence[0] == -2 && sequence[1] == 1 && sequence[2] == 4);
     return 0;
 }

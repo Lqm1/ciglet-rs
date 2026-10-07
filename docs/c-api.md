@@ -7,6 +7,7 @@ calculation backend; unsafe code is allowed only in `src/c_api.rs`.
 This is the first binding checkpoint, not complete binding coverage. Currently
 the ABI version and binary32/binary64 minimum/maximum operations are exported.
 Binary32/binary64 first difference, cumulative sum and reverse are also exported.
+Statistics and array generation exports are listed in the checkpoint below.
 All remaining public ciglet operations, including the bundled approximation
 functions, still require bindings. Liblrhsmm and SHIRO bindings and all browser/
 Node WebAssembly bindings remain required work.
@@ -26,7 +27,7 @@ The header intentionally exports functions only, without unrelated Rust constant
 
 ## Pointer and numerical contract
 
-Functions return an unsigned 32-bit status: zero means success and one means
+Scalar comparison functions return an unsigned 32-bit status: zero means success and one means
 null or misaligned output. Rejected outputs are not written. Otherwise the caller
 must supply writable, exclusively accessed storage for the declared output type.
 Checking alignment cannot prove allocation validity, lifetime or exclusive access.
@@ -92,3 +93,33 @@ Additional primary references:
 - https://doc.rust-lang.org/std/slice/fn.from_raw_parts.html
 - https://doc.rust-lang.org/std/ptr/fn.copy_nonoverlapping.html
 - https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
+
+## Statistics and generation checkpoint
+
+The interface now has 32 functions including the ABI version. New functions
+cover sum, sum of squares, mean, population variance, median and array extrema
+in both precisions, explicit mean/variance policies in both precisions, inclusive
+linear grids in both precisions and checked i32 arithmetic progressions.
+Policy arguments are checked u32 integers: zero means Stable, one Legacy, and
+other values return status three. Default mean/variance select Stable, matching
+the Rust API. Empty sums return positive zero; empty mean/variance/median/extrema
+return status three. Unordered extrema, total-order median, legacy nonfinite
+arithmetic and stable validation retain their distinct native behavior.
+
+Scalar reductions finish before committing one output value, allowing it to
+overlap the input. Generation also computes into separate owned storage before
+committing. Integer overflow and invalid grid values leave output unchanged.
+No caller allocation is adopted or freed by Rust.
+
+Windows MSVC x86_64/i686 Debug pass six integration boundary tests and actual
+C callers exercising all 32 exports. Windows x86_64 Python ctypes also exercises
+all exports, including both valid policies and invalid-policy rejection. Tests
+demonstrate stable mean of two f32::MAX values remains finite while Legacy
+retains infinity, and verify a scalar output overlapping its input. Ordinary
+nonexact Python mean/variance expectations use explicit small rounding bounds;
+no native numerical comparison tolerance was changed.
+
+Statistics bindings still need selection/partition mutation, stable sorting
+with original indices, dot product, covariance/correlation with both policies
+and cross correlation. Array2 ownership/dimensions/reshape/transpose also remain
+required. These additions do not complete ciglet or the three-package bindings.

@@ -129,4 +129,243 @@ uint32_t ciglet_rs_minimum_f64(double first, double second, double *output);
  */
 uint32_t ciglet_rs_maximum_f64(double first, double second, double *output);
 
+/**
+ * Compute sum using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_sum_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute sum squares using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_sum_squares_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute mean using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_mean_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute variance using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_variance_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute median using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_median_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute minimum using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_array_minimum_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute maximum using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_array_maximum_f32(const float *input, uintptr_t length, float *output);
+
+/**
+ * Compute mean with policy zero for Stable or one for Legacy.
+ * Other policy integers return status three without touching output.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_mean_with_f32(const float *input,
+                                 uintptr_t length,
+                                 uint32_t policy,
+                                 float *output);
+
+/**
+ * Compute variance with policy zero for Stable or one for Legacy.
+ * Other policy integers return status three without touching output.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_variance_with_f32(const float *input,
+                                     uintptr_t length,
+                                     uint32_t policy,
+                                     float *output);
+
+/**
+ * Compute sum using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_sum_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute sum squares using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_sum_squares_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute mean using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_mean_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute variance using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_variance_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute median using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_median_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute minimum using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_array_minimum_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute maximum using the native default policy.
+ * Empty extrema, mean, variance and median return status three.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_array_maximum_f64(const double *input, uintptr_t length, double *output);
+
+/**
+ * Compute mean with policy zero for Stable or one for Legacy.
+ * Other policy integers return status three without touching output.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_mean_with_f64(const double *input,
+                                 uintptr_t length,
+                                 uint32_t policy,
+                                 double *output);
+
+/**
+ * Compute variance with policy zero for Stable or one for Legacy.
+ * Other policy integers return status three without touching output.
+ *
+ * # Safety
+ * Nonempty input must be initialized, readable in one allocation and stable
+ * during computation. Output must be exclusively writable for one value.
+ * Input and output may overlap. Failure leaves output unchanged.
+ */
+uint32_t ciglet_rs_variance_with_f64(const double *input,
+                                     uintptr_t length,
+                                     uint32_t policy,
+                                     double *output);
+
+/**
+ * Generate a checked i32 arithmetic progression.
+ * Zero length accepts a null output. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be exclusively writable for length i32 values.
+ */
+uint32_t ciglet_rs_integer_sequence(int32_t start, int32_t step, int32_t *output, uintptr_t length);
+
+/**
+ * Generate an inclusive linear grid, retaining the native rounding policy.
+ * Zero length accepts a null output; one point equals start.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be exclusively writable for length values.
+ */
+uint32_t ciglet_rs_linear_grid_f32(float start, float end, float *output, uintptr_t length);
+
+/**
+ * Generate an inclusive linear grid, retaining the native rounding policy.
+ * Zero length accepts a null output; one point equals start.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be exclusively writable for length values.
+ */
+uint32_t ciglet_rs_linear_grid_f64(double start, double end, double *output, uintptr_t length);
+
 #endif  /* CIGLET_RS_H */

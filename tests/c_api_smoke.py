@@ -40,6 +40,43 @@ def main():
             assert function(None, 0, None, 0) == 0
             assert function(values, 3, values, 2) == 2
             assert list(values) == expected
+        reductions = (("sum", 10.0), ("sum_squares", 46.0), ("mean", 10.0 / 3.0),
+                      ("variance", 38.0 / 9.0), ("median", 3.0),
+                      ("array_minimum", 1.0), ("array_maximum", 6.0))
+        for operation, expected in reductions:
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t, ctypes.POINTER(scalar)]
+            function.restype = ctypes.c_uint32
+            values = (scalar * 3)(1.0, 3.0, 6.0)
+            output = scalar(-71.0)
+            assert function(values, 3, ctypes.byref(output)) == 0
+            assert abs(output.value - expected) <= 1e-6 * max(1.0, abs(expected))
+        for operation, expected in (("mean", 10.0 / 3.0), ("variance", 38.0 / 9.0)):
+            function = getattr(library, f"ciglet_rs_{operation}_with_{suffix}")
+            function.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t,
+                                 ctypes.c_uint32, ctypes.POINTER(scalar)]
+            function.restype = ctypes.c_uint32
+            for policy in (0, 1):
+                output = scalar(-71.0)
+                assert function(values, 3, policy, ctypes.byref(output)) == 0
+                assert abs(output.value - expected) <= 2e-6 * max(1.0, abs(expected))
+            output = scalar(-71.0)
+            assert function(values, 3, 2, ctypes.byref(output)) == 3
+            assert output.value == -71.0
+        grid = getattr(library, f"ciglet_rs_linear_grid_{suffix}")
+        grid.argtypes = [scalar, scalar, ctypes.POINTER(scalar), ctypes.c_size_t]
+        grid.restype = ctypes.c_uint32
+        values = (scalar * 3)()
+        assert grid(-1.0, 1.0, values, 3) == 0
+        assert list(values) == [-1.0, 0.0, 1.0]
+    sequence = library.ciglet_rs_integer_sequence
+    sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
+    sequence.restype = ctypes.c_uint32
+    integers = (ctypes.c_int32 * 3)(91, 91, 91)
+    assert sequence(2147483647, 1, integers, 3) == 3
+    assert list(integers) == [91, 91, 91]
+    assert sequence(-2, 3, integers, 3) == 0
+    assert list(integers) == [-2, 1, 4]
     print("C ABI Python smoke test passed")
 
 
