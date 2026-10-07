@@ -1,3 +1,5 @@
 * text=auto eol=lf
 *.hsmm binary
 *.bin binary
+# Exact C image rows include a trailing space after the final sample.
+tests/fixtures/plotting-*.txt whitespace=-blank-at-eol

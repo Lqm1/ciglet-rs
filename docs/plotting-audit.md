@@ -1,10 +1,12 @@
-# Remaining Gnuplot interface audit
+# Gnuplot interface audit
 
 The pinned ciglet header lines 1310-1392 contain five public functions under
 `_POSIX_C_SOURCE >= 2`: plotopenv, plotopen, plot, imagesc and plotclose.
-The public figure configuration owns one FILE stream. These functions remain
-unimplemented; they are part of full dependency scope even though SHIRO does
-not call them and the original excludes Windows.
+The public figure configuration owns one FILE stream. These functions are now
+implemented through Commands/Figure, including writer access, owned process
+lifecycle and f32/f64 C-format capture. They remain part of full dependency
+scope even though SHIRO does not call them and the original excludes Windows.
+Current validation details and GUI limits are in plotting-compatibility.md.
 
 - plotopenv launches the selected executable directly with argument `-p`,
   connecting a pipe to its stdin. plotopen selects `gnuplot-qt`.
@@ -35,11 +37,15 @@ Primary documentation retrieved through Context7/Mintlify confirms that Rust
 Child has no Drop-based kill/reap behavior, while dropping ChildStdin closes its
 pipe. Child::wait closes only stdin still held by that Child; an extracted writer
 must be dropped separately. Waiting is required to release exited child resources
-on Unix. Gnuplot's official persist/FAQ documentation states that `-p` permits
+on Unix. The implementation uses wait_with_output to drain configured output
+pipes concurrently with input and collect the status. Gnuplot's official
+persist/FAQ documentation states that `-p` permits
 display windows to outlive the main program, and does not affect file terminals.
 The older Qt terminal page describes persistence differently, so test real
 installed backend behavior instead of inferring lifecycle solely from that page.
-No Gnuplot executable was found on the current WSL PATH during this audit.
+No Gnuplot executable was found on the original WSL PATH during the initial
+audit. Official 6.0.5 tools were subsequently prepared in task-owned paths;
+native tests require them explicitly and include actual SVG rendering.
 
 References:
 

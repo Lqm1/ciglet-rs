@@ -2,6 +2,18 @@
 
 These findings refer to ciglet commit 895ba9b1c0eabee83d3544208bbc82420efa3206. Recording a finding does not establish that its Rust replacement is implemented or verified.
 
+## Plotting process errors and unreaped children
+
+Original plotopenv ignores pipe/fork/dup2/fdopen errors and returns no parent-side
+exec error. plotclose closes its FILE but retains no PID and performs no wait.
+Four unmodified-C probes (Linux 64/32bit, float/double) confirm an exited child
+remains available for waitpid after plotclose. They also verify direct -p launch,
+green line command bytes and EOF delivery. Figure establishes a waiting worker
+before spawn, propagates process/I/O errors, closes stdin on destruction and
+reaps through wait_with_output without killing persistent windows. Rust Linux
+tests verify /proc disappearance after Drop. Piped output is drained while
+input is written, independently tested with one MiB on both output streams.
+
 ## Gaussian zero draw and variance intermediate overflow
 
 The source randn passes inclusive zero draws to a bit-based approximate log,

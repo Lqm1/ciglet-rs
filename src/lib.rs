@@ -22,6 +22,7 @@ pub mod kalman;
 pub mod matrix;
 pub mod median;
 pub mod phase;
+pub mod plotting;
 pub mod polynomial;
 pub mod prediction;
 pub mod random;

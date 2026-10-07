@@ -2,6 +2,11 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Gnuplot line/matrix commands support arbitrary Rust writers, nonfinite data,
+source-compatible formatting and all source colors. Native figures manage stdin,
+captured output and background child reaping on Windows and Unix. See
+[plotting compatibility](docs/plotting-compatibility.md).
+
 Owned seeded ChaCha8 sampling provides uniform/Gaussian draws and signed-amplitude
 white noise for f32/f64. Raw integer transformations retain source arithmetic;
 Legacy Gaussian sampling retains the original approximation and Stable corrects
