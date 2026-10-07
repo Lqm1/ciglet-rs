@@ -29,6 +29,7 @@ pub mod root;
 pub mod scalar;
 pub mod sinc;
 pub mod smoothing;
+pub mod spectral_envelope;
 pub mod spectral_peak;
 pub mod statistics;
 pub mod stft;

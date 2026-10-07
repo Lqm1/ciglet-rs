@@ -73,3 +73,5 @@ FFT API references: https://docs.rs/rustfft/6.4.1/rustfft/struct.FftPlanner.html
 `instantaneous_frequency::Detector` owns the original configurable four-filter detector, with explicit Legacy arithmetic and scaled Stable estimation. See docs/instantaneous-frequency-compatibility.md.
 
 Framewise correlograms support ACF, AMDF, squared difference and YIN, with period-to-frequency mapping, selected-scalar Legacy arithmetic and Stable centered ACF. See docs/correlogram-compatibility.md.
+
+Reusable spectral-envelope plans return the complete log-envelope and one-sided cepstrum, with explicit harmonic counts and Nyquist compatibility policies. See docs/spectral-envelope-compatibility.md.
