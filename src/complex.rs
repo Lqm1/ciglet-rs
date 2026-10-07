@@ -1,7 +1,7 @@
 //! Complex arithmetic using the RustFFT re-export of num-complex.
 pub use crate::approximation::Precision;
 pub use crate::fourier::Complex;
-use crate::{Error, approximation, phase, statistics::Scalar, vector};
+use crate::{Error, approximation, statistics::Scalar, vector};
 
 /// Source division order, with scaled fallback for intermediate range loss.
 pub fn divide<T: Scalar>(numerator: Complex<T>, divisor: Complex<T>) -> Result<Complex<T>, Error> {
@@ -90,8 +90,5 @@ pub fn exponential<T: Scalar>(
 }
 
 pub fn argument<T: Scalar>(value: Complex<T>, precision: Precision) -> Result<T, Error> {
-    match precision {
-        Precision::Fast => approximation::atan2_fast(value.im, value.re),
-        Precision::Approximate | Precision::Exact => phase::argument_of(value),
-    }
+    approximation::atan2_with(value.im, value.re, precision)
 }

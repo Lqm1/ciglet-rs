@@ -10,6 +10,40 @@ pub enum Precision {
     Exact,
 }
 
+/// Selected sine precision. Exact uses double libm before scalar conversion.
+pub fn sine_with<T: crate::statistics::Scalar>(value: T, precision: Precision) -> Result<T, Error> {
+    crate::vector::validate(&[value])?;
+    crate::vector::scalar(match precision {
+        Precision::Fast => sine_fast(value.into() as f32)? as f64,
+        Precision::Approximate => sine(value.into() as f32)? as f64,
+        Precision::Exact => value.into().sin(),
+    })
+}
+/// Selected cosine precision, retaining binary32 approximation stages.
+pub fn cosine_with<T: crate::statistics::Scalar>(
+    value: T,
+    precision: Precision,
+) -> Result<T, Error> {
+    crate::vector::validate(&[value])?;
+    crate::vector::scalar(match precision {
+        Precision::Fast => cosine_fast(value.into() as f32)? as f64,
+        Precision::Approximate => cosine(value.into() as f32)? as f64,
+        Precision::Exact => value.into().cos(),
+    })
+}
+/// Levels two and three both use double atan2 in the source.
+pub fn atan2_with<T: crate::statistics::Scalar>(
+    y: T,
+    x: T,
+    precision: Precision,
+) -> Result<T, Error> {
+    if precision == Precision::Fast {
+        return atan2_fast(y, x);
+    }
+    crate::vector::validate(&[y, x])?;
+    crate::vector::scalar(y.into().atan2(x.into()))
+}
+
 /// Level-one base-two logarithm, preserving its linear bit approximation.
 pub fn logarithm2_fast(value: f32) -> Result<f32, Error> {
     if !value.is_finite() || value <= 0.0 {

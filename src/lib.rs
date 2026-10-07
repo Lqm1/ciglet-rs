@@ -23,6 +23,7 @@ pub mod prediction;
 pub mod real_cepstrum;
 pub mod resampling;
 pub mod root;
+pub mod scalar;
 pub mod smoothing;
 pub mod spectral_peak;
 pub mod statistics;

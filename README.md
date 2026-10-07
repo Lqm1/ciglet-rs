@@ -2,6 +2,10 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Scalar sine/cosine/atan2 expose all source precision levels. Scalar min/max
+retain the original second-operand behavior for ties and NaNs. See
+[scalar math compatibility](docs/scalar-math-compatibility.md).
+
 Owned generic row-major arrays support initialization, copying, flattening,
 reshape and transpose. In-place transpose moves non-Clone elements safely;
 floating-point storage preserves every bit pattern. These arrays are distinct
