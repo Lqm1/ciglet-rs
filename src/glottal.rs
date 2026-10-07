@@ -8,6 +8,10 @@ use crate::{
     vector,
 };
 
+#[cfg(test)]
+#[path = "glottal/tests.rs"]
+mod tests;
+
 /// Public LF configuration; timing fields other than period are period ratios.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Model<T> {

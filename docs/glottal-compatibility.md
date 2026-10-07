@@ -14,7 +14,10 @@ search through the checked root API and exactly eight Newton updates. Invalid
 timings, nonfinite inputs/derived results, zero divisions and allocation failure
 are reported as errors. The original unconverged finite eight-update result is
 not silently replaced by a different optimizer; broader residual/conditioning
-checks remain in the final numerical audit.
+checks are recorded in [the preparation conditioning audit](glottal-conditioning-audit.md).
+That corpus verifies preparation compatibility while demonstrating separate
+finite-but-unconverged source results; it does not establish universal solver
+accuracy or waveform usability.
 
 Default spectrum and waveform retain binary32 exponential/trigonometric
 approximations, selected-scalar complex multiplication/division and source
