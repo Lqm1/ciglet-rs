@@ -12,6 +12,7 @@ pub mod frame;
 pub mod frequency;
 pub mod interpolation;
 pub mod kalman;
+pub mod median;
 pub mod resampling;
 pub mod smoothing;
 pub mod statistics;
