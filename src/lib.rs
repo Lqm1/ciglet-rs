@@ -5,6 +5,7 @@ pub mod approximation;
 pub mod cepstrum;
 pub mod chirp_z;
 pub mod cosine;
+pub mod extrema;
 pub mod filterbank;
 pub mod filtering;
 pub mod fourier;
