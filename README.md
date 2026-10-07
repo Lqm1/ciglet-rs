@@ -2,6 +2,8 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+The native Rust phase passes the agreed five-target acceptance gate, including all installed fastapprox mappings. C ABI and WebAssembly bindings remain to be implemented.
+
 Custom window generation accepts stateful/fallible trig callbacks with independent
 f32/f64 weight and callback precision. Standard Iterator::fold covers the source
 reduction generator. See [custom macro compatibility](docs/custom-window-compatibility.md).

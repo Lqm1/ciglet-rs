@@ -4,8 +4,10 @@ Function coverage alone is not the complete port acceptance criterion. A direct
 scan of all header `#define` names found the following items absent as distinct
 rows in api-inventory.csv. Several are already implemented and documented under
 their generated functions or ownership equivalents. Absence from that CSV does
-not imply omission or establish completion. This audit remains open until each
-semantic mapping and precision/build configuration has concrete evidence.
+not imply omission or establish completion. Each semantic mapping and precision
+configuration needs concrete evidence. The completed mappings are now recorded
+below; final native execution is documented
+in SHIRO's native acceptance audit.
 
 | Header item | Current mapping or required review |
 | --- | --- |
@@ -42,13 +44,33 @@ See instantaneous-frequency-compatibility.md, filterbank-configuration-audit.md,
 complex-compatibility.md, glottal-compatibility.md and plotting-audit.md for
 source arithmetic, corrections and reference reproduction.
 
-This initial audit covers ciglet.h only. The installed fastapprox header now
-has a separate 88-function inventory with all function mappings implemented;
-see bundled-approximation-compatibility.md. Implementation export locations,
-build-selected FP_TYPE behavior and bundled helper macros/types also require
-mapping, alongside the independent SHIRO/liblrhsmm inventories. Numeric
-stability fixes and native workflow acceptance remain separate requirements.
+The installed fastapprox header has a separate 88-function inventory with all
+function mappings implemented. Its conversion, index, splat, bit and absolute
+value helpers are mapped in bundled-approximation-compatibility.md. C/SSE
+storage unions become typed arrays and checked conversions, with source-specific
+sign/order behavior retained or disclosed as a correction.
+
+The original Makefile defaults to FP_TYPE=float and supports double builds.
+Rust scalar-storage APIs use selected f32/f64 types within one package rather
+than rebuilding an incompatible global typedef. Scalar/bundled fastapprox
+kernels intentionally retain their original binary32 storage; generic outer
+arithmetic preserves the documented source conversion stages. Both precisions
+are exercised by the algorithm-specific C corpora and independent tests.
+Public exports are the modules in src/lib.rs and corresponding symbols in
+api-inventory.csv, including ownership equivalents. This maps packaging and
+precision selection without adding a second package or hiding standalone APIs.
+
+The original Makefile installs only ciglet.h and external/fastapprox-all.h.
+Its linked external FFT, median and WAV implementation objects are represented
+by the corresponding Rust algorithms and waveform APIs. Single-file generation,
+archive naming, PIC and include guards are C build/packaging mechanisms.
+OpenMP is an implementation execution choice rather than a separate public
+algorithm; Rust checked owned outputs replace shared C buffers.
+Native target execution and numerical corrections remain separate from these
+public-definition mappings.
 
 Custom window/reduction evidence and the intentionally corrected Blackman
 argument behavior are detailed in custom-window-compatibility.md. This closes
-those extensibility mappings, not the complete structure/build/precision audit.
+those extensibility mappings. The own-header structures, installed bundled
+helpers, package exports and selected precision now have explicit mappings;
+final acceptance still uses the execution and numerical evidence as well.
