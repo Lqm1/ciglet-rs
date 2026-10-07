@@ -2,6 +2,12 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Real cepstra, inverse reconstruction, minimum-phase angles and frame-major
+magnitude/cepstrum conversion support f32/f64 with reusable FFT workspaces.
+Explicit Legacy policies retain original Nyquist and lifter behavior; defaults
+preserve Nyquist and use the causal minimum-phase lifter. See
+[real cepstrum compatibility](docs/real-cepstrum-compatibility.md).
+
 Quadratic spectral peak interpolation returns fractional bin positions and
 capped magnitudes for f32/f64 with source arithmetic rounding. Missing neighbors
 and invalid participating samples return errors. See

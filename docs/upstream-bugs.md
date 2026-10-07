@@ -105,3 +105,9 @@ The original cig_rresample interpolation checks ix_base + j > 0, excluding sourc
 ## Spectral peak neighbor bounds
 
 The original cig_qifft reads both neighbors without checking k or the input length. spectral_peak::interpolate rejects endpoint and missing-neighbor indices before indexing. Flat parabolas take an explicit zero-displacement path rather than computing a zero divisor; their finite outputs retain C behavior. Nonfinite inputs and overflowing polynomial arithmetic return errors. Extreme finite-input rescaling remains under audit. See docs/spectral-peak-compatibility.md.
+
+## Real cepstrum bounds and minimum-phase lifter
+
+The original rceps has no positive-transform-size validation; a zero-length call reaches invalid symmetry writes. irceps copies arbitrary coefficient counts into a fixed transform workspace; a 32-coefficient prefix with FFT length eight writes beyond its allocation. The unmodified C bounds driver reproduces both heap-buffer-overflows for float and double under AddressSanitizer. Rust validates lengths before indexing or writes.
+
+The minphase lifter doubles coefficient nfft/2 and clears negative quefrencies only from nfft/2+2, retaining coefficient nfft/2+1. That retained sample contributes to phase and breaks the intended causal lifter. Lifter::Causal retains DC/Nyquist, doubles positive quefrencies and clears every negative quefrency. Lifter::Legacy preserves both original loops, independently of NyquistPolicy. Analytic tests isolate the retained sample contribution; unchanged-C fixtures compare Legacy output. See docs/real-cepstrum-compatibility.md.
