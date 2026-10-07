@@ -11,6 +11,60 @@ mod statistics;
 pub use statistics::*;
 mod generation;
 pub use generation::*;
+mod pair_statistics;
+pub use pair_statistics::*;
+
+unsafe fn pair_result<T: std::panic::RefUnwindSafe, R>(
+    left: *const T,
+    left_length: usize,
+    right: *const T,
+    right_length: usize,
+    compute: impl FnOnce(&[T], &[T]) -> Result<R, crate::Error> + std::panic::UnwindSafe,
+) -> Result<R, u32> {
+    if left_length != right_length {
+        return Err(2);
+    }
+    range(left, left_length)?;
+    range(right, right_length)?;
+    boundary(|| {
+        let (left, right) = if left_length == 0 {
+            (&[][..], &[][..])
+        } else {
+            // SAFETY: Caller inputs are initialized, stable, single-allocation
+            // readable ranges. Alignment, size and matching lengths are checked.
+            // Immutable inputs may overlap one another.
+            unsafe {
+                (
+                    std::slice::from_raw_parts(left, left_length),
+                    std::slice::from_raw_parts(right, right_length),
+                )
+            }
+        };
+        compute(left, right)
+    })
+}
+
+unsafe fn pair_scalar_result<T: Copy + std::panic::RefUnwindSafe>(
+    left: *const T,
+    left_length: usize,
+    right: *const T,
+    right_length: usize,
+    output: *mut T,
+    compute: impl FnOnce(&[T], &[T]) -> Result<T, crate::Error> + std::panic::UnwindSafe,
+) -> u32 {
+    if let Err(status) = range(output.cast_const(), 1) {
+        return status;
+    }
+    // SAFETY: This adapter forwards the caller's input contracts.
+    match unsafe { pair_result(left, left_length, right, right_length, compute) } {
+        Ok(value) => {
+            // SAFETY: Input borrows ended; caller output is exclusively writable.
+            unsafe { output.write(value) };
+            0
+        }
+        Err(status) => status,
+    }
+}
 
 unsafe fn generated_result<T: Copy>(
     output: *mut T,

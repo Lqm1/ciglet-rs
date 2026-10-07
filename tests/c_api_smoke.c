@@ -61,6 +61,31 @@ int main(void) {
     assert(ciglet_rs_difference_f32(samples, 3, samples, 2) == 2);
     CHECK_STATISTICS(float, f32);
     CHECK_STATISTICS(double, f64);
+    #define CHECK_PAIR(type, suffix) do { \
+        type left[] = {1, 2, 3}; \
+        type right[] = {2, 4, 6}; \
+        type result = -71; \
+        assert(ciglet_rs_dot_##suffix(left, 3, right, 3, &result) == 0 && result == 28); \
+        assert(ciglet_rs_covariance_##suffix(left, 3, right, 3, &result) == 0); \
+        assert(result > 1.3333 && result < 1.3334); \
+        assert(ciglet_rs_correlation_##suffix(left, 3, right, 3, &result) == 0); \
+        assert(result > 0.999999 && result < 1.000001); \
+        for (uint32_t policy = 0; policy < 2; ++policy) { \
+            assert(ciglet_rs_covariance_with_##suffix(left, 3, right, 3, policy, &result) == 0); \
+            assert(result > 1.3333 && result < 1.3334); \
+            assert(ciglet_rs_correlation_with_##suffix(left, 3, right, 3, policy, &result) == 0); \
+            assert(result > 0.999999 && result < 1.000001); \
+        } \
+        result = -71; \
+        assert(ciglet_rs_covariance_with_##suffix(left, 3, right, 3, 2, &result) == 3 && result == -71); \
+        assert(ciglet_rs_dot_##suffix(left, 3, right, 2, &result) == 2 && result == -71); \
+        type lags[4]; \
+        assert(ciglet_rs_cross_correlation_##suffix(left, 3, right, 3, lags, 4) == 0); \
+        assert(lags[0] == 28 && lags[1] == 16 && lags[2] == 6 && lags[3] == 0); \
+    } while (0)
+    CHECK_PAIR(float, f32);
+    CHECK_PAIR(double, f64);
+    #undef CHECK_PAIR
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

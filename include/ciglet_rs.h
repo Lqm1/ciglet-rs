@@ -368,4 +368,194 @@ uint32_t ciglet_rs_linear_grid_f32(float start, float end, float *output, uintpt
  */
 uint32_t ciglet_rs_linear_grid_f64(double start, double end, double *output, uintptr_t length);
 
+/**
+ * Compute dot with the native default arithmetic policy.
+ * Lengths must match. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_dot_f32(const float *left,
+                           uintptr_t left_length,
+                           const float *right,
+                           uintptr_t right_length,
+                           float *output);
+
+/**
+ * Compute covariance with the native default arithmetic policy.
+ * Lengths must match. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_covariance_f32(const float *left,
+                                  uintptr_t left_length,
+                                  const float *right,
+                                  uintptr_t right_length,
+                                  float *output);
+
+/**
+ * Compute correlation with the native default arithmetic policy.
+ * Lengths must match. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_correlation_f32(const float *left,
+                                   uintptr_t left_length,
+                                   const float *right,
+                                   uintptr_t right_length,
+                                   float *output);
+
+/**
+ * Compute covariance with policy zero for Stable or one for Legacy.
+ * Invalid policies return status three. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_covariance_with_f32(const float *left,
+                                       uintptr_t left_length,
+                                       const float *right,
+                                       uintptr_t right_length,
+                                       uint32_t policy,
+                                       float *output);
+
+/**
+ * Compute correlation with policy zero for Stable or one for Legacy.
+ * Invalid policies return status three. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_correlation_with_f32(const float *left,
+                                        uintptr_t left_length,
+                                        const float *right,
+                                        uintptr_t right_length,
+                                        uint32_t policy,
+                                        float *output);
+
+/**
+ * Compute unnormalized nonnegative-lag cross correlation.
+ * Input lengths must match; output length selects lag count. Excess lags
+ * are zero-filled. Empty inputs or output accept null pointers in those ranges.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for lags values.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_cross_correlation_f32(const float *left,
+                                         uintptr_t left_length,
+                                         const float *right,
+                                         uintptr_t right_length,
+                                         float *output,
+                                         uintptr_t lags);
+
+/**
+ * Compute dot with the native default arithmetic policy.
+ * Lengths must match. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_dot_f64(const double *left,
+                           uintptr_t left_length,
+                           const double *right,
+                           uintptr_t right_length,
+                           double *output);
+
+/**
+ * Compute covariance with the native default arithmetic policy.
+ * Lengths must match. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_covariance_f64(const double *left,
+                                  uintptr_t left_length,
+                                  const double *right,
+                                  uintptr_t right_length,
+                                  double *output);
+
+/**
+ * Compute correlation with the native default arithmetic policy.
+ * Lengths must match. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_correlation_f64(const double *left,
+                                   uintptr_t left_length,
+                                   const double *right,
+                                   uintptr_t right_length,
+                                   double *output);
+
+/**
+ * Compute covariance with policy zero for Stable or one for Legacy.
+ * Invalid policies return status three. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_covariance_with_f64(const double *left,
+                                       uintptr_t left_length,
+                                       const double *right,
+                                       uintptr_t right_length,
+                                       uint32_t policy,
+                                       double *output);
+
+/**
+ * Compute correlation with policy zero for Stable or one for Legacy.
+ * Invalid policies return status three. Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for one value.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_correlation_with_f64(const double *left,
+                                        uintptr_t left_length,
+                                        const double *right,
+                                        uintptr_t right_length,
+                                        uint32_t policy,
+                                        double *output);
+
+/**
+ * Compute unnormalized nonnegative-lag cross correlation.
+ * Input lengths must match; output length selects lag count. Excess lags
+ * are zero-filled. Empty inputs or output accept null pointers in those ranges.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, readable in single allocations and
+ * stable during computation. Output must be exclusively writable for lags values.
+ * The inputs and output may overlap, without concurrent conflicting accesses.
+ */
+uint32_t ciglet_rs_cross_correlation_f64(const double *left,
+                                         uintptr_t left_length,
+                                         const double *right,
+                                         uintptr_t right_length,
+                                         double *output,
+                                         uintptr_t lags);
+
 #endif  /* CIGLET_RS_H */

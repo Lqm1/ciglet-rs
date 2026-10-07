@@ -4,6 +4,120 @@ use ciglet_rs::c_api::*;
 use std::mem::MaybeUninit;
 
 #[test]
+fn paired_statistics_preserve_scaled_moments_and_overlap() {
+    let extreme = [-1e300_f64, 0.0, 1e300];
+    let mut result = -71.0_f64;
+    // SAFETY: Both inputs are valid readable ranges; output is exclusive.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_correlation_f64(extreme.as_ptr(), 3, extreme.as_ptr(), 3, &mut result),
+            0
+        );
+        assert_eq!(result, 1.0);
+        assert_eq!(
+            ciglet_rs_covariance_f64(extreme.as_ptr(), 3, extreme.as_ptr(), 3, &mut result),
+            3
+        );
+        assert_eq!(result, 1.0);
+        assert_eq!(
+            ciglet_rs_correlation_with_f64(
+                extreme.as_ptr(),
+                3,
+                extreme.as_ptr(),
+                3,
+                1,
+                &mut result
+            ),
+            3
+        );
+        assert_eq!(result, 1.0);
+    }
+    let mut left = [1.0_f32, 2.0, 3.0, 91.0];
+    let right = [2.0_f32, 4.0, 6.0];
+    let pointer = left.as_mut_ptr();
+    // SAFETY: Output overlaps a valid input range; the adapter stages its result.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_cross_correlation_f32(pointer, 3, right.as_ptr(), 3, pointer, 4),
+            0
+        );
+    }
+    assert_eq!(left, [28.0, 16.0, 6.0, 0.0]);
+    let pointer = left.as_mut_ptr();
+    // SAFETY: Identical immutable inputs may alias; scalar output may overlap.
+    unsafe { assert_eq!(ciglet_rs_dot_f32(pointer, 3, pointer, 3, pointer), 0) };
+    assert_eq!(left[0], 1076.0);
+}
+
+#[test]
+fn paired_statistics_failures_and_empty_ranges_are_transactional() {
+    let left = [1.0_f64, 1.0, 1.0];
+    let right = [2.0_f64, 3.0, 4.0];
+    let mut output = [-71.0_f64; 4];
+    // SAFETY: Buffers are valid; null inputs are supplied only for rejection or
+    // zero-length ranges, and output is never accessed concurrently.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_correlation_f64(left.as_ptr(), 3, right.as_ptr(), 3, output.as_mut_ptr()),
+            3
+        );
+        assert_eq!(
+            ciglet_rs_dot_f64(left.as_ptr(), 3, right.as_ptr(), 2, output.as_mut_ptr()),
+            2
+        );
+        assert_eq!(
+            ciglet_rs_dot_f64(left.as_ptr(), 3, std::ptr::null(), 3, output.as_mut_ptr()),
+            1
+        );
+        assert_eq!(
+            ciglet_rs_covariance_with_f64(
+                left.as_ptr(),
+                3,
+                right.as_ptr(),
+                3,
+                u32::MAX,
+                output.as_mut_ptr()
+            ),
+            3
+        );
+        assert_eq!(output, [-71.0; 4]);
+        assert_eq!(
+            ciglet_rs_cross_correlation_f64(
+                std::ptr::null(),
+                0,
+                std::ptr::null(),
+                0,
+                output.as_mut_ptr(),
+                4
+            ),
+            0
+        );
+        assert_eq!(output, [0.0; 4]);
+        assert_eq!(
+            ciglet_rs_dot_f64(
+                std::ptr::null(),
+                0,
+                std::ptr::null(),
+                0,
+                output.as_mut_ptr()
+            ),
+            0
+        );
+        assert_eq!(
+            ciglet_rs_cross_correlation_f64(
+                left.as_ptr(),
+                3,
+                right.as_ptr(),
+                3,
+                std::ptr::null_mut(),
+                0
+            ),
+            0
+        );
+    }
+}
+
+#[test]
 fn statistics_keep_policy_and_transactional_outputs() {
     let values = [f32::MAX, f32::MAX];
     let mut output = -71.0_f32;

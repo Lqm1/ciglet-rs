@@ -124,7 +124,47 @@ Linux and Windows GNU binding validation remain pending. Cbindgen's `--verify`
 confirms the checked-in header matches generation. All-target Clippy and Rustdoc
 with warnings denied, formatting and whitespace checks pass.
 
-Statistics bindings still need selection/partition mutation, stable sorting
-with original indices, dot product, covariance/correlation with both policies
-and cross correlation. Array2 ownership/dimensions/reshape/transpose also remain
+Statistics bindings still need selection/partition mutation and stable sorting
+with original indices. Array2 ownership/dimensions/reshape/transpose also remain
 required. These additions do not complete ciglet or the three-package bindings.
+
+## Paired statistics checkpoint
+
+Twelve additional functions expose dot product, default and explicit-policy
+covariance/correlation, and cross correlation, each in both precisions. There
+are now 44 exports including the ABI version. Both input lengths are explicit
+and must match; mismatch returns status two before reading either input.
+Input ranges may overlap. Scalar output or the cross-correlation output may
+overlap either input because all input borrows end before output commit.
+Cross-correlation output length selects the number of nonnegative lags and
+retains the native zero-filled suffix when lags exceed the input length.
+It intentionally retains the core's acceptance of nonfinite arithmetic; this
+adapter does not add finite-value validation to dot/cross correlation.
+
+Windows MSVC x86_64/i686 Debug pass eight boundary integration tests and actual
+C callers exercising all 44 exports. Windows x86_64 Debug/Release also pass
+Python calls, and Release passes the same eight Rust tests and optimized C
+caller. Extreme binary64 input regression verifies Stable correlation remains
+one when standalone covariance is unrepresentable and Legacy correlation
+returns its existing error. Failure keeps the previous output. Additional
+tests cover constant-vector correlation errors, unequal lengths, null inputs,
+invalid policy values, identical input/output overlap, empty dot product,
+empty cross correlation and zero lag count.
+Linux GNU x86_64/i686 Debug subsequently pass the same eight integration tests
+and real GCC-compiled C callers linked to the actual shared libraries. Linux
+x86_64 also passes Python ctypes calls for all 44 exports. Linux 32-bit Python
+and Linux Release binding callers remain unverified.
+Windows GNU x86_64 Debug also passes eight integration tests and independent
+C/Python callers for all exports. Together with Windows MSVC x86_64/i686, all
+five agreed native targets now execute these current C bindings successfully.
+This is binding-boundary verification, not a rerun of the full native test matrix
+or proof of complete binding coverage. Cbindgen header verification, Clippy and
+Rustdoc with warnings denied, formatting and whitespace checks pass.
+
+`binding-inventory.csv` retains every row from the two native inventories.
+It maps 20 upstream symbols, including aliases, to these verified C endpoints;
+312 other public/configuration rows remain pending for C and all 332 public rows
+remain pending for WASM. Two macro formal-parameter rows are explicitly nonpublic.
+The native status column preserves the existing Rust implementation audit;
+binding status does not replace or infer that audit. Export count and upstream
+row count differ because precision/policy variants and aliases are explicit.

@@ -63,6 +63,42 @@ def main():
             output = scalar(-71.0)
             assert function(values, 3, 2, ctypes.byref(output)) == 3
             assert output.value == -71.0
+        left = (scalar * 3)(1.0, 2.0, 3.0)
+        right = (scalar * 3)(2.0, 4.0, 6.0)
+        for operation, expected in (("dot", 28.0), ("covariance", 4.0 / 3.0), ("correlation", 1.0)):
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t,
+                                 ctypes.POINTER(scalar), ctypes.c_size_t, ctypes.POINTER(scalar)]
+            function.restype = ctypes.c_uint32
+            output = scalar(-71.0)
+            assert function(left, 3, right, 3, ctypes.byref(output)) == 0
+            assert abs(output.value - expected) <= 1e-6 * max(1.0, abs(expected))
+            output = scalar(-71.0)
+            assert function(left, 3, right, 2, ctypes.byref(output)) == 2
+            assert output.value == -71.0
+        for operation, expected in (("covariance", 4.0 / 3.0), ("correlation", 1.0)):
+            function = getattr(library, f"ciglet_rs_{operation}_with_{suffix}")
+            function.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t,
+                                 ctypes.POINTER(scalar), ctypes.c_size_t,
+                                 ctypes.c_uint32, ctypes.POINTER(scalar)]
+            function.restype = ctypes.c_uint32
+            for policy in (0, 1):
+                output = scalar(-71.0)
+                assert function(left, 3, right, 3, policy, ctypes.byref(output)) == 0
+                assert abs(output.value - expected) <= 1e-6 * max(1.0, abs(expected))
+            output = scalar(-71.0)
+            assert function(left, 3, right, 3, 2, ctypes.byref(output)) == 3
+            assert output.value == -71.0
+        cross = getattr(library, f"ciglet_rs_cross_correlation_{suffix}")
+        cross.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t,
+                         ctypes.POINTER(scalar), ctypes.c_size_t,
+                         ctypes.POINTER(scalar), ctypes.c_size_t]
+        cross.restype = ctypes.c_uint32
+        output = (scalar * 4)(-71.0, -71.0, -71.0, -71.0)
+        assert cross(left, 3, right, 3, output, 4) == 0
+        assert list(output) == [28.0, 16.0, 6.0, 0.0]
+        assert cross(None, 0, None, 0, output, 4) == 0
+        assert list(output) == [0.0] * 4
         grid = getattr(library, f"ciglet_rs_linear_grid_{suffix}")
         grid.argtypes = [scalar, scalar, ctypes.POINTER(scalar), ctypes.c_size_t]
         grid.restype = ctypes.c_uint32
