@@ -169,3 +169,16 @@ The source spec2env cutoff can be zero even with a valid two-harmonic request, c
 ## LF DC division and sample-index conversion
 
 The source LF spectrum computes a zero-divisor complex term at DC, then masks the final NaN response to zero. Rust returns that same positive-zero magnitude/phase directly. The source sampled-period function casts rounded indices to int without range checks; a two-second model at INT_MAX sample rate overflows that conversion even for a one-sample requested output. GCC float-divide-by-zero and float-cast-overflow probes reproduce both arithmetic defects in float and double, four probes total. Rust clips checked finite usize indices to the requested output and uses saturating addition. Signed excitation remains supported: negative values invert the waveform. Approximate trig asymmetry and a tiny first-sample residue remain disclosed source-precision behavior; broader eight-Newton-update residual/conditioning checks remain pending. See docs/glottal-compatibility.md.
+
+## Moment cancellation and correlation normalization
+
+Header varfp subtracts squared means from squared sums; large offsets can yield
+zero or negative variance for nonconstant inputs. meanfp can overflow its sum
+even when the mean is representable. cov can overflow centered products, and
+corr multiplies variances before taking a square root, losing representable
+correlations at both extremes. The unchanged-header 48-case corpus captures
+these outcomes for float/double. Stable mean/variance/covariance/correlation
+use compensated exponent buckets, centered two-part differences and residual
+mean correction. Legacy retains source arithmetic and previous undefined
+correlation errors. Exact-rational and 220-digit correlation references verify
+the corrected results. See docs/statistics-compatibility.md.

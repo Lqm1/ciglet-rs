@@ -1,7 +1,16 @@
-//! Binary32/binary64 vector statistics with source scalar arithmetic order.
+//! Binary32/binary64 vector statistics with stable moments and legacy arithmetic.
 use crate::Error;
 use rustfft::FftNum;
 use std::cmp::Ordering;
+mod moments;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Policy {
+    /// Centered, compensated binary64 moments with exponent-scaled products.
+    Stable,
+    /// Preserve the original selected-scalar reduction and cancellation.
+    Legacy,
+}
 
 mod sealed {
     pub trait Sealed {}
@@ -34,14 +43,28 @@ pub fn sum_squares<T: Scalar>(values: &[T]) -> T {
         .fold(T::zero(), |sum, &value| sum + value * value)
 }
 pub fn mean<T: Scalar>(values: &[T]) -> Result<T, Error> {
+    mean_with(values, Policy::Stable)
+}
+pub fn mean_with<T: Scalar>(values: &[T], policy: Policy) -> Result<T, Error> {
     if values.is_empty() {
         return Err(Error("mean requires at least one value"));
     }
+    if policy == Policy::Stable {
+        moments::validate(values)?;
+        return crate::vector::scalar(moments::mean(values));
+    }
     Ok(sum(values) / T::from_usize(values.len()).unwrap())
 }
-/// Population variance retaining C's sum-of-squares subtraction and cancellation.
+/// Population variance; unrepresentable finite results return an error.
 pub fn variance<T: Scalar>(values: &[T]) -> Result<T, Error> {
-    let average = mean(values)?;
+    variance_with(values, Policy::Stable)
+}
+pub fn variance_with<T: Scalar>(values: &[T], policy: Policy) -> Result<T, Error> {
+    if policy == Policy::Stable {
+        moments::validate(values)?;
+        return crate::vector::scalar(moments::product(values, values).value().max(0.0));
+    }
+    let average = mean_with(values, Policy::Legacy)?;
     Ok(sum_squares(values) / T::from_usize(values.len()).unwrap() - average * average)
 }
 pub fn minimum<T: Scalar>(values: &[T]) -> Option<T> {
@@ -107,20 +130,41 @@ pub fn dot<T: Scalar>(left: &[T], right: &[T]) -> Result<T, Error> {
         .fold(T::zero(), |sum, (&a, &b)| sum + a * b))
 }
 pub fn covariance<T: Scalar>(left: &[T], right: &[T]) -> Result<T, Error> {
+    covariance_with(left, right, Policy::Stable)
+}
+pub fn covariance_with<T: Scalar>(left: &[T], right: &[T], policy: Policy) -> Result<T, Error> {
     equal_lengths(left, right)?;
-    let left_mean = mean(left)?;
-    let right_mean = mean(right)?;
+    if policy == Policy::Stable {
+        moments::validate(left)?;
+        moments::validate(right)?;
+        return crate::vector::scalar(moments::product(left, right).value());
+    }
+    let left_mean = mean_with(left, Policy::Legacy)?;
+    let right_mean = mean_with(right, Policy::Legacy)?;
     let sum = left.iter().zip(right).fold(T::zero(), |sum, (&a, &b)| {
         sum + (a - left_mean) * (b - right_mean)
     });
     Ok(sum / T::from_usize(left.len()).unwrap())
 }
-/// Source correlation on numerically defined positive variances. Constant,
-/// cancelled, nonfinite or overflowing/underflowing variances return an error.
+/// Pearson correlation; constant vectors return an error. Normalization retains
+/// scaled variances even when standalone variance would overflow or round to zero.
 pub fn correlation<T: Scalar>(left: &[T], right: &[T]) -> Result<T, Error> {
-    let covariance = covariance(left, right)?;
-    let left_variance = variance(left)?;
-    let right_variance = variance(right)?;
+    correlation_with(left, right, Policy::Stable)
+}
+pub fn correlation_with<T: Scalar>(left: &[T], right: &[T], policy: Policy) -> Result<T, Error> {
+    if policy == Policy::Stable {
+        equal_lengths(left, right)?;
+        moments::validate(left)?;
+        moments::validate(right)?;
+        return crate::vector::scalar(moments::correlation(
+            moments::product(left, right),
+            moments::product(left, left),
+            moments::product(right, right),
+        )?);
+    }
+    let covariance = covariance_with(left, right, Policy::Legacy)?;
+    let left_variance = variance_with(left, Policy::Legacy)?;
+    let right_variance = variance_with(right, Policy::Legacy)?;
     let divisor = (left_variance * right_variance).into().sqrt();
     if left_variance.into() <= 0.0
         || right_variance.into() <= 0.0
