@@ -245,6 +245,11 @@ distinct power exponents, integer rounding ties and invalid conversion lanes.
 Seventy-nine complete arrays match original bits, 316 lane comparisons. The
 remaining array has an infinite source exponential result at the last float
 below 128; the checked Rust calculation returns an error for the whole array.
+The scalar exponential2 API now applies the same finite-result guard, correcting
+its previously unchecked Ok(infinity) at this reproduced rounding boundary.
+Finite original outputs and the distinct faster exponential approximation are
+unchanged. Scalar and lane boundary tests verify both rejection and nearby
+representable outputs.
 Windows Zig and Linux GCC regenerate identical fixtures with contraction
 disabled. Separate tests cover error position in every lane and safe owned
 bit/splat/index/64-bit-word representations.

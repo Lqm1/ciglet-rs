@@ -246,7 +246,11 @@ pub fn exponential2(exponent: f32) -> Result<f32, Error> {
             "approximate exponential bit conversion exceeds the legacy range",
         ));
     }
-    Ok(f32::from_bits(bits as u32))
+    let result = f32::from_bits(bits as u32);
+    if !result.is_finite() {
+        return Err(Error("approximate exponential overflowed"));
+    }
+    Ok(result)
 }
 
 pub fn exponential(exponent: f32) -> Result<f32, Error> {

@@ -107,6 +107,15 @@ fn c_double_reference() {
 }
 #[test]
 fn precision_and_comparison_boundaries() {
+    // The source bit approximation rounds the last exponent below 128 to
+    // infinity. A checked scalar result must reject it, like the lane API.
+    assert!(approximation::exponential2(f32::from_bits(0x42ff_ffff)).is_err());
+    assert!(approximation::exponential2(127.75).unwrap().is_finite());
+    assert!(
+        approximation::exponential2_fast(f32::from_bits(0x42ff_ffff))
+            .unwrap()
+            .is_finite()
+    );
     assert_eq!(
         approximation::sine_with(-0.0_f64, Precision::Exact)
             .unwrap()
