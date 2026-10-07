@@ -164,7 +164,7 @@ Source prefix-sum ACF can yield a false zero from catastrophic variance subtract
 
 ## Spectral envelope zero cutoff and harmonic conversion
 
-The source spec2env cutoff can be zero even with a valid two-harmonic request, causing smoothed[-1] access. Original float/double probes reproduce heap-buffer-overflow under ASan; changing only zero cutoff to one passes and replicates the first bin, as Rust does. The convenience wrapper converts its computed harmonic count to int without range validation; GCC float-cast-overflow probes confirm this for float and double at fundamental 1e-12. Rust computes the equivalent cutoff without that conversion, handling both the above-spectrum case and the two-point first-bin case. Nyquist replacement remains explicitly selectable; the default preserves that bin. Fractional smoothing endpoint behavior is retained and disclosed for compatibility, with broader numerical audit pending. See docs/spectral-envelope-compatibility.md.
+The source spec2env cutoff can be zero even with a valid two-harmonic request, causing smoothed[-1] access. Original float/double probes reproduce heap-buffer-overflow under ASan; changing only zero cutoff to one passes and replicates the first bin, as Rust does. The convenience wrapper converts its computed harmonic count to int without range validation; GCC float-cast-overflow probes confirm this for float and double at fundamental 1e-12. Rust computes the equivalent cutoff without that conversion, handling both the above-spectrum case and the two-point first-bin case. Nyquist replacement remains explicitly selectable; the default preserves that bin. Fractional smoothing now defaults to corrected sample-cell integration; explicit SmoothingPolicy::Legacy retains original interpolation arithmetic. Broader envelope conditioning remains under audit. See docs/spectral-envelope-compatibility.md.
 
 ## LF DC division and sample-index conversion
 
@@ -182,3 +182,24 @@ use compensated exponent buckets, centered two-part differences and residual
 mean correction. Legacy retains source arithmetic and previous undefined
 correlation errors. Exact-rational and 220-digit correlation references verify
 the corrected results. See docs/statistics-compatibility.md.
+
+## Fractional smoothing DC loss and RMS intermediate range
+
+The cumulative moving-average grid stretches for fractional half-widths and
+loses DC, including nine unit samples at width 1.5. Tiny positive widths lose
+their upper/lower cumulative difference. Source RMS squares samples before
+averaging, so representable RMS values can overflow or underflow internally.
+Stable smoothing directly integrates unit-spaced sample cells with endpoint
+replication and scaled rolling products. Legacy retains the original results.
+An independent 330-case exact-rational/220-digit root reference validates both
+precisions. Subnormal RMS permits one quantum for final binary64 rounding;
+ordinary results retain tight relative bounds. See docs/smoothing-compatibility.md.
+
+## Prediction FFT intermediate range
+
+Finite maximum-valued prediction coefficients can overflow their FFT response
+even when gain divided by its magnitude is representable. Exceptional bins
+now use a scaled direct DFT and divide gain before converting the response.
+Exact quarter-turn phases recover small DC/Nyquist residuals after huge
+cancellation. Actual poles remain errors for nonzero gain. Ordinary source FFT
+arithmetic remains unchanged. See docs/prediction-spectrum-compatibility.md.

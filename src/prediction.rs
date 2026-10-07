@@ -2,6 +2,7 @@
 pub use crate::phase::NyquistPolicy;
 use crate::{
     Error,
+    accumulation::{Scaled, Sum},
     fourier::{Complex, Direction, FftPlan},
     polynomial,
     statistics::{self, Scalar},
@@ -101,7 +102,7 @@ impl<T: Scalar> SpectrumPlan<T> {
             value.re = coefficient;
         }
         self.fft.process(&mut self.workspace, Direction::Forward)?;
-        for value in &self.workspace {
+        for (index, value) in self.workspace.iter().enumerate() {
             let square = value.re * value.re + value.im * value.im;
             let magnitude = if !square.into().is_finite()
                 || (square == T::zero() && (value.re != T::zero() || value.im != T::zero()))
@@ -110,15 +111,44 @@ impl<T: Scalar> SpectrumPlan<T> {
             } else {
                 square.into().sqrt()
             };
-            if magnitude == 0.0 {
-                return Err(Error(
-                    "prediction spectrum has a pole on the transform grid",
-                ));
-            }
-            output.push(vector::scalar(gain.into() / magnitude)?);
+            let ratio = if !magnitude.is_finite() || magnitude == 0.0 {
+                let response = scaled_response(coefficients, index, n);
+                if response.fraction == 0.0 {
+                    return Err(Error(
+                        "prediction spectrum has a pole on the transform grid",
+                    ));
+                }
+                Scaled::new(gain.into(), 0).divided_by(response).value()
+            } else {
+                gain.into() / magnitude
+            };
+            output.push(vector::scalar(ratio)?);
         }
         Ok(output)
     }
+}
+
+/// Recover only exceptional FFT bins without normalizing away small coefficients.
+fn scaled_response<T: Scalar>(coefficients: &[T], bin: usize, length: usize) -> Scaled {
+    let mut real = Sum::new();
+    let mut imaginary = Sum::new();
+    let length = length as u64;
+    for (index, &coefficient) in coefficients.iter().enumerate() {
+        let turn = (index as u64 * bin as u64) % length;
+        let (sine, cosine) = if (turn * 4).is_multiple_of(length) {
+            match turn * 4 / length {
+                0 => (0.0, 1.0),
+                1 => (1.0, 0.0),
+                2 => (0.0, -1.0),
+                _ => (-1.0, 0.0),
+            }
+        } else {
+            (std::f64::consts::TAU * turn as f64 / length as f64).sin_cos()
+        };
+        real.product(Scaled::new(coefficient.into(), 0), Scaled::new(cosine, 0));
+        imaginary.product(Scaled::new(coefficient.into(), 0), Scaled::new(-sine, 0));
+    }
+    real.finish(1.0).hypot(imaginary.finish(1.0))
 }
 
 /// Source transform sizing: next power of two at least twice bins minus one.

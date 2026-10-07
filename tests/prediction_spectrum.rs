@@ -225,3 +225,33 @@ fn nyquist_silence_sizing_and_analytic_spectrum() {
     );
     assert!(prediction::resonances::<f64>(&[]).is_err());
 }
+
+#[test]
+fn overflowing_fft_preserves_representable_prediction_ratios() {
+    fn check<T: Scalar>(large: T, tolerance: f64) {
+        let mut plan = SpectrumPlan::<T>::new(16).unwrap();
+        let half = T::from_f64(large.into() * 0.5).unwrap();
+        for sign in [1.0, -1.0] {
+            let gain = T::from_f64(sign * large.into()).unwrap();
+            let spectrum = plan.spectrum(&[large, half], gain).unwrap();
+            for (bin, value) in spectrum.into_iter().enumerate() {
+                let angle = std::f64::consts::TAU * bin as f64 / 16.0;
+                let expected = sign / (1.25 + angle.cos()).sqrt();
+                assert!((value.into() / expected - 1.0).abs() <= tolerance);
+            }
+        }
+        let one = T::from_f64(1.0).unwrap();
+        let minus = T::from_f64(-large.into()).unwrap();
+        let cancelled = plan.spectrum(&[large, one, minus], one).unwrap();
+        assert_eq!(cancelled[0], one);
+        assert_eq!(cancelled[8], one);
+        assert!(plan.spectrum(&[large, minus], one).is_err());
+        assert_eq!(
+            plan.spectrum(&[large, minus], T::zero()).unwrap(),
+            vec![T::zero(); 16]
+        );
+        assert_eq!(plan.spectrum(&[one], one).unwrap(), vec![one; 16]);
+    }
+    check(f32::MAX, 2e-7);
+    check(f64::MAX, 4e-15);
+}

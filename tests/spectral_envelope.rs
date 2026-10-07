@@ -35,11 +35,12 @@ fn reference<T: Scalar>(bytes: &[u8], width: usize, tolerance: f64) {
         let expected_coeff = values::<T>(bytes, &mut cursor, width, n / 2 + 1);
         let mut plan = Plan::new(n).unwrap();
         let result = plan
-            .estimate_with(
+            .estimate_with_smoothing(
                 &spectrum,
                 f0,
                 if count == 0 { None } else { Some(count) },
                 NyquistPolicy::Legacy,
+                ciglet_rs::spectral_envelope::SmoothingPolicy::Legacy,
             )
             .unwrap();
         for (field, (actual, expected)) in [
@@ -81,8 +82,8 @@ fn unchanged_c_reference() {
 fn constant_spectrum_and_reusable_plan() {
     let mut plan = Plan::<f64>::new(32).unwrap();
     for value in [0.0, 0.5, 2.0] {
-        // Integer width avoids the source fractional endpoint artifact.
-        let result = plan.estimate(&[value; 17], 0.1875, None).unwrap();
+        // Fractional smoothing must preserve a constant spectrum.
+        let result = plan.estimate(&[value; 17], 0.09375, None).unwrap();
         let expected = ciglet_rs::approximation::logarithm((value + 1e-15) as f32).unwrap() as f64;
         for &log in &result.log_spectrum {
             assert!((log - expected).abs() < 2e-13);

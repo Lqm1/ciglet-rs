@@ -6,6 +6,13 @@ Custom window generation accepts stateful/fallible trig callbacks with independe
 f32/f64 weight and callback precision. Standard Iterator::fold covers the source
 reduction generator. See [custom macro compatibility](docs/custom-window-compatibility.md).
 
+Moving averages and RMS use stable scaled rolling sums, retain integer window
+locations and support fractional widths without losing DC. Explicit Legacy
+operations preserve original cumulative interpolation and scalar arithmetic.
+Spectral envelopes select smoothing and Nyquist policies independently. See
+[smoothing compatibility](docs/smoothing-compatibility.md) and
+[envelope compatibility](docs/spectral-envelope-compatibility.md).
+
 Gnuplot line/matrix commands support arbitrary Rust writers, nonfinite data,
 source-compatible formatting and all source colors. Native figures manage stdin,
 captured output and background child reaping on Windows and Unix. See

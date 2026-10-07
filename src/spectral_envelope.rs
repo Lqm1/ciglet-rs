@@ -1,5 +1,6 @@
 //! CheapTrick-style log spectral envelope with the original approximation stages.
 pub use crate::phase::NyquistPolicy;
+pub use crate::smoothing::Policy as SmoothingPolicy;
 use crate::{Error, approximation, real_cepstrum, smoothing, statistics::Scalar, vector};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -52,6 +53,23 @@ impl<T: Scalar> Plan<T> {
         harmonics: Option<usize>,
         policy: NyquistPolicy,
     ) -> Result<Envelope<T>, Error> {
+        self.estimate_with_smoothing(
+            spectrum,
+            fundamental,
+            harmonics,
+            policy,
+            SmoothingPolicy::Stable,
+        )
+    }
+    /// Select smoothing arithmetic independently of Nyquist replacement.
+    pub fn estimate_with_smoothing(
+        &mut self,
+        spectrum: &[T],
+        fundamental: T,
+        harmonics: Option<usize>,
+        policy: NyquistPolicy,
+        smoothing_policy: SmoothingPolicy,
+    ) -> Result<Envelope<T>, Error> {
         vector::validate(&[fundamental])?;
         vector::validate(spectrum)?;
         if spectrum.len() != self.bins()
@@ -67,14 +85,19 @@ impl<T: Scalar> Plan<T> {
             return Err(Error("envelope harmonic count is out of range"));
         }
         let n = T::from_usize(self.len()).unwrap();
-        let smoothing_width: T = vector::scalar(n.into() / (3.0 / fundamental.into()))?;
+        let smoothing_width: T = vector::scalar(if smoothing_policy == SmoothingPolicy::Legacy {
+            n.into() / (3.0 / fundamental.into())
+        } else {
+            (n.into() / 3.0) * fundamental.into()
+        })?;
         let reflection = (fundamental * n).into().ceil() as usize;
         let mut reflected = vector::buffer(self.bins())?;
         reflected.extend_from_slice(spectrum);
         for index in 0..reflection / 2 {
             reflected[index] = reflected[reflection - index];
         }
-        let mut smoothed = smoothing::moving_average(&reflected, smoothing_width)?;
+        let mut smoothed =
+            smoothing::moving_average_with(&reflected, smoothing_width, smoothing_policy)?;
         let count = match harmonics {
             Some(count) => Some(T::from_usize(count).unwrap()),
             None => {

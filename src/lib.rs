@@ -1,6 +1,7 @@
 //! Signal-processing operations reimplemented from ciglet.
 //! The complete public upstream API is being ported in stages.
 #![forbid(unsafe_code)]
+mod accumulation;
 pub mod approximation;
 pub mod array;
 pub mod cepstrum;

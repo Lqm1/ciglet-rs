@@ -63,5 +63,21 @@ All 135 integration tests passed on Windows MSVC x86_64/i686, Windows GNU
 x86_64 and Linux GNU x86_64/i686. After the final two-point oversized-count
 correction, all three envelope tests passed again on all five targets.
 Formatting, Clippy and warning-as-error Rustdoc pass. GCC/Linux and Zig/Windows
-regenerate byte-identical source fixtures. The fractional smoothing endpoint
-and tiny-width arithmetic remain explicitly pending in the numerical audit.
+regenerate byte-identical source fixtures.
+
+## Smoothing policy
+
+Default estimates now use stable smoothing, including fractional widths.
+`Plan::estimate_with_smoothing` selects `SmoothingPolicy` independently of the
+existing Nyquist policy. The original 144-case C comparison explicitly selects
+Legacy for both policies, preserving its original measured bounds. A constant
+spectrum regression now uses a fractional half-width and retains constant log
+spectrum and zero non-DC cepstral coefficients.
+
+Stable smoothing computes width as `(length / 3) * fundamental`; Legacy retains
+`length / (3 / fundamental)`. The stable order avoids an overflowing intermediate
+reciprocal for very small fundamentals. Other approximation, reflection,
+cepstral weighting and cutoff stages retain their documented behavior. Extreme
+fundamental conditioning of those stages remains subject to the numerical audit.
+All 165 integration tests pass on Windows MSVC x86_64/i686, Windows GNU x86_64
+and Linux GNU x86_64/i686. Formatting, Clippy and warning-as-error Rustdoc pass.

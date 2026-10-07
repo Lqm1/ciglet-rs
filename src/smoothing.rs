@@ -1,11 +1,151 @@
-//! Source-compatible moving averages with fractional half-widths.
-use crate::{Error, interpolation};
+//! Moving averages and RMS with endpoint replication and fractional half-widths.
+use crate::{
+    Error,
+    accumulation::{Scaled, Sum},
+    interpolation,
+    statistics::Scalar,
+    vector,
+};
 use rustfft::FftNum;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Policy {
+    /// Unit-spaced sample cells, compensated rolling sums and scaled squares.
+    Stable,
+    /// Original cumulative-sum interpolation grid and selected-scalar arithmetic.
+    Legacy,
+}
+
+/// Integer half-width h averages samples i-h+1 through i+h. Fractional widths
+/// add equal endpoint-cell fractions; positive widths below one average i/i+1.
+/// Zero width returns an unchanged copy. Endpoints are replicated.
+pub fn moving_average<T: Scalar>(signal: &[T], half_width: T) -> Result<Vec<T>, Error> {
+    moving_average_with(signal, half_width, Policy::Stable)
+}
+pub fn moving_average_with<T: Scalar>(
+    signal: &[T],
+    half_width: T,
+    policy: Policy,
+) -> Result<Vec<T>, Error> {
+    if policy == Policy::Legacy {
+        return legacy_average(signal, half_width);
+    }
+    vector::validate(signal)?;
+    let width = half_width.into();
+    if !width.is_finite() || !(0.0..=i32::MAX as f64).contains(&width) {
+        return Err(Error(
+            "moving average requires a nonnegative bounded half-width",
+        ));
+    }
+    stable(signal, width, false)
+}
+
+/// RMS over the same integer-width windows, with squares retained in scaled form.
+pub fn moving_rms<T: Scalar>(signal: &[T], half_width: usize) -> Result<Vec<T>, Error> {
+    moving_rms_with(signal, half_width, Policy::Stable)
+}
+pub fn moving_rms_with<T: Scalar>(
+    signal: &[T],
+    half_width: usize,
+    policy: Policy,
+) -> Result<Vec<T>, Error> {
+    if policy == Policy::Legacy {
+        return legacy_rms(signal, half_width);
+    }
+    vector::validate(signal)?;
+    if half_width > i32::MAX as usize {
+        return Err(Error("moving RMS half-width exceeds the supported range"));
+    }
+    stable(signal, half_width as f64, true)
+}
+
+fn add(sum: &mut Sum, sample: f64, weight: f64, rms: bool) {
+    if rms {
+        sum.weighted_square(sample, weight);
+    } else {
+        sum.product(Scaled::new(sample, 0), Scaled::new(weight, 0));
+    }
+}
+
+fn stable<T: Scalar>(signal: &[T], width: f64, rms: bool) -> Result<Vec<T>, Error> {
+    let mut output = vector::buffer(signal.len())?;
+    if signal.is_empty() {
+        return Ok(output);
+    }
+    if width == 0.0 {
+        for &sample in signal {
+            output.push(if rms {
+                vector::scalar(sample.into().abs())?
+            } else {
+                sample
+            });
+        }
+        return Ok(output);
+    }
+    let minimum = signal
+        .iter()
+        .map(|&x| x.into())
+        .fold(f64::INFINITY, f64::min);
+    let maximum = signal
+        .iter()
+        .map(|&x| x.into())
+        .fold(f64::NEG_INFINITY, f64::max);
+    let absolute_maximum = minimum.abs().max(maximum.abs());
+    let integer = width.floor() as i64;
+    let fraction = width - integer as f64;
+    let length = signal.len() as i64;
+    let mut sum = Sum::new();
+    let mut start = 0_usize;
+    let mut end = 0_usize;
+    for index in 0..signal.len() {
+        let lower = index as i64 - integer + 1;
+        let upper = index as i64 + integer + 1;
+        let next_start = lower.clamp(0, length) as usize;
+        let next_end = upper.clamp(0, length) as usize;
+        while start < next_start {
+            if start < end {
+                add(&mut sum, signal[start].into(), -1.0, rms);
+            }
+            start += 1;
+        }
+        end = end.max(start);
+        while end < next_end {
+            add(&mut sum, signal[end].into(), 1.0, rms);
+            end += 1;
+        }
+        let edges = [
+            (signal[0].into(), (-lower).max(0) as f64),
+            (
+                signal[signal.len() - 1].into(),
+                (upper - length).max(0) as f64,
+            ),
+            (
+                signal[(lower - 1).clamp(0, length - 1) as usize].into(),
+                fraction,
+            ),
+            (signal[upper.clamp(0, length - 1) as usize].into(), fraction),
+        ];
+        for (sample, weight) in edges {
+            add(&mut sum, sample, weight, rms);
+        }
+        let result = sum.finish(2.0 * width);
+        let value = if rms {
+            result.sqrt().clamp(0.0, absolute_maximum)
+        } else {
+            result.value().clamp(minimum, maximum)
+        };
+        output.push(vector::scalar(value)?);
+        for (sample, weight) in edges {
+            add(&mut sum, sample, -weight, rms);
+        }
+    }
+    Ok(output)
+}
 
 /// Preserve C cumulative-sum and fractional interpolation arithmetic.
 /// Integer half-width h averages samples i-h+1 through i+h with endpoint
 /// replication. Zero half-width returns an unchanged owned copy.
-pub fn moving_average<T: FftNum + Into<f64>>(signal: &[T], half_width: T) -> Result<Vec<T>, Error> {
+fn legacy_average<T: FftNum + Into<f64>>(signal: &[T], half_width: T) -> Result<Vec<T>, Error> {
     if signal.len() > i32::MAX as usize
         || !half_width.into().is_finite()
         || half_width.into() < 0.0
@@ -87,7 +227,7 @@ pub fn moving_average<T: FftNum + Into<f64>>(signal: &[T], half_width: T) -> Res
 
 /// Square, average using the source integer half-width, and take a double
 /// precision square root before rounding to the selected scalar type.
-pub fn moving_rms<T: FftNum + Into<f64>>(signal: &[T], half_width: usize) -> Result<Vec<T>, Error> {
+fn legacy_rms<T: FftNum + Into<f64>>(signal: &[T], half_width: usize) -> Result<Vec<T>, Error> {
     if signal.len() > i32::MAX as usize || half_width > i32::MAX as usize {
         return Err(Error("moving RMS half-width exceeds the legacy range"));
     }
@@ -104,7 +244,7 @@ pub fn moving_rms<T: FftNum + Into<f64>>(signal: &[T], half_width: usize) -> Res
     }
     let half_width =
         T::from_usize(half_width).ok_or(Error("moving RMS half-width cannot be represented"))?;
-    let mut output = moving_average(&squares, half_width)?;
+    let mut output = legacy_average(&squares, half_width)?;
     for value in &mut output {
         *value = if (*value).into() <= 0.0 {
             T::zero()

@@ -88,3 +88,27 @@ finite correlation and coefficients in both precisions.
 Primary Rust interfaces are
 [checked_next_power_of_two](https://doc.rust-lang.org/std/primitive.usize.html#method.checked_next_power_of_two)
 and [stable sort_by](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_by).
+
+## Exceptional FFT bins
+
+Ordinary finite nonzero FFT magnitudes retain their existing arithmetic. A
+nonfinite or zero magnitude now triggers a direct scaled DFT for that bin.
+Compensated exponent buckets retain coefficient products and cancellation
+without first rounding an overflowing response into the selected scalar type.
+Exact quarter-turn phases avoid trigonometric residuals at DC and Nyquist.
+The signed gain is divided by the scaled response before conversion; a genuine
+zero response remains an error for nonzero gain. Zero gain retains its early
+return, and plans remain reusable after errors.
+
+The fallback costs coefficient-count work for each exceptional bin. General
+trigonometric results use the primary Rust
+[sin_cos](https://doc.rust-lang.org/std/primitive.f64.html#method.sin_cos) and
+[hypot](https://doc.rust-lang.org/std/primitive.f64.html#method.hypot) APIs;
+platform-independent trigonometric bit equality is not claimed.
+Independent float/double tests compare all sixteen bins of maximum-valued
+first-order coefficients with an analytic transfer response, for both gain
+signs. They also recover unit DC/Nyquist after huge coefficient cancellation,
+reject true poles, and verify zero-gain behavior and reuse. Original-C reference
+bounds remain unchanged. All 165 integration tests pass on Windows MSVC
+x86_64/i686, Windows GNU x86_64 and Linux GNU x86_64/i686. Formatting,
+Clippy and warning-as-error Rustdoc pass.
