@@ -1,5 +1,15 @@
 # DSP reference fixture
 
+The four `matrix-{legacy,corrected}-{float,double}.bin` fixtures use `MAT1`:
+scalar width and correction flag, then counts of product, row-swap and LU cases,
+all integers as little-endian u32. Product records store rows, inner size and
+columns, both inputs, matrix product and vector product. Swap records store
+rows, columns, input matrix/vector, ordered swap indices and both outputs.
+LU records store order, original matrix/right-hand side, swaps, pivoted matrix,
+permuted right-hand side, packed factors and solution. Floating payloads use
+the header scalar width. See `docs/matrix-compatibility.md` for provenance,
+corrections and reproduction commands.
+
 `polynomial-float.bin` and `polynomial-double.bin` contain original-C polynomial
 evaluations and roots in `POL1` format. The header stores scalar width and record
 count as little-endian u32. Each record stores coefficient count, complex

@@ -13,6 +13,7 @@ pub mod frame;
 pub mod frequency;
 pub mod interpolation;
 pub mod kalman;
+pub mod matrix;
 pub mod median;
 pub mod polynomial;
 pub mod resampling;

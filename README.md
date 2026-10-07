@@ -6,6 +6,8 @@ The port is in progress. Statistics, f32/f64 precise and level-two window functi
 
 The scalar Kalman API supports time-varying process/observation noise, explicit or first-measurement initialization, posterior variances, source-compatible likelihood and backward smoothing. Empty inputs and deterministic smoothing have checked behavior. See docs/kalman-compatibility.md.
 
+Owned column-major matrices support zero/identity construction, rectangular products and ordered row swaps. Source-compatible preliminary pivoting, packed LU factorization and substitution are available alongside elimination-stage partial pivoting for complete solves. Rectangular stride/wrapper defects are corrected, and singular or nonfinite arithmetic returns errors. See docs/matrix-compatibility.md for the C comparisons and independent residual checks.
+
 ```powershell
 cargo test
 cargo test --target i686-pc-windows-msvc

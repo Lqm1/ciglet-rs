@@ -1,0 +1,26 @@
+--- a/ciglet.c
++++ b/ciglet.c
+@@ -300,9 +300,9 @@
+     int permrow = perm[i];
+     if(permrow != i) { // exchange row i with row perm[i]
+       for(int j = 0; j < n; j ++) {
+-        FP_TYPE tmp = A[i + j * n];
+-        A[i + j * n] = A[permrow + j * n];
+-        A[permrow + j * n] = tmp;
++        FP_TYPE tmp = A[i + j * m];
++        A[i + j * m] = A[permrow + j * m];
++        A[permrow + j * m] = tmp;
+       }
+     }
+   }
+--- a/ciglet.h
++++ b/ciglet.h
+@@ -462,7 +462,7 @@
+ 
+ // A (m x n) times x (n * 1) -> b (m * 1)
+ static inline void mvecmul(FP_TYPE* A, FP_TYPE* x, FP_TYPE* b, int m, int n) {
+-  cig_mvecmul(A, x, b, n, n);
++  cig_mvecmul(A, x, b, m, n);
+ }
+ 
+ static inline FP_TYPE dot(FP_TYPE* x, FP_TYPE* y, int n) {

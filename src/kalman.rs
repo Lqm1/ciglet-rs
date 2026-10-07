@@ -43,7 +43,7 @@ pub fn filter<T: FftNum + Into<f64>>(
 }
 
 /// Filter with an explicit initial mean, as in cig_kalmanf1d. The initial
-/// predicted variance is process_variances[0]; later steps add process noise.
+/// predicted variance is `process_variances[0]`; later steps add process noise.
 /// Likelihood retains the source's f32 approximate logarithm and f64 expression
 /// evaluation, rounding the running sum into T after every measurement.
 pub fn filter_with_initial<T: FftNum + Into<f64>>(
