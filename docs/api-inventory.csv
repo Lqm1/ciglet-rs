@@ -143,7 +143,7 @@
 "iota","ciglet.h","vector::integer_sequence","implemented","f32/f64 unchanged C corpus; corrected empty/range bounds; tests/vector_phase.rs; docs/vector-phase-compatibility.md"
 "irceps","ciglet.h","real_cepstrum::Plan::reconstruct and to_log_spectrum","implemented","f32/f64 source prefix mirroring and safe bounds; tests/real_cepstrum.rs; docs/real-cepstrum-compatibility.md"
 "istft","ciglet.h","stft::synthesize_regular","implemented","validated FrameGrid; original zero offset and 32-sample fade; explicit Nyquist policy; tests/istft.rs"
-"itakura_saito","ciglet.h","","pending",""
+"itakura_saito","ciglet.h","distance::{log_itakura_saito_with,log_itakura_saito,itakura_saito}","implemented","source approximate log-mean output and explicit Legacy artifacts; stable near-identity/extreme ratios; tests/distance.rs; docs/distance-compatibility.md"
 "kalmanf1d","ciglet.h","kalman::filter","implemented","tests/kalman.rs; original first-measurement initialization"
 "kalmans1d","ciglet.h","kalman::smooth","implemented","tests/kalman.rs"
 "levinson","ciglet.h","prediction::levinson","implemented","same source wrapper; docs/prediction-compatibility.md"

@@ -115,3 +115,7 @@ The minphase lifter doubles coefficient nfft/2 and clears negative quefrencies o
 ## Aliased sinc pole sign and derivative plateau
 
 The original safe_aliased_sinc returns length whenever the rounded sine denominator is below 1e-4, assigning a positive limit for positive even lengths at 2*pi. The correct limit there is negative length. The original safe_aliased_dsinc returns zero below 1e-5, hiding nonzero small-angle slopes and permitting cancellation elsewhere. The Stable policy evaluates in double, uses small-angle series and retains integer-length pole parity; the Legacy policy preserves original thresholds and scalar rounding. Analytic length-two/three and fractional-slope tests verify the corrections independently of C. See docs/sinc-compatibility.md.
+
+## Itakura-Saito approximate-log artifacts
+
+The source itakura_saito returns an approximate logarithm of the mean divergence. Its binary32 bit-based logs introduce a nonzero identity baseline and produce finite artifacts for zero, overflowing or NaN intermediate ratios/means. The corrected distance policy uses a factored near-identity series, log-domain extreme ratios and scaled compensated accumulation. Identical positive spectra yield zero mean and negative-infinity log mean; a zero against a positive bin yields infinity; a paired zero is an explicit domain error. Legacy preserves original accumulation and bit-approximation outputs, including the tested artifacts. No implicit input floor is introduced. See docs/distance-compatibility.md.

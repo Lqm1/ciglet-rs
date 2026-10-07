@@ -216,9 +216,19 @@ pub fn logarithm2(value: f32) -> Result<f32, Error> {
             "approximate logarithm requires a positive finite value",
         ));
     }
+    Ok(logarithm2_bits(value))
+}
+
+fn logarithm2_bits(value: f32) -> f32 {
     let mantissa = f32::from_bits((value.to_bits() & 0x007f_ffff) | 0x3f00_0000);
     let exponent = value.to_bits() as f32 * 1.192_092_9e-7;
-    Ok(exponent - 124.225_52 - 1.498_030_3 * mantissa - 1.725_88 / (0.352_088_72 + mantissa))
+    exponent - 124.225_52 - 1.498_030_3 * mantissa - 1.725_88 / (0.352_088_72 + mantissa)
+}
+
+// Used only for explicit source compatibility when intermediate distance
+// values fall outside the mathematical log domain. Public log APIs validate.
+pub(crate) fn logarithm_legacy_bits(value: f32) -> f32 {
+    std::f32::consts::LN_2 * logarithm2_bits(value)
 }
 
 pub fn logarithm(value: f32) -> Result<f32, Error> {

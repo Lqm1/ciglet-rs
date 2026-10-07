@@ -2,6 +2,11 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Itakura-Saito distance exposes corrected mean/log-mean divergence and an explicit
+source-compatible approximate log mean. Stable evaluation retains near-identity
+distances and handles extreme ratios in the log domain. See
+[distance compatibility](docs/distance-compatibility.md).
+
 Aliased DTFT sinc and its angular derivative support f32/f64, source Legacy
 thresholds and corrected small-angle and removable-pole evaluation. See
 [sinc compatibility](docs/sinc-compatibility.md).
