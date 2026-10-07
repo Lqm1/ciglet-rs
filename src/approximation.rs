@@ -3,6 +3,7 @@
 use crate::Error;
 
 pub mod hyperbolic;
+pub mod special;
 pub mod trigonometric;
 
 /// Upstream numerical levels, from the fastest approximation to host libm.

@@ -9,8 +9,9 @@ The installed header defines 44 scalar functions and 44 SSE2 four-lane
 functions. `bundled-approximation-inventory.csv` records each one. Thirteen
 scalar functions already map to existing approximation APIs. Eight further
 scalar functions map to `approximation::hyperbolic`. Nine additional scalar
-functions map to restricted trigonometry, full tangent and faster power,
-leaving 14 scalar and all 44 four-lane functions pending. Existing mappings do not establish
+functions map to restricted trigonometry, full tangent and faster power.
+The remaining fourteen scalar functions now map to `approximation::special`,
+leaving all 44 four-lane functions pending. Existing mappings do not establish
 complete bundled-specific verification by themselves.
 
 ## Hyperbolic and sigmoid functions
@@ -84,10 +85,71 @@ Exact mode uses host double sine/cosine/tangent before conversion. Their
 does not guarantee identical bits across platforms. Approximate and Fast
 retain explicit binary32 arithmetic without fused multiply-add calls.
 
+## Error, gamma and Lambert W functions
+
+`approximation::special` exposes fourteen checked scalar functions. The `_fast`
+suffix selects the source's faster variant. These functions have no host Exact
+mode because the installed source exposes two approximation algorithms here.
+
+| Source | Rust function |
+| --- | --- |
+| fasterfc / fastererfc | complementary_error / complementary_error_fast |
+| fasterf / fastererf | error / error_fast |
+| fastinverseerf / fasterinverseerf | inverse_error / inverse_error_fast |
+| fastlgamma / fasterlgamma | log_gamma / log_gamma_fast |
+| fastdigamma / fasterdigamma | digamma / digamma_fast |
+| fastlambertw / fasterlambertw | lambert_w / lambert_w_fast |
+| fastlambertwexpx / fasterlambertwexpx | lambert_w_exp / lambert_w_exp_fast |
+
+The unusual `fasterfc` spelling means fast erfc; it is the more accurate variant,
+distinct from `fastererfc`. Rust names express that distinction without preserving
+the ambiguous spelling. The algorithms retain binary32 stages and source
+coefficients, including natural-log coefficients, the inverse-error rational
+correction, branch-selected Lambert initialization and distinct refinements.
+W(exp(value)) is evaluated without forming exp(value). Both such variants use
+the faster base-two exponential in their initialization, as in the source.
+
+Inputs and outputs must be finite. Inverse-error arguments must be strictly
+between -1 and 1. Gamma/digamma domains follow their actual intermediate
+logarithm arguments and poles, rather than a blanket positive-input restriction.
+The more accurate log-gamma accepts source-defined negative inputs between -2
+and -1; digamma also accepts its valid negative intervals. Faster log-gamma's
+log(value) still requires positive values, and faster digamma's log(1 + value)
+requires value > -1 while excluding zero. Principal real
+Lambert W requires value >= -1/e; this comparison widens the binary32 input
+before applying the double constant. Intermediate logarithms and exponentials
+use existing checked APIs. Defined ordinary source values match; out-of-domain
+or unrepresentable stages return errors rather than unchecked bit conversions.
+No saturation or exact-root solver replaces the source approximations.
+
+The unchanged original header supplies 232 bit-encoded records: eighty for
+error/complementary error, twenty-eight for inverse error, sixty for
+gamma/digamma, twenty-four for W(value), and forty for W(exp(value)). The inputs
+include zero signs, tiny values, inverse-error values next to +/-1, positive
+gamma inputs from 0.0001 through 1e6 and twelve valid negative gamma/digamma
+cases, negative and positive principal-branch
+arguments, and adjacent floats around both Lambert branch thresholds. All
+232 results match binary32 bits, and Windows Zig/Linux GCC generate identical
+fixture bytes with contraction disabled. Domain and nonfinite tests are
+separate from this source comparison. Approximation accuracy for unmeasured
+extreme conditioning is not established by bit compatibility.
+
+The corpus exposes a reproduced source defect: both W(exp(value)) variants
+produce a negative value at -100, although exp(value) is positive and the
+principal real W must be positive. This checkpoint records the original bits
+so a subsequent numerical correction can be distinguished from a porting
+error. That correction remains required before native acceptance. Source bit
+compatibility is not a correctness claim for this exceptional input.
+
+All five native targets pass the special-function, scalar-math, hyperbolic
+and trigonometric integration suites in Debug and Release, nine tests per
+configuration. The final ten logs include the negative-domain expansion.
+Clippy and Rustdoc pass with warnings denied, as do formatting and whitespace
+checks. This is focused verification; final combined native acceptance must
+also include subsequent numerical corrections and four-lane implementation.
+
 ## Remaining interfaces
 
-Error/complementary-error and inverse-error functions, log-gamma/digamma,
-Lambert W variants still require implementation and independent C verification.
 The four-lane functions require their own source arithmetic audit; mapping
 each to a scalar call must not be presumed bit-equivalent. Portable owned
 four-element arrays can replace platform vector types without requiring C/SSE
