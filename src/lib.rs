@@ -4,6 +4,7 @@
 pub mod approximation;
 pub mod chirp_z;
 pub mod cosine;
+pub mod filterbank;
 pub mod fourier;
 pub mod frame;
 pub mod frequency;
