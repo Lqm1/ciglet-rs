@@ -43,7 +43,7 @@ complex-compatibility.md, glottal-compatibility.md and plotting-audit.md for
 source arithmetic, corrections and reference reproduction.
 
 This initial audit covers ciglet.h only. The installed fastapprox header now
-has a separate 88-function inventory and concrete pending implementation rows;
+has a separate 88-function inventory with all function mappings implemented;
 see bundled-approximation-compatibility.md. Implementation export locations,
 build-selected FP_TYPE behavior and bundled helper macros/types also require
 mapping, alongside the independent SHIRO/liblrhsmm inventories. Numeric

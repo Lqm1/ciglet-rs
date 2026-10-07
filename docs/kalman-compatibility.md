@@ -69,6 +69,11 @@ hand-computed posterior and backward update, deterministic zero uncertainty,
 empty input, validation errors, overflow and extreme f64 variance likelihood.
 Other native targets and original -Ofast comparisons are separately pending.
 
+The later full native matrix verifies these strict fixtures on all five targets.
+Original `-Ofast` and effective fast-math comparisons at both precisions are now
+recorded in `dsp-optimization-audit.md` and its compiler-specific JSON reports.
+The earlier sentence describes the initial checkpoint, not the current matrix.
+
 Rust primary references:
 https://doc.rust-lang.org/std/convert/trait.Into.html,
 https://doc.rust-lang.org/std/primitive.slice.html,

@@ -138,7 +138,7 @@ pub fn linear_uniform<T: FftNum + Into<f64>>(
     Ok(output)
 }
 
-pub use crate::resampling::BoundaryPolicy;
+pub use crate::resampling::{BoundaryPolicy, KernelPolicy};
 
 /// Four-lobe Lanczos interpolation on source coordinates occupying [start, end).
 /// Include sample zero by default, correcting upstream's strict-positive bound.
@@ -148,7 +148,14 @@ pub fn sinc_uniform<T: FftNum + Into<f64>>(
     values: &[T],
     positions: &[T],
 ) -> Result<Vec<T>, Error> {
-    sinc_uniform_with(start, end, values, positions, BoundaryPolicy::IncludeFirst)
+    sinc_uniform_with_kernel(
+        start,
+        end,
+        values,
+        positions,
+        BoundaryPolicy::IncludeFirst,
+        KernelPolicy::Stable,
+    )
 }
 
 /// LegacySkipFirst retains the source's omission of sample zero. Both policies
@@ -159,6 +166,18 @@ pub fn sinc_uniform_with<T: FftNum + Into<f64>>(
     values: &[T],
     positions: &[T],
     policy: BoundaryPolicy,
+) -> Result<Vec<T>, Error> {
+    sinc_uniform_with_kernel(start, end, values, positions, policy, KernelPolicy::Legacy)
+}
+
+/// Select boundary handling and corrected or source-compatible kernel arithmetic.
+pub fn sinc_uniform_with_kernel<T: FftNum + Into<f64>>(
+    start: T,
+    end: T,
+    values: &[T],
+    positions: &[T],
+    policy: BoundaryPolicy,
+    kernel_policy: KernelPolicy,
 ) -> Result<Vec<T>, Error> {
     validate(values, positions)?;
     if !start.into().is_finite() || !end.into().is_finite() || start.into() >= end.into() {
@@ -190,7 +209,9 @@ pub fn sinc_uniform_with<T: FftNum + Into<f64>>(
                 let distance =
                     fraction - T::from_i32(offset).expect("small offset is representable");
                 value = checked(
-                    value + crate::resampling::kernel(distance)? * values[source as usize],
+                    value
+                        + crate::resampling::kernel_with(distance, kernel_policy)?
+                            * values[source as usize],
                 )?;
             }
         }

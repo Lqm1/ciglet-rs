@@ -11,6 +11,36 @@ pub enum BoundaryPolicy {
     LegacySkipFirst,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum KernelPolicy {
+    /// Evaluate the removable near-zero singularity without binary32 sine reduction.
+    #[default]
+    Stable,
+    /// Preserve the original approximate sine and scalar staging, including its near-zero defect.
+    Legacy,
+}
+
+pub(crate) fn kernel_with<T: FftNum + Into<f64>>(
+    distance: T,
+    policy: KernelPolicy,
+) -> Result<T, Error> {
+    let x = distance.into();
+    if policy == KernelPolicy::Stable && x.abs() <= 1e-3 {
+        // sinc(pi*x) * sinc(pi*x/4), through the eighth-order term.
+        // At this radius the omitted term is below 2.4e-29 for each factor.
+        let sinc = |angle: f64| {
+            let square = angle * angle;
+            1.0 + square
+                * (-1.0 / 6.0
+                    + square * (1.0 / 120.0 + square * (-1.0 / 5040.0 + square / 362880.0)))
+        };
+        let angle = std::f64::consts::PI * x;
+        return T::from_f64(sinc(angle) * sinc(angle / 4.0))
+            .ok_or(Error("resampling weight cannot be represented"));
+    }
+    kernel(distance)
+}
+
 pub(crate) fn kernel<T: FftNum + Into<f64>>(distance: T) -> Result<T, Error> {
     let x = distance.into();
     if x == 0.0 {
@@ -33,13 +63,30 @@ pub(crate) fn kernel<T: FftNum + Into<f64>>(distance: T) -> Result<T, Error> {
 /// Ratio is output sample rate / input sample rate. Downsampling first applies
 /// the original 32-tap Hamming FIR and compensates its 16-sample delay.
 pub fn resample<T: FftNum + Into<f64>>(signal: &[T], ratio: T) -> Result<Vec<T>, Error> {
-    resample_with(signal, ratio, BoundaryPolicy::IncludeFirst)
+    resample_with_kernel(
+        signal,
+        ratio,
+        BoundaryPolicy::IncludeFirst,
+        KernelPolicy::Stable,
+    )
 }
 
+/// Select the boundary convention while preserving the original kernel arithmetic.
+/// Use `resample_with_kernel` to independently select corrected near-zero evaluation.
 pub fn resample_with<T: FftNum + Into<f64>>(
     signal: &[T],
     ratio: T,
     policy: BoundaryPolicy,
+) -> Result<Vec<T>, Error> {
+    resample_with_kernel(signal, ratio, policy, KernelPolicy::Legacy)
+}
+
+/// Select sample-zero handling and numerical kernel behavior independently.
+pub fn resample_with_kernel<T: FftNum + Into<f64>>(
+    signal: &[T],
+    ratio: T,
+    policy: BoundaryPolicy,
+    kernel_policy: KernelPolicy,
 ) -> Result<Vec<T>, Error> {
     if signal.len() > i32::MAX as usize
         || !ratio.into().is_finite()
@@ -91,7 +138,7 @@ pub fn resample_with<T: FftNum + Into<f64>>(
                 continue;
             }
             let distance = fraction - T::from_i32(offset).expect("small offset is representable");
-            *value = *value + kernel(distance)? * input[source as usize];
+            *value = *value + kernel_with(distance, kernel_policy)? * input[source as usize];
         }
     }
     Ok(output)

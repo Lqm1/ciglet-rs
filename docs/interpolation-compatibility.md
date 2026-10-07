@@ -60,3 +60,10 @@ input, an impulse at sample zero and distant sinc queries. Rust owns returned
 vectors and never mutates borrowed input. All 72 integration tests pass on Windows MSVC64/32, Windows GNU64 and
 Linux GNU64/32, including these eight interpolation tests. Formatting and
 Clippy with warnings denied pass on the primary Windows target.
+
+The later near-zero conditioning correction uses KernelPolicy independently
+of sample-zero handling. Default sinc_uniform selects Stable, while the existing
+sinc_uniform_with keeps source kernel arithmetic. sinc_uniform_with_kernel
+exposes both policies explicitly. Original/disclosed-corrected fixture comparisons
+are unchanged; tests/resampling_conditioning.rs adds independent mathematical
+limit checks. See dsp-optimization-audit.md for measurements and current validation.

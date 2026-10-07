@@ -1,0 +1,788 @@
+{
+  "compiler": "gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "source_sha256": "d2ed7a0da09607b67618f0220df0542fd051ac432f65fa29796c250a50b7f48c",
+  "contraction": "disabled",
+  "profiles": {
+    "strict": {
+      "flags": [
+        "-O2"
+      ],
+      "macros": [
+        "#define __FINITE_MATH_ONLY__ 0"
+      ]
+    },
+    "ofast": {
+      "flags": [
+        "-Ofast"
+      ],
+      "macros": [
+        "#define __FINITE_MATH_ONLY__ 1",
+        "#define __FAST_MATH__ 1"
+      ]
+    },
+    "fast_math": {
+      "flags": [
+        "-O3",
+        "-ffast-math"
+      ],
+      "macros": [
+        "#define __FINITE_MATH_ONLY__ 1",
+        "#define __FAST_MATH__ 1"
+      ]
+    }
+  },
+  "results": [
+    {
+      "family": "kalman",
+      "precision": "float",
+      "profile": "strict",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      },
+      "outputs": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      }
+    },
+    {
+      "family": "kalman",
+      "precision": "float",
+      "profile": "ofast",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 87,
+          "maximum_absolute_error": 2.9802322387695312e-08,
+          "maximum_normalized_error": 2.9802322387695312e-08,
+          "first_difference": {
+            "index": 461,
+            "strict": 0.00042622900218702853,
+            "optimized": 0.00042622897308319807
+          },
+          "maximum_difference": {
+            "index": 576,
+            "strict": -0.021958112716674805,
+            "optimized": -0.021958082914352417
+          }
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 171,
+          "maximum_absolute_error": 3.725290298461914e-09,
+          "maximum_normalized_error": 3.725290298461914e-09,
+          "first_difference": {
+            "index": 86,
+            "strict": 0.04859195649623871,
+            "optimized": 0.04859195277094841
+          },
+          "maximum_difference": {
+            "index": 86,
+            "strict": 0.04859195649623871,
+            "optimized": 0.04859195277094841
+          }
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 122,
+          "maximum_absolute_error": 2.9802322387695312e-08,
+          "maximum_normalized_error": 2.9802322387695312e-08,
+          "first_difference": {
+            "index": 151,
+            "strict": -0.0746663361787796,
+            "optimized": -0.074666328728199
+          },
+          "maximum_difference": {
+            "index": 1144,
+            "strict": 0.055845871567726135,
+            "optimized": 0.05584590137004852
+          }
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 28,
+          "maximum_absolute_error": 9.5367431640625e-07,
+          "maximum_normalized_error": 2.9164082303665027e-07,
+          "first_difference": {
+            "index": 28,
+            "strict": 0.4289747476577759,
+            "optimized": 0.4289746880531311
+          },
+          "maximum_difference": {
+            "index": 97,
+            "strict": -8.825824737548828,
+            "optimized": -8.825823783874512
+          }
+        }
+      }
+    },
+    {
+      "family": "kalman",
+      "precision": "float",
+      "profile": "fast_math",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 87,
+          "maximum_absolute_error": 2.9802322387695312e-08,
+          "maximum_normalized_error": 2.9802322387695312e-08,
+          "first_difference": {
+            "index": 461,
+            "strict": 0.00042622900218702853,
+            "optimized": 0.00042622897308319807
+          },
+          "maximum_difference": {
+            "index": 576,
+            "strict": -0.021958112716674805,
+            "optimized": -0.021958082914352417
+          }
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 171,
+          "maximum_absolute_error": 3.725290298461914e-09,
+          "maximum_normalized_error": 3.725290298461914e-09,
+          "first_difference": {
+            "index": 86,
+            "strict": 0.04859195649623871,
+            "optimized": 0.04859195277094841
+          },
+          "maximum_difference": {
+            "index": 86,
+            "strict": 0.04859195649623871,
+            "optimized": 0.04859195277094841
+          }
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 122,
+          "maximum_absolute_error": 2.9802322387695312e-08,
+          "maximum_normalized_error": 2.9802322387695312e-08,
+          "first_difference": {
+            "index": 151,
+            "strict": -0.0746663361787796,
+            "optimized": -0.074666328728199
+          },
+          "maximum_difference": {
+            "index": 1144,
+            "strict": 0.055845871567726135,
+            "optimized": 0.05584590137004852
+          }
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 28,
+          "maximum_absolute_error": 9.5367431640625e-07,
+          "maximum_normalized_error": 2.9164082303665027e-07,
+          "first_difference": {
+            "index": 28,
+            "strict": 0.4289747476577759,
+            "optimized": 0.4289746880531311
+          },
+          "maximum_difference": {
+            "index": 97,
+            "strict": -8.825824737548828,
+            "optimized": -8.825823783874512
+          }
+        }
+      }
+    },
+    {
+      "family": "kalman",
+      "precision": "double",
+      "profile": "strict",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      },
+      "outputs": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      }
+    },
+    {
+      "family": "kalman",
+      "precision": "double",
+      "profile": "ofast",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 101,
+          "maximum_absolute_error": 2.7755575615628914e-17,
+          "maximum_normalized_error": 2.7755575615628914e-17,
+          "first_difference": {
+            "index": 123,
+            "strict": 0.0026426811888290097,
+            "optimized": 0.0026426811888290093
+          },
+          "maximum_difference": {
+            "index": 312,
+            "strict": 0.2498047483318075,
+            "optimized": 0.24980474833180752
+          }
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 216,
+          "maximum_absolute_error": 6.938893903907228e-18,
+          "maximum_normalized_error": 6.938893903907228e-18,
+          "first_difference": {
+            "index": 84,
+            "strict": 0.047317596566523595,
+            "optimized": 0.0473175965665236
+          },
+          "maximum_difference": {
+            "index": 84,
+            "strict": 0.047317596566523595,
+            "optimized": 0.0473175965665236
+          }
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 170,
+          "maximum_absolute_error": 2.7755575615628914e-17,
+          "maximum_normalized_error": 2.7755575615628914e-17,
+          "first_difference": {
+            "index": 111,
+            "strict": 0.026004678346375112,
+            "optimized": 0.02600467834637511
+          },
+          "maximum_difference": {
+            "index": 244,
+            "strict": -0.18590883556691165,
+            "optimized": -0.18590883556691162
+          }
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 45,
+          "maximum_absolute_error": 6.034970283508301e-07,
+          "maximum_normalized_error": 2.7398291137310117e-07,
+          "first_difference": {
+            "index": 28,
+            "strict": 0.4289747402071953,
+            "optimized": 0.4289747029542923
+          },
+          "maximum_difference": {
+            "index": 81,
+            "strict": -3.8154233433306217,
+            "optimized": -3.81542394682765
+          }
+        }
+      }
+    },
+    {
+      "family": "kalman",
+      "precision": "double",
+      "profile": "fast_math",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "means": {
+          "values": 1188,
+          "changed_bits": 101,
+          "maximum_absolute_error": 2.7755575615628914e-17,
+          "maximum_normalized_error": 2.7755575615628914e-17,
+          "first_difference": {
+            "index": 123,
+            "strict": 0.0026426811888290097,
+            "optimized": 0.0026426811888290093
+          },
+          "maximum_difference": {
+            "index": 312,
+            "strict": 0.2498047483318075,
+            "optimized": 0.24980474833180752
+          }
+        },
+        "variances": {
+          "values": 1188,
+          "changed_bits": 216,
+          "maximum_absolute_error": 6.938893903907228e-18,
+          "maximum_normalized_error": 6.938893903907228e-18,
+          "first_difference": {
+            "index": 84,
+            "strict": 0.047317596566523595,
+            "optimized": 0.0473175965665236
+          },
+          "maximum_difference": {
+            "index": 84,
+            "strict": 0.047317596566523595,
+            "optimized": 0.0473175965665236
+          }
+        },
+        "smoothed": {
+          "values": 1188,
+          "changed_bits": 170,
+          "maximum_absolute_error": 2.7755575615628914e-17,
+          "maximum_normalized_error": 2.7755575615628914e-17,
+          "first_difference": {
+            "index": 111,
+            "strict": 0.026004678346375112,
+            "optimized": 0.02600467834637511
+          },
+          "maximum_difference": {
+            "index": 244,
+            "strict": -0.18590883556691165,
+            "optimized": -0.18590883556691162
+          }
+        },
+        "likelihood": {
+          "values": 108,
+          "changed_bits": 45,
+          "maximum_absolute_error": 6.034970283508301e-07,
+          "maximum_normalized_error": 2.7398291137310117e-07,
+          "first_difference": {
+            "index": 28,
+            "strict": 0.4289747402071953,
+            "optimized": 0.4289747029542923
+          },
+          "maximum_difference": {
+            "index": 81,
+            "strict": -3.8154233433306217,
+            "optimized": -3.81542394682765
+          }
+        }
+      }
+    },
+    {
+      "family": "filter_resample",
+      "precision": "float",
+      "profile": "strict",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      },
+      "outputs": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      }
+    },
+    {
+      "family": "filter_resample",
+      "precision": "float",
+      "profile": "ofast",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 2223,
+          "maximum_absolute_error": 5.960464477539063e-08,
+          "maximum_normalized_error": 5.960464477539063e-08,
+          "first_difference": {
+            "index": 124,
+            "strict": 0.5833333134651184,
+            "optimized": 0.5833333730697632
+          },
+          "maximum_difference": {
+            "index": 124,
+            "strict": 0.5833333134651184,
+            "optimized": 0.5833333730697632
+          }
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 204,
+          "maximum_absolute_error": 0.03439971059560776,
+          "maximum_normalized_error": 0.03439971059560776,
+          "first_difference": {
+            "index": 33,
+            "strict": 0.03988019749522209,
+            "optimized": 0.039880216121673584
+          },
+          "maximum_difference": {
+            "index": 1575,
+            "strict": -0.125,
+            "optimized": -0.09060028940439224
+          }
+        }
+      }
+    },
+    {
+      "family": "filter_resample",
+      "precision": "float",
+      "profile": "fast_math",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 2223,
+          "maximum_absolute_error": 5.960464477539063e-08,
+          "maximum_normalized_error": 5.960464477539063e-08,
+          "first_difference": {
+            "index": 124,
+            "strict": 0.5833333134651184,
+            "optimized": 0.5833333730697632
+          },
+          "maximum_difference": {
+            "index": 124,
+            "strict": 0.5833333134651184,
+            "optimized": 0.5833333730697632
+          }
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 204,
+          "maximum_absolute_error": 0.03439971059560776,
+          "maximum_normalized_error": 0.03439971059560776,
+          "first_difference": {
+            "index": 33,
+            "strict": 0.03988019749522209,
+            "optimized": 0.039880216121673584
+          },
+          "maximum_difference": {
+            "index": 1575,
+            "strict": -0.125,
+            "optimized": -0.09060028940439224
+          }
+        }
+      }
+    },
+    {
+      "family": "filter_resample",
+      "precision": "double",
+      "profile": "strict",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      },
+      "outputs": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        }
+      }
+    },
+    {
+      "family": "filter_resample",
+      "precision": "double",
+      "profile": "ofast",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 2830,
+          "maximum_absolute_error": 1.6653345369377348e-16,
+          "maximum_normalized_error": 1.6653345369377348e-16,
+          "first_difference": {
+            "index": 72,
+            "strict": -0.0,
+            "optimized": 0.0
+          },
+          "maximum_difference": {
+            "index": 2065,
+            "strict": -0.2983951509601253,
+            "optimized": -0.2983951509601255
+          }
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 393,
+          "maximum_absolute_error": 561584025553958.9,
+          "maximum_normalized_error": 0.9999999999999998,
+          "first_difference": {
+            "index": 33,
+            "strict": 0.03988015178901873,
+            "optimized": 0.03988015178901878
+          },
+          "maximum_difference": {
+            "index": 541,
+            "strict": -561584025553959.0,
+            "optimized": -0.125
+          }
+        }
+      }
+    },
+    {
+      "family": "filter_resample",
+      "precision": "double",
+      "profile": "fast_math",
+      "input_bytes_and_dimensions_identical": true,
+      "strict_fixture_comparison": null,
+      "outputs": {
+        "fir": {
+          "values": 4560,
+          "changed_bits": 2830,
+          "maximum_absolute_error": 1.6653345369377348e-16,
+          "maximum_normalized_error": 1.6653345369377348e-16,
+          "first_difference": {
+            "index": 72,
+            "strict": -0.0,
+            "optimized": 0.0
+          },
+          "maximum_difference": {
+            "index": 2065,
+            "strict": -0.2983951509601253,
+            "optimized": -0.2983951509601255
+          }
+        },
+        "convolution": {
+          "values": 1830,
+          "changed_bits": 0,
+          "maximum_absolute_error": 0.0,
+          "maximum_normalized_error": 0.0,
+          "first_difference": null,
+          "maximum_difference": null
+        },
+        "resampling": {
+          "values": 2298,
+          "changed_bits": 393,
+          "maximum_absolute_error": 561584025553958.9,
+          "maximum_normalized_error": 0.9999999999999998,
+          "first_difference": {
+            "index": 33,
+            "strict": 0.03988015178901873,
+            "optimized": 0.03988015178901878
+          },
+          "maximum_difference": {
+            "index": 541,
+            "strict": -561584025553959.0,
+            "optimized": -0.125
+          }
+        }
+      }
+    }
+  ]
+}

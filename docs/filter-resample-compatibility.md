@@ -33,6 +33,12 @@ pipelines that require its exact boundary convention. With a single 0.75 sample
 and ratio two, original C produces two zeros; corrected Rust retains 0.75 at
 the first output sample. This correction does not change a file format.
 
+The subsequent conditioning audit reproduces a separate near-zero kernel defect.
+Default `resample` now corrects it, while `resample_with` retains source kernel
+arithmetic. `resample_with_kernel` independently selects boundary and kernel
+policies. See `dsp-optimization-audit.md` for the source probe, optimizer comparison,
+independent mathematical checks and validation status.
+
 ## Original-C reference
 
 Pinned ciglet commit: 895ba9b1c0eabee83d3544208bbc82420efa3206.
