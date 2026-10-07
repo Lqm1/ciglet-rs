@@ -14,6 +14,7 @@ pub mod frequency;
 pub mod interpolation;
 pub mod kalman;
 pub mod median;
+pub mod polynomial;
 pub mod resampling;
 pub mod root;
 pub mod smoothing;

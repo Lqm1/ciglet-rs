@@ -2,6 +2,25 @@
 // Adapted from Paul Mineiro's fastapprox. See LICENSES/fastapprox-BSD.txt.
 use crate::Error;
 
+/// Upstream level-one sine, retaining fastapprox's binary32 arithmetic.
+pub fn sine_fast(angle: f32) -> Result<f32, Error> {
+    let turns = angle * 0.159_154_94;
+    if !turns.is_finite() || turns < i32::MIN as f32 || turns >= 2_147_483_648.0 {
+        return Err(Error("approximate sine angle exceeds the legacy range"));
+    }
+    let half = if angle < 0.0 { -0.5 } else { 0.5 };
+    let reduced = (half + turns as i32 as f32) * std::f32::consts::TAU - angle;
+    let magnitude = f32::from_bits(reduced.to_bits() & 0x7fff_ffff);
+    let signed = f32::from_bits(0.223_085_1f32.to_bits() | (reduced.to_bits() & 0x8000_0000));
+    let base = 1.273_239_5 * reduced - 0.405_284_73 * reduced * magnitude;
+    Ok(base * (0.776_330_23 + signed * base))
+}
+
+/// Upstream level-one cosine, including the binary32 half-pi addition.
+pub fn cosine_fast(angle: f32) -> Result<f32, Error> {
+    sine_fast(angle + std::f32::consts::FRAC_PI_2)
+}
+
 /// The upstream `sin_2` approximation, including its scalar range reduction.
 /// Accuracy degrades for large arguments, as in the original implementation.
 pub fn sine(angle: f32) -> Result<f32, Error> {

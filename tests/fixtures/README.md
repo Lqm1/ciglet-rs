@@ -1,5 +1,14 @@
 # DSP reference fixture
 
+`polynomial-float.bin` and `polynomial-double.bin` contain original-C polynomial
+evaluations and roots in `POL1` format. The header stores scalar width and record
+count as little-endian u32. Each record stores coefficient count, complex
+coefficients, three argument/result pairs and degree-many roots, each complex
+number as real/imaginary scalars. The trailing u32 count precedes 61 scalar
+argument/sine/cosine triples. Float has 32 records and double has 33, including
+one deliberately unconverged eight-root case. See
+`docs/polynomial-compatibility.md` for algorithm limits and generator commands.
+
 The `root-float.bin` and `root-double.bin` fixtures contain 25 scalar zero
 searches each, generated from unmodified ciglet commit
 `895ba9b1c0eabee83d3544208bbc82420efa3206`. The `ROT1` format stores the scalar
