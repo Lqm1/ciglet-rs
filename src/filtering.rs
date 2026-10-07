@@ -169,3 +169,109 @@ pub fn convolve<T: FftNum + Into<f64>>(signal: &[T], impulse: &[T]) -> Result<Ve
     }
     Ok(output)
 }
+
+/// Initial-state handling for recursive filters.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Startup {
+    /// Begin processing at sample zero with zero input/output history.
+    #[default]
+    ZeroState,
+    /// Retain skipped leading samples in the original equal-length 2..=6
+    /// coefficient fast paths. Other coefficient shapes use zero state.
+    LegacyZeroPrefix,
+}
+
+/// Causal filtering with the original monic denominator convention.
+/// Denominator element zero is ignored, as in cig_filter; coefficients are
+/// not normalized. Empty numerator coefficients produce zeros. The result
+/// contains exactly one sample per input, without an unused allocation tail.
+pub fn filter<T: FftNum + Into<f64>>(
+    signal: &[T],
+    numerator: &[T],
+    denominator: &[T],
+) -> Result<Vec<T>, Error> {
+    filter_with(signal, numerator, denominator, Startup::ZeroState)
+}
+
+/// Filter with an explicit startup compatibility policy.
+pub fn filter_with<T: FftNum + Into<f64>>(
+    signal: &[T],
+    numerator: &[T],
+    denominator: &[T],
+    startup: Startup,
+) -> Result<Vec<T>, Error> {
+    if [signal.len(), numerator.len(), denominator.len()]
+        .into_iter()
+        .any(|n| n > i32::MAX as usize)
+        || signal
+            .iter()
+            .chain(numerator)
+            .chain(denominator)
+            .any(|value| !(*value).into().is_finite())
+    {
+        return Err(Error(
+            "filter inputs must be finite and within the legacy range",
+        ));
+    }
+    let mut output = zeros(signal.len())?;
+    let grouped = numerator.len() == denominator.len() && (2..=6).contains(&denominator.len());
+    let begin = if grouped && startup == Startup::LegacyZeroPrefix {
+        denominator.len() - 1
+    } else {
+        0
+    };
+    for index in begin..signal.len() {
+        let mut value = T::zero();
+        if grouped {
+            // Retain the source fast path's grouped arithmetic. This affects
+            // rounding even after correcting which sample processing starts at.
+            let mut feedback = T::zero();
+            for (lag, coefficient) in denominator.iter().enumerate().skip(1).take(index) {
+                feedback = feedback + *coefficient * output[index - lag];
+            }
+            let mut forward = T::zero();
+            for (lag, coefficient) in numerator.iter().enumerate().take(index + 1) {
+                forward = forward + *coefficient * signal[index - lag];
+            }
+            value = value - feedback;
+            value = value + forward;
+        } else {
+            for (lag, coefficient) in denominator.iter().enumerate().skip(1).take(index) {
+                value = value - *coefficient * output[index - lag];
+            }
+            for (lag, coefficient) in numerator.iter().enumerate().take(index + 1) {
+                value = value + *coefficient * signal[index - lag];
+            }
+        }
+        if !value.into().is_finite() {
+            return Err(Error("recursive filter output overflows"));
+        }
+        output[index] = value;
+    }
+    Ok(output)
+}
+
+/// Apply the same filter forward and backward, reversing between passes.
+/// This preserves ciglet's simple two-pass workflow without endpoint padding
+/// or a steady-state initialization step.
+pub fn forward_backward<T: FftNum + Into<f64>>(
+    signal: &[T],
+    numerator: &[T],
+    denominator: &[T],
+) -> Result<Vec<T>, Error> {
+    forward_backward_with(signal, numerator, denominator, Startup::ZeroState)
+}
+
+/// Forward/backward filtering with explicit original-startup compatibility.
+pub fn forward_backward_with<T: FftNum + Into<f64>>(
+    signal: &[T],
+    numerator: &[T],
+    denominator: &[T],
+    startup: Startup,
+) -> Result<Vec<T>, Error> {
+    let mut forward = filter_with(signal, numerator, denominator, startup)?;
+    forward.reverse();
+    let mut backward = filter_with(&forward, numerator, denominator, startup)?;
+    backward.reverse();
+    Ok(backward)
+}
