@@ -10,6 +10,7 @@ pub mod filtering;
 pub mod fourier;
 pub mod frame;
 pub mod frequency;
+pub mod kalman;
 pub mod resampling;
 pub mod statistics;
 pub mod stft;
