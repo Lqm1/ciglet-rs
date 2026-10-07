@@ -3,6 +3,7 @@
 use crate::Error;
 
 pub mod hyperbolic;
+pub mod trigonometric;
 
 /// Upstream numerical levels, from the fastest approximation to host libm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -174,10 +175,7 @@ pub fn sine_fast(angle: f32) -> Result<f32, Error> {
     }
     let half = if angle < 0.0 { -0.5 } else { 0.5 };
     let reduced = (half + turns as i32 as f32) * std::f32::consts::TAU - angle;
-    let magnitude = f32::from_bits(reduced.to_bits() & 0x7fff_ffff);
-    let signed = f32::from_bits(0.223_085_1f32.to_bits() | (reduced.to_bits() & 0x8000_0000));
-    let base = 1.273_239_5 * reduced - 0.405_284_73 * reduced * magnitude;
-    Ok(base * (0.776_330_23 + signed * base))
+    Ok(trigonometric::sine_kernel(reduced, Precision::Fast))
 }
 
 /// Upstream level-one cosine, including the binary32 half-pi addition.
@@ -195,14 +193,7 @@ pub fn sine(angle: f32) -> Result<f32, Error> {
     let whole_turns = turns as i32;
     let half_turn = if angle < 0.0 { -0.5 } else { 0.5 };
     let reduced = (half_turn + whole_turns as f32) * std::f32::consts::TAU - angle;
-    let sign = reduced.to_bits() & 0x8000_0000;
-    let magnitude = f32::from_bits(reduced.to_bits() & 0x7fff_ffff);
-    let base = 1.273_239_5 * reduced - 0.405_284_73 * reduced * magnitude;
-    let square = base * base;
-    let linear = f32::from_bits(0.203_639_37f32.to_bits() | sign);
-    let cubic = f32::from_bits(0.015_124_941f32.to_bits() | sign);
-    let quintic = f32::from_bits((-0.003_222_59f32).to_bits() ^ sign);
-    Ok(0.784_444_87 * base + square * (linear + square * (cubic + square * quintic)))
+    Ok(trigonometric::sine_kernel(reduced, Precision::Approximate))
 }
 
 /// The upstream `cos_2` approximation. Its internal arithmetic remains f32
@@ -262,4 +253,9 @@ pub fn exponential(exponent: f32) -> Result<f32, Error> {
 
 pub fn power(value: f32, exponent: f32) -> Result<f32, Error> {
     exponential2(exponent * logarithm2(value)?)
+}
+
+/// Bundled level-one power, retaining its logarithm2/exponential2 bit kernels.
+pub fn power_fast(value: f32, exponent: f32) -> Result<f32, Error> {
+    exponential2_fast(exponent * logarithm2_fast(value)?)
 }

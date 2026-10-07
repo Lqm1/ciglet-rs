@@ -1,0 +1,456 @@
+fastsin 00000000 00000000
+fastsin 80000000 00000000
+fastsin 0da24260 0da20ff5
+fastsin 8da24260 8da20ff5
+fastsin 38d1b717 38d175fd
+fastsin b8d1b717 b8d175fd
+fastsin 3e800000 3e7d5a7e
+fastsin be800000 be7d5a7e
+fastsin 3f800000 3f576b32
+fastsin bf800000 bf576b32
+fastsin 3fc90fda 3f7fff1e
+fastsin 3fc90fdb 3f7fff1c
+fastsin 3fc90fdc 3f7fff22
+fastsin bfc90fda bf7fff1e
+fastsin bfc90fdb bf7fff1c
+fastsin bfc90fdc bf7fff22
+fastsin 40490fda 00000000
+fastsin 40490fdb b4c8d15f
+fastsin 40490fdc 00000000
+fastsin c0490fda 00000000
+fastsin c0490fdb 34c8d15f
+fastsin c0490fdc 00000000
+fastsin 40c90fda c44204af
+fastsin 40c90fdb c44204c8
+fastsin 40c90fdc c44204be
+fastsin c0c90fda 444204af
+fastsin c0c90fdb 444204c8
+fastsin c0c90fdc 444204be
+fastsin 41200000 c9b45075
+fastsin c1200000 49b45075
+fastsin 42c80000 df23a5dd
+fastsin c2c80000 5f23a5dd
+fastersin 00000000 00000000
+fastersin 80000000 00000000
+fastersin 0da24260 0da062c9
+fastersin 8da24260 8da062c9
+fastersin 38d1b717 38cf4b7d
+fastersin b8d1b717 b8cf4b7d
+fastersin 3e800000 3e7c8426
+fastersin be800000 be7c8426
+fastersin 3f800000 3f57856d
+fastersin bf800000 bf57856d
+fastersin 3fc90fda 3f7fd9ae
+fastersin 3fc90fdb 3f7fd9ac
+fastersin 3fc90fdc 3f7fd9b2
+fastersin bfc90fda bf7fd9ae
+fastersin bfc90fdb bf7fd9ac
+fastersin bfc90fdc bf7fd9b2
+fastersin 40490fda 00000000
+fastersin 40490fdb b4c6bd92
+fastersin 40490fdc 00000000
+fastersin c0490fda 00000000
+fastersin c0490fdb 34c6bd92
+fastersin c0490fdc 00000000
+fastersin 40c90fda 410111a0
+fastersin 40c90fdb 410111a8
+fastersin 40c90fdc 410111a5
+fastersin c0c90fda c10111a0
+fastersin c0c90fdb c10111a8
+fastersin c0c90fdc c10111a5
+fastersin 41200000 4316c811
+fastersin c1200000 c316c811
+fastersin 42c80000 4a51a22a
+fastersin c2c80000 ca51a22a
+fastcos 00000000 3f7fff1c
+fastcos 80000000 3f7fff1c
+fastcos 0da24260 3f7fff1c
+fastcos 8da24260 3f7fff1c
+fastcos 38d1b717 3f7fff1c
+fastcos b8d1b717 3f7fff1e
+fastcos 3e800000 3f780acf
+fastcos be800000 3f780ad2
+fastcos 3f800000 3f0a50c8
+fastcos bf800000 3f0a50ca
+fastcos 3fc90fda 00000000
+fastcos 3fc90fdb b4c8d15f
+fastcos 3fc90fdc 00000000
+fastcos bfc90fda 33ffb075
+fastcos bfc90fdb 00000000
+fastcos bfc90fdc b3ffb075
+fastcos 40490fda bf7fff22
+fastcos 40490fdb bf7fff1e
+fastcos 40490fdc bf7fff1e
+fastcos c0490fda bf7fff1c
+fastcos c0490fdb bf7fff1c
+fastcos c0490fdc bf7fff1c
+fastcos 40c90fda 3f7fff1e
+fastcos 40c90fdb 3f7fff22
+fastcos 40c90fdc 3f7fff1c
+fastcos c0c90fda 3fd28660
+fastcos c0c90fdb 3fd28674
+fastcos c0c90fdc 3fd28693
+fastcos 41200000 c1b82e79
+fastcos c1200000 47d76a22
+fastcos 42c80000 deb5a20a
+fastcos c2c80000 5f06e95a
+fastercos 00000000 3f800000
+fastercos 80000000 3f800000
+fastercos 0da24260 3f800000
+fastercos 8da24260 3f800000
+fastercos 38d1b717 3f800032
+fastercos b8d1b717 3f800032
+fastercos 3e800000 3f79b75e
+fastercos be800000 3f79b75e
+fastercos 3f800000 3f0924cc
+fastercos bf800000 3f0924cc
+fastercos 3fc90fda 33c5f0e0
+fastercos 3fc90fdb 00000000
+fastercos 3fc90fdc b445f0e0
+fastercos bfc90fda 33c5f0e0
+fastercos bfc90fdb 00000000
+fastercos bfc90fdc b445f0e0
+fastercos 40490fda bf800000
+fastercos 40490fdb bf800000
+fastercos 40490fdc bf800000
+fastercos c0490fda bf800000
+fastercos c0490fdb bf800000
+fastercos c0490fdc bf800000
+fastercos 40c90fda 4121d29b
+fastercos 40c90fdb 4121d29e
+fastercos 40c90fdc 4121d2a6
+fastercos c0c90fda 4121d29b
+fastercos c0c90fdb 4121d29e
+fastercos c0c90fdc 4121d2a6
+fastercos 41200000 429845d7
+fastercos c1200000 429845d7
+fastercos 42c80000 4803322b
+fastercos c2c80000 4803322b
+fasttan 00000000 00000000
+fasttan 80000000 00000000
+fasttan 0da24260 0da21085
+fasttan 8da24260 8da21085
+fasttan 38d1b717 38d176b8
+fasttan b8d1b717 b8d176b6
+fasttan 3e800000 3e82bda7
+fasttan be800000 be82bda6
+fasttan 3f800000 3fc75a54
+fasttan bf800000 bfc75a51
+fasttan 3fc90fda 7f800000
+fasttan 3fc90fdb ca232ba7
+fasttan 3fc90fdc 7f800000
+fasttan bfc90fda cb002761
+fasttan bfc90fdb ff800000
+fasttan bfc90fdc 4b002763
+fasttan 40490fda 80000000
+fasttan 40490fdb 34743220
+fasttan 40490fdc 80000000
+fasttan c0490fda 80000000
+fasttan c0490fdb b4c8d212
+fasttan c0490fdc 80000000
+fasttan 40c90fda 3cb10df1
+fasttan 40c90fdb 3cb10df9
+fasttan 40c90fdc 3cb10de5
+fasttan c0c90fda 43ebed86
+fasttan c0c90fdb 43ebed8e
+fasttan c0c90fdc 43ebed5f
+fasttan 41200000 3df6d506
+fasttan c1200000 4156495e
+fasttan 42c80000 3f53b17b
+fasttan c2c80000 3f9b43a3
+fastertan 00000000 00000000
+fastertan 80000000 00000000
+fastertan 0da24260 0da062c9
+fastertan 8da24260 8da062c9
+fastertan 38d1b717 38cf4b2c
+fastertan b8d1b717 b8cf4b2c
+fastertan 3e800000 3e816f69
+fastertan be800000 be816f69
+fastertan 3f800000 3fc926de
+fastertan bf800000 bfc926de
+fastertan 3fc90fda 4b257293
+fastertan 3fc90fdb 7f800000
+fastertan 3fc90fdc caa57295
+fastertan bfc90fda cb257293
+fastertan bfc90fdb ff800000
+fastertan bfc90fdc 4aa57295
+fastertan 40490fda 80000000
+fastertan 40490fdb 34c6bd92
+fastertan 40490fdc 80000000
+fastertan c0490fda 80000000
+fastertan c0490fdb b4c6bd92
+fastertan c0490fdc 80000000
+fastertan 40c90fda 3f4c2f24
+fastertan 40c90fdb 3f4c2f2d
+fastertan 40c90fdc 3f4c2f1e
+fastertan c0c90fda bf4c2f24
+fastertan c0c90fdb bf4c2f2d
+fastertan c0c90fdc bf4c2f1e
+fastertan 41200000 3ffd7e2a
+fastertan c1200000 bffd7e2a
+fastertan 42c80000 41cc86d8
+fastertan c2c80000 c1cc86d8
+fasttanfull 00000000 b4c8d212
+fasttanfull 80000000 b4c8d212
+fasttanfull 0da24260 b4c8d212
+fasttanfull 8da24260 34c8d210
+fasttanfull 38d1b717 38d0ac08
+fasttanfull b8d1b717 b8d0ac08
+fasttanfull 3e800000 3e82bd9c
+fasttanfull be800000 be82bd9c
+fasttanfull 3f800000 3fc75a4f
+fasttanfull bf800000 bfc75a4c
+fasttanfull 3fc90fda 4b002763
+fasttanfull 3fc90fdb ff800000
+fasttanfull 3fc90fdc cb002761
+fasttanfull bfc90fda 7f800000
+fasttanfull bfc90fdb ca232ba7
+fasttanfull bfc90fdc 7f800000
+fasttanfull 40490fda b47fb157
+fasttanfull 40490fdb 00000000
+fasttanfull 40490fdc 347fb157
+fasttanfull c0490fda 347fb157
+fasttanfull c0490fdb 00000000
+fasttanfull c0490fdc b47fb157
+fasttanfull 40c90fda b448d213
+fasttanfull 40c90fdb 80000000
+fasttanfull 40c90fdc 35169d91
+fasttanfull c0c90fda 3448d213
+fasttanfull c0c90fdb 80000000
+fasttanfull c0c90fdc b5169d91
+fasttanfull 41200000 3f25f9f9
+fasttanfull c1200000 bf25f9f5
+fasttanfull 42c80000 bf165336
+fasttanfull c2c80000 3f165335
+fastertanfull 00000000 b4c6bd92
+fastertanfull 80000000 b4c6bd92
+fastertanfull 0da24260 b4c6bd92
+fastertanfull 8da24260 34c6bd92
+fastertanfull 38d1b717 38ce8298
+fastertanfull b8d1b717 b8ce8298
+fastertanfull 3e800000 3e816f5e
+fastertanfull be800000 be816f5e
+fastertanfull 3f800000 3fc926dd
+fastertanfull bf800000 bfc926dd
+fastertanfull 3fc90fda 4aa57295
+fastertanfull 3fc90fdb ff800000
+fastertanfull 3fc90fdc cb257293
+fastertanfull bfc90fda caa57295
+fastertanfull bfc90fdb 7f800000
+fastertanfull bfc90fdc 4b257293
+fastertanfull 40490fda b47d0b57
+fastertanfull 40490fdb 00000000
+fastertanfull 40490fdc 347d0b57
+fastertanfull c0490fda 347d0b57
+fastertanfull c0490fdb 00000000
+fastertanfull c0490fdc b47d0b57
+fastertanfull 40c90fda b446bd95
+fastertanfull 40c90fdb 80000000
+fastertanfull 40c90fdc 35150e31
+fastertanfull c0c90fda 3446bd95
+fastertanfull c0c90fdb 80000000
+fastertanfull c0c90fdc b5150e31
+fastertanfull 41200000 3f25b168
+fastertanfull c1200000 bf25b168
+fastertanfull 42c80000 bf15e175
+fastertanfull c2c80000 3f15e175
+fastsinfull 00000000 b4c8d15f
+fastsinfull 80000000 b4c8d15f
+fastsinfull 0da24260 b4c8d15f
+fastsinfull 8da24260 34c8d15f
+fastsinfull 38d1b717 38d0ab51
+fastsinfull b8d1b717 b8d0ab51
+fastsinfull 3e800000 3e7d5a6b
+fastsinfull be800000 be7d5a6b
+fastsinfull 3f800000 3f576b30
+fastsinfull bf800000 bf576b30
+fastsinfull 3fc90fda 3f7fff22
+fastsinfull 3fc90fdb 3f7fff1c
+fastsinfull 3fc90fdc 3f7fff1e
+fastsinfull bfc90fda bf7fff22
+fastsinfull bfc90fdb bf7fff1c
+fastsinfull bfc90fdc bf7fff1e
+fastsinfull 40490fda 347fb073
+fastsinfull 40490fdb 00000000
+fastsinfull 40490fdc b47fb073
+fastsinfull c0490fda b47fb073
+fastsinfull c0490fdb 00000000
+fastsinfull c0490fdc 347fb073
+fastsinfull 40c90fda b448d162
+fastsinfull 40c90fdb 00000000
+fastsinfull 40c90fdc 35169d0b
+fastsinfull c0c90fda 3448d162
+fastsinfull c0c90fdb 00000000
+fastsinfull c0c90fdc b5169d0b
+fastsinfull 41200000 bf0b4476
+fastsinfull c1200000 3f0b4476
+fastsinfull 42c80000 bf01a135
+fastsinfull c2c80000 3f01a135
+fastersinfull 00000000 b4c6bd92
+fastersinfull 80000000 b4c6bd92
+fastersinfull 0da24260 b4c6bd92
+fastersinfull 8da24260 34c6bd92
+fastersinfull 38d1b717 38ce82e9
+fastersinfull b8d1b717 b8ce82e9
+fastersinfull 3e800000 3e7c8412
+fastersinfull be800000 be7c8412
+fastersinfull 3f800000 3f57856a
+fastersinfull bf800000 bf57856a
+fastersinfull 3fc90fda 3f7fd9b2
+fastersinfull 3fc90fdb 3f7fd9ac
+fastersinfull 3fc90fdc 3f7fd9ae
+fastersinfull bfc90fda bf7fd9b2
+fastersinfull bfc90fdb bf7fd9ac
+fastersinfull bfc90fdc bf7fd9ae
+fastersinfull 40490fda 347d0b57
+fastersinfull 40490fdb 00000000
+fastersinfull 40490fdc b47d0b57
+fastersinfull c0490fda b47d0b57
+fastersinfull c0490fdb 00000000
+fastersinfull c0490fdc 347d0b57
+fastersinfull 40c90fda b446bd95
+fastersinfull 40c90fdb 00000000
+fastersinfull 40c90fdc 35150e31
+fastersinfull c0c90fda 3446bd95
+fastersinfull c0c90fdb 00000000
+fastersinfull c0c90fdc b5150e31
+fastersinfull 41200000 bf0b5925
+fastersinfull c1200000 3f0b5925
+fastersinfull 42c80000 bf01ac8f
+fastersinfull c2c80000 3f01ac8f
+fastcosfull 00000000 3f7fff1c
+fastcosfull 80000000 3f7fff1c
+fastcosfull 0da24260 3f7fff1c
+fastcosfull 8da24260 3f7fff1c
+fastcosfull 38d1b717 3f7fff1e
+fastcosfull b8d1b717 3f7fff1c
+fastcosfull 3e800000 3f780ad2
+fastcosfull be800000 3f780acf
+fastcosfull 3f800000 3f0a50c8
+fastcosfull bf800000 3f0a50c8
+fastcosfull 3fc90fda 347fb073
+fastcosfull 3fc90fdb 00000000
+fastcosfull 3fc90fdc b47fb073
+fastcosfull bfc90fda 00000000
+fastcosfull bfc90fdb b4c8d15f
+fastcosfull bfc90fdc 00000000
+fastcosfull 40490fda bf7fff1e
+fastcosfull 40490fdb bf7fff1e
+fastcosfull 40490fdc bf7fff1f
+fastcosfull c0490fda bf7fff1c
+fastcosfull c0490fdb bf7fff1c
+fastcosfull c0490fdc bf7fff1c
+fastcosfull 40c90fda 3f7fff22
+fastcosfull 40c90fdb 3f7fff1e
+fastcosfull 40c90fdc 3f7fff1e
+fastcosfull c0c90fda 3f7fff1c
+fastcosfull c0c90fdb 3f7fff1e
+fastcosfull c0c90fdc 3f7fff1f
+fastcosfull 41200000 bf56cdf0
+fastcosfull c1200000 bf56cdea
+fastcosfull 42c80000 3f5cc171
+fastcosfull c2c80000 3f5cc1bc
+fastercosfull 00000000 3f7fd9ac
+fastercosfull 80000000 3f7fd9ac
+fastercosfull 0da24260 3f7fd9ac
+fastercosfull 8da24260 3f7fd9ac
+fastercosfull 38d1b717 3f7fd9ae
+fastercosfull b8d1b717 3f7fd9ac
+fastercosfull 3e800000 3f77f5a8
+fastercosfull be800000 3f77f5a6
+fastercosfull 3f800000 3f0a6498
+fastercosfull bf800000 3f0a6498
+fastercosfull 3fc90fda 347d0b57
+fastercosfull 3fc90fdb 00000000
+fastercosfull 3fc90fdc b47d0b57
+fastercosfull bfc90fda 00000000
+fastercosfull bfc90fdb b4c6bd92
+fastercosfull bfc90fdc 00000000
+fastercosfull 40490fda bf7fd9ae
+fastercosfull 40490fdb bf7fd9ae
+fastercosfull 40490fdc bf7fd9af
+fastercosfull c0490fda bf7fd9ac
+fastercosfull c0490fdb bf7fd9ac
+fastercosfull c0490fdc bf7fd9ac
+fastercosfull 40c90fda 3f7fd9b2
+fastercosfull 40c90fdb 3f7fd9ae
+fastercosfull 40c90fdc 3f7fd9ae
+fastercosfull c0c90fda 3f7fd9ab
+fastercosfull c0c90fdb 3f7fd9ae
+fastercosfull c0c90fdc 3f7fd9af
+fastercosfull 41200000 bf56e8bf
+fastercosfull c1200000 bf56e8b9
+fastercosfull 42c80000 3f5cd619
+fastercosfull c2c80000 3f5cd664
+fastpow 3e000000 c0400000 44000000
+fasterpow 3e000000 c0400000 43e2a900
+fastpow 3e000000 bf000000 40350500
+fasterpow 3e000000 bf000000 4034ff80
+fastpow 3e000000 00000000 3f800000
+fasterpow 3e000000 00000000 3f78aa40
+fastpow 3e000000 3f000000 3eb50540
+fasterpow 3e000000 3f000000 3ebc5500
+fastpow 3e000000 40000000 3c800080
+fasterpow 3e000000 40000000 3c8755c0
+fastpow 3e000000 40400000 3b000040
+fasterpow 3e000000 40400000 3b0eab80
+fastpow 3f000000 c0400000 41000000
+fasterpow 3f000000 c0400000 40e2a900
+fastpow 3f000000 bf000000 3fb50540
+fasterpow 3f000000 bf000000 3fb4ff80
+fastpow 3f000000 00000000 3f800000
+fasterpow 3f000000 00000000 3f78aa40
+fastpow 3f000000 3f000000 3f350540
+fasterpow 3f000000 3f000000 3f3c5500
+fastpow 3f000000 40000000 3e800080
+fasterpow 3f000000 40000000 3e8755c0
+fastpow 3f000000 40400000 3e000040
+fasterpow 3f000000 40400000 3e0eab80
+fastpow 3f800000 c0400000 3f800040
+fasterpow 3f800000 c0400000 3f62a900
+fastpow 3f800000 bf000000 3f800000
+fasterpow 3f800000 bf000000 3f74ff80
+fastpow 3f800000 00000000 3f800000
+fasterpow 3f800000 00000000 3f78aa40
+fastpow 3f800000 3f000000 3f800080
+fasterpow 3f800000 3f000000 3f7c5500
+fastpow 3f800000 40000000 3f800040
+fasterpow 3f800000 40000000 3f8755c0
+fastpow 3f800000 40400000 3f800040
+fasterpow 3f800000 40400000 3f8eab80
+fastpow 40000000 c0400000 3e000040
+fasterpow 40000000 c0400000 3de2a900
+fastpow 40000000 bf000000 3f350540
+fasterpow 40000000 bf000000 3f34ff80
+fastpow 40000000 00000000 3f800000
+fasterpow 40000000 00000000 3f78aa40
+fastpow 40000000 3f000000 3fb50540
+fasterpow 40000000 3f000000 3fbc5500
+fastpow 40000000 40000000 40800000
+fasterpow 40000000 40000000 40875600
+fastpow 40000000 40400000 41000080
+fasterpow 40000000 40400000 410eab80
+fastpow 41200000 c0400000 3a831600
+fasterpow 41200000 c0400000 3a82a900
+fastpow 41200000 bf000000 3ea1e8c0
+fasterpow 41200000 bf000000 3ea4ff80
+fastpow 41200000 00000000 3f800000
+fasterpow 41200000 00000000 3f78aa40
+fastpow 41200000 3f000000 404a6100
+fasterpow 41200000 3f000000 404c5500
+fastpow 41200000 40000000 42c7fb00
+fasterpow 41200000 40000000 42c75600
+fastpow 41200000 40400000 4479f700
+fasterpow 41200000 40400000 446eab80
+fastpow 42c80000 c0400000 35863900
+fasterpow 42c80000 c0400000 358aa900
+fastpow 42c80000 bf000000 3dccccc0
+fasterpow 42c80000 bf000000 3dd0ff80
+fastpow 42c80000 00000000 3f800000
+fasterpow 42c80000 00000000 3f78aa40
+fastpow 42c80000 3f000000 411ffe80
+fasterpow 42c80000 3f000000 41205500
+fastpow 42c80000 40000000 461c3c80
+fasterpow 42c80000 40000000 46175600
+fastpow 42c80000 40400000 49741d80
+fasterpow 42c80000 40400000 4966ab80

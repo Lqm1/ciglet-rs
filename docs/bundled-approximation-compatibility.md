@@ -8,8 +8,9 @@ They remain part of the complete accepted functionality scope.
 The installed header defines 44 scalar functions and 44 SSE2 four-lane
 functions. `bundled-approximation-inventory.csv` records each one. Thirteen
 scalar functions already map to existing approximation APIs. Eight further
-scalar functions now map to `approximation::hyperbolic`, leaving 23 scalar
-and all 44 four-lane functions pending. Existing mappings do not establish
+scalar functions map to `approximation::hyperbolic`. Nine additional scalar
+functions map to restricted trigonometry, full tangent and faster power,
+leaving 14 scalar and all 44 four-lane functions pending. Existing mappings do not establish
 complete bundled-specific verification by themselves.
 
 ## Hyperbolic and sigmoid functions
@@ -41,11 +42,52 @@ Zig and Linux GCC regenerate byte-identical fixtures with `-O2` and contraction
 disabled. Additional tests verify nonfinite/range errors and zero values in
 Exact mode. No Cargo dependency or original source modification is introduced.
 
+## Restricted trigonometry, full tangent and faster power
+
+| Source | Rust call |
+| --- | --- |
+| fastsin / fastersin | trigonometric::sine with Approximate / Fast |
+| fastcos / fastercos | trigonometric::cosine with Approximate / Fast |
+| fasttan / fastertan | trigonometric::tangent with Approximate / Fast |
+| fasttanfull / fastertanfull | trigonometric::tangent_full with Approximate / Fast |
+| fasterpow | approximation::power_fast |
+
+Restricted kernels do not reduce angles modulo a period. They retain the
+source polynomial even outside its calibration interval. The faster cosine
+uses its own even polynomial. Approximate restricted tangent divides two sine
+polynomials, whereas Fast divides sine by the even cosine polynomial. Full
+tangent retains the source reduction direction, which differs from full sine.
+The existing full sine kernels now share the restricted polynomial without
+changing their range reduction or validation.
+
+The unchanged bundled C header supplies 456 bit-encoded records: twelve trig
+functions at 32 inputs and both power functions at 36 base/exponent pairs.
+The inputs include both zero signs, tiny values, adjacent representable values
+around half-pi, pi and two-pi, and angles out to +/-100. Finite outputs match
+binary32 bits. Nonfinite pole outputs become explicit Rust errors. The full
+tangent rejects turn counts outside signed 32-bit conversion range, and faster
+power uses the existing positive logarithm and representable exponential checks.
+Windows Zig and Linux GCC regenerate identical fixture bytes with contraction
+disabled. These measurements do not establish accuracy outside calibration
+intervals or at every representable angle.
+
+All five native targets pass the six affected integration suites in Debug and
+Release, eighteen tests per configuration. The suites cover the new APIs,
+existing scalar and complex math, polynomial coefficients, windows and glottal
+synthesis. The fixture has 446 finite bit comparisons and ten nonfinite pole
+results; all ten are explicitly checked as errors. Clippy and Rustdoc pass
+with warnings denied, and formatting and whitespace checks pass.
+
+Sign manipulation uses safe [f32::to_bits/from_bits](https://doc.rust-lang.org/std/primitive.f32.html#method.to_bits).
+Exact mode uses host double sine/cosine/tangent before conversion. Their
+[Rust standard-library precision contract](https://doc.rust-lang.org/std/primitive.f64.html#method.tan)
+does not guarantee identical bits across platforms. Approximate and Fast
+retain explicit binary32 arithmetic without fused multiply-add calls.
+
 ## Remaining interfaces
 
 Error/complementary-error and inverse-error functions, log-gamma/digamma,
-Lambert W variants, the faster power and restricted-range trigonometric
-functions still require implementation and independent C verification.
+Lambert W variants still require implementation and independent C verification.
 The four-lane functions require their own source arithmetic audit; mapping
 each to a scalar call must not be presumed bit-equivalent. Portable owned
 four-element arrays can replace platform vector types without requiring C/SSE
