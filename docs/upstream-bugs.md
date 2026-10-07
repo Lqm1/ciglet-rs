@@ -25,3 +25,8 @@ The original PCM8 writer maps silence to byte 127 with (sample + 1) * 127, altho
 Signed PCM quantization converts to int before clipping. For FP_TYPE=float, the PCM32 maximum 2147483647 rounds to 2147483648 in multiplication, making the subsequent positive-unit float-to-int cast out of range. Larger magnitudes at every depth can likewise leave the conversion domain. Rust clips the product before the cast, rejects nonfinite input before output, and propagates write/flush failures. The C fixtures only exercise defined conversion inputs. Existing destination files are not truncated on validation failure.
 
 Specification references: https://learn.microsoft.com/en-us/windows/win32/multimedia/devices-and-data-types and https://learn.microsoft.com/en-us/windows/win32/xaudio2/resource-interchange-file-format--riff-.
+
+
+## Resampling first-sample omission
+
+The original cig_rresample interpolation checks ix_base + j > 0, excluding source index zero for every nonidentity ratio. A single nonzero input sample therefore produces only zeros after upsampling. resampling::resample uses corrected first-sample inclusion. resample_with offers BoundaryPolicy::LegacySkipFirst for unchanged-C comparisons and pipelines requiring original boundary values. Ratio one still copies every input sample exactly. The independent impulse regression in tests/filter_resample.rs distinguishes corrected and legacy outputs. See docs/filter-resample-compatibility.md for the original-C corpus and precision measurements.
