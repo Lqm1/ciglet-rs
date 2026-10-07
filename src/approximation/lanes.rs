@@ -5,6 +5,7 @@
 use crate::Error;
 
 pub mod hyperbolic;
+pub mod special;
 pub mod trigonometric;
 
 /// Four binary32 lanes in source index order.

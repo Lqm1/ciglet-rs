@@ -10,11 +10,12 @@ functions. `bundled-approximation-inventory.csv` records each one. Thirteen
 scalar functions already map to existing approximation APIs. Eight further
 scalar functions map to `approximation::hyperbolic`. Nine additional scalar
 functions map to restricted trigonometry, full tangent and faster power.
-The remaining fourteen scalar functions now map to `approximation::special`,
+The remaining fourteen scalar functions now map to `approximation::special`.
 Ten four-lane exponential/logarithm/power functions now map to
 `approximation::lanes`. Eight hyperbolic/sigmoid functions now map to its
 `hyperbolic` module. Twelve trigonometric functions now map to
-`lanes::trigonometric`, leaving fourteen four-lane special functions pending.
+`lanes::trigonometric`. Fourteen special functions now map to `lanes::special`.
+All 88 installed scalar/four-lane functions have Rust mappings.
 Existing mappings do not establish
 complete bundled-specific verification by themselves.
 
@@ -315,18 +316,51 @@ Release, eighteen tests per configuration. Each of the ten final logs has no
 failed or ignored tests. Clippy and Rustdoc with warnings denied, formatting
 and whitespace checks pass. Final combined native acceptance remains pending.
 
-## Remaining four-lane interfaces
+## Four-lane special functions
 
-The remaining four-lane functions require their own source arithmetic audit; mapping
-each to a scalar call must not be presumed bit-equivalent. Portable owned
+`lanes::special` exposes the fourteen error/complementary-error/inverse-error,
+log-gamma/digamma, principal Lambert W and W(exp(value)) APIs. Each has a
+descriptive name matching the scalar API, with `_fast` for the faster variant.
+Source inspection confirms matching per-lane expression order and threshold
+selection. Valid logarithm intermediates have positive bits, so the audited
+scalar/vector conversion equivalence applies. The checked mapper shares the
+scalar kernels while retaining supported negative gamma/digamma intervals.
+An invalid input or pole in any lane aborts the entire owned result.
+
+The independent original SSE2 oracle supplies 67 mixed arrays, 268 lane
+comparisons: 255 preserve original bits and thirteen receive independently
+verified Lambert corrections. Inputs cover zero signs, tiny values, error/inverse-error domains,
+inverse endpoint neighbors, negative gamma/digamma intervals, the principal
+Lambert lower boundary and neighboring branch thresholds. W(exp(value)) mixes
+ordinary values with the reproduced negative-tail and overflowing-positive
+source defects. Each positive finite Lambert output retains its source bits;
+invalid refinements use the existing scalar correction independently per lane.
+The corrected lanes are checked within one binary32 ULP of the independently
+rounded 80/120-digit mathematical corpus. Expected zero also requires positive
+zero bits. Other outputs match the original bits directly. Windows Zig and
+Linux GCC regenerate identical fixtures with contraction disabled, canonicalizing
+only NaN classification. Additional tests check every invalid lane position,
+inverse endpoints, poles, principal-real-domain errors and supported negatives.
+
+All five native targets pass nine affected integration suites in Debug and
+Release, twenty tests per configuration. All ten final logs have no failed or
+ignored tests. Clippy and Rustdoc with warnings denied, formatting and
+whitespace checks pass. The complete three-package native matrix still needs
+refreshing before the final acceptance decision.
+
+## Remaining acceptance audit
+
+The completed four-lane functions have source arithmetic audits; mapping
+each to a scalar call was not presumed bit-equivalent. Portable owned
 four-element arrays can replace platform vector types without requiring C/SSE
 layout in the Rust API. Conversion/index/splat/absolute-value helper macros
 and union representations now have explicit safe mappings documented above.
 They remain part of the audit rather than being excluded as macros/types.
 
-The remaining fourteen special functions require their own per-lane formula,
-domain and numerical-correction audit. Completed trigonometric mappings retain
-the reproduced vector-specific branch and sign-order differences documented above.
+All function rows are implemented, but that inventory alone does not establish
+final acceptance. Public-definition and numerical evidence still require a
+complete requirement audit, and the three-package native execution matrix must
+be refreshed at the completed bundled-function revision before bindings start.
 
 The header's include guards, compiler conditional selection and the single-file
 packaging mode have no independent runtime algorithm. The single Cargo library
