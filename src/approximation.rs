@@ -225,8 +225,8 @@ fn logarithm2_bits(value: f32) -> f32 {
     exponent - 124.225_52 - 1.498_030_3 * mantissa - 1.725_88 / (0.352_088_72 + mantissa)
 }
 
-// Used only for explicit source compatibility when intermediate distance
-// values fall outside the mathematical log domain. Public log APIs validate.
+// Explicit source compatibility for distance intermediates and random draws
+// outside the mathematical log domain. Public log APIs validate.
 pub(crate) fn logarithm_legacy_bits(value: f32) -> f32 {
     std::f32::consts::LN_2 * logarithm2_bits(value)
 }

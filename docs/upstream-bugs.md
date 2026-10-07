@@ -2,6 +2,18 @@
 
 These findings refer to ciglet commit 895ba9b1c0eabee83d3544208bbc82420efa3206. Recording a finding does not establish that its Rust replacement is implemented or verified.
 
+## Gaussian zero draw and variance intermediate overflow
+
+The source randn passes inclusive zero draws to a bit-based approximate log,
+producing a finite artifact outside the mathematical log domain. Legacy retains
+that transform, while Stable requests another first draw. Caller-provided RNGs
+that repeatedly return zero produce a bounded error after 128 attempts. The
+source double product -2*log(u1)*variance can overflow even when the final
+standard deviation and sample are finite. Stable computes separate square roots;
+the tested variance DBL_MAX with u1=1/8 and zero phase remains finite. Mean and
+signed white-noise amplitude remain valid, and zero variance/amplitude still
+consume the appropriate source grid draws. See docs/random-compatibility.md.
+
 ## Magnitude prediction sizing and spectrum range loss
 
 flpc with a singleton spectrum derives a zero FFT length, then writes into a

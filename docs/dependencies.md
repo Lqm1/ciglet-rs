@@ -19,7 +19,8 @@ complete SHIRO feature/inference compatibility is still pending.
 
 All currently resolved dependencies offer MIT or Apache-2.0. This project uses
 their MIT option and retains the corresponding copyright/license text in
-LICENSES. Cargo.lock records exact resolved versions.
+LICENSES. The optional unicode-ident package additionally requires Unicode-3.0;
+that notice is retained too. Cargo.lock records exact resolved versions.
 
 | Package | Version | Retained notice |
 | --- | --- | --- |
@@ -31,6 +32,25 @@ LICENSES. Cargo.lock records exact resolved versions.
 | strength_reduce | 0.2.4 | strength_reduce-0.2.4-MIT.txt |
 | transpose | 0.2.3 | transpose-0.2.3-MIT.txt |
 | autocfg | 1.5.1 | autocfg-1.5.1-MIT.txt |
+| rand | 0.10.3 | rand-0.10.3-MIT.txt; COPYRIGHT |
+| rand_core | 0.10.1 | rand_core-0.10.1-MIT.txt; COPYRIGHT |
+| rand_chacha | 0.10.0 | rand_chacha-0.10.0-MIT.txt; COPYRIGHT |
+| ppv-lite86 | 0.2.21 | ppv-lite86-0.2.21-MIT.txt |
+| zerocopy | 0.8.61 | zerocopy-0.8.61-MIT.txt |
+| zerocopy-derive | 0.8.61 | zerocopy-derive-0.8.61-MIT.txt |
+| proc-macro2 | 1.0.107 | proc-macro2-1.0.107-MIT.txt |
+| quote | 1.0.47 | quote-1.0.47-MIT.txt |
+| syn | 2.0.119 | syn-2.0.119-MIT.txt |
+| unicode-ident | 1.0.26 | unicode-ident-1.0.26-MIT.txt; unicode-ident-1.0.26-UNICODE.txt |
+
+Rand 0.10.3 is already used by the companion liblrhsmm-rs crate. Rand and
+rand_chacha disable default features; only rand_chacha's std feature is enabled.
+The normal/build dependency tree contains rand_core, ppv-lite86 and zerocopy,
+with no getrandom dependency or OS entropy feature. The explicitly named
+ChaCha8 algorithm supports portable seeded streams; StdRng/SmallRng do not
+provide the same reproducibility contract. Optional derive/procedural-macro
+packages appear in Cargo.lock but are absent from the current normal/build
+tree; their MIT notices are also retained for that resolved package set.
 
 Primary API references:
 

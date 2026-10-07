@@ -24,6 +24,7 @@ pub mod median;
 pub mod phase;
 pub mod polynomial;
 pub mod prediction;
+pub mod random;
 pub mod real_cepstrum;
 pub mod resampling;
 pub mod root;

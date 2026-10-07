@@ -2,6 +2,11 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Owned seeded ChaCha8 sampling provides uniform/Gaussian draws and signed-amplitude
+white noise for f32/f64. Raw integer transformations retain source arithmetic;
+Legacy Gaussian sampling retains the original approximation and Stable corrects
+its zero-input behavior. See [random compatibility](docs/random-compatibility.md).
+
 Itakura-Saito distance exposes corrected mean/log-mean divergence and an explicit
 source-compatible approximate log mean. Stable evaluation retains near-identity
 distances and handles extreme ratios in the log domain. See
