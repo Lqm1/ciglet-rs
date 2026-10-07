@@ -4,6 +4,8 @@
 //! output escapes. They assume ordinary nearest-even floating-point rounding.
 use crate::Error;
 
+pub mod hyperbolic;
+
 /// Four binary32 lanes in source index order.
 pub type Floats = [f32; 4];
 /// Four signed 32-bit lanes in source index order.
@@ -53,7 +55,7 @@ pub fn from_integer64_lanes(values: [i64; 2]) -> Integers {
     ]
 }
 
-fn map(values: Floats, kernel: fn(f32) -> Result<f32, Error>) -> Result<Floats, Error> {
+fn map(values: Floats, mut kernel: impl FnMut(f32) -> Result<f32, Error>) -> Result<Floats, Error> {
     let mut result = [0.0; 4];
     for (output, value) in result.iter_mut().zip(values) {
         *output = kernel(value)?;

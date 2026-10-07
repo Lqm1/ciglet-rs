@@ -12,7 +12,8 @@ scalar functions map to `approximation::hyperbolic`. Nine additional scalar
 functions map to restricted trigonometry, full tangent and faster power.
 The remaining fourteen scalar functions now map to `approximation::special`,
 Ten four-lane exponential/logarithm/power functions now map to
-`approximation::lanes`, leaving 34 four-lane functions pending. Existing mappings do not establish
+`approximation::lanes`. Eight hyperbolic/sigmoid functions now map to its
+`hyperbolic` module, leaving 26 four-lane functions pending. Existing mappings do not establish
 complete bundled-specific verification by themselves.
 
 ## Hyperbolic and sigmoid functions
@@ -251,6 +252,33 @@ scalar math, special functions, Lambert correction, hyperbolic and trigonometric
 operations. Clippy and Rustdoc with warnings denied, formatting and whitespace
 checks pass. This focused result still precedes final combined native acceptance.
 
+## Four-lane hyperbolic and sigmoid functions
+
+`lanes::hyperbolic::{sine,cosine,tangent,sigmoid}` accepts four independent
+binary32 lanes and a Precision selection. Approximate/Fast map to the eight
+original vfast/vfaster sinh/cosh/tanh/sigmoid functions. Source inspection
+confirms the same lane expression order as the scalar algorithms, including
+half-times-sum/difference, the tangent exponential at -2*value and the sigmoid
+exponential at -value. The checked mapper now accepts a closure so these APIs
+share the same source kernels without duplicating formulas or exposing partial
+results. Existing four-lane APIs retain their behavior.
+
+The independent unchanged-header SSE2 oracle records six mixed input arrays
+per function, 48 arrays and 192 exact binary32 output comparisons. Inputs
+include zero signs, tiny values, positive/negative magnitudes, fractional
+arguments and values through +/-40. Windows Zig and Linux GCC regenerate
+identical reference bytes with contraction disabled. Every lane position is
+tested for nonfinite inputs and unsupported exponential ranges. Exact mode
+additionally follows the existing scalar host-exponential selection and retains
+the binary32 surrounding formulas; zero outputs have explicit tests. Exact
+mode is additional Rust functionality and has no bundled C counterpart.
+
+All five native targets pass seven affected integration suites in Debug and
+Release, sixteen tests per configuration, including the previous four-lane
+kernels and Lambert correction. The ten final logs have no failed or ignored
+tests. Clippy and Rustdoc pass with warnings denied; formatting and whitespace
+checks pass. This checkpoint does not replace final combined native acceptance.
+
 ## Remaining four-lane interfaces
 
 The remaining four-lane functions require their own source arithmetic audit; mapping
@@ -259,6 +287,13 @@ four-element arrays can replace platform vector types without requiring C/SSE
 layout in the Rust API. Conversion/index/splat/absolute-value helper macros
 and union representations now have explicit safe mappings documented above.
 They remain part of the audit rather than being excluded as macros/types.
+
+One concrete pending trigonometric difference is already reproduced:
+vfastcos selects its negative offset at angle >= half-pi, whereas scalar
+fastcos selects it only at angle > half-pi. An isolated unchanged-header probe
+at binary32 half-pi produces scalar bits b4c8d15f and vector bits 00000000.
+The upcoming four-lane implementation must preserve the vector branch instead
+of delegating this case to the scalar cosine function.
 
 The header's include guards, compiler conditional selection and the single-file
 packaging mode have no independent runtime algorithm. The single Cargo library
