@@ -18,6 +18,7 @@ pub mod matrix;
 pub mod median;
 pub mod phase;
 pub mod polynomial;
+pub mod prediction;
 pub mod resampling;
 pub mod root;
 pub mod smoothing;

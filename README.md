@@ -2,6 +2,11 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Waveform linear prediction supports f32/f64 Levinson recursion, owned
+autocorrelation/coefficient results and source gain estimation. Order zero and
+silence are safe. Frequency-domain prediction and resonance extraction remain
+pending. See [prediction compatibility](docs/prediction-compatibility.md).
+
 Complex construction, conjugation and arithmetic use the existing RustFFT
 `Complex` type. Checked division repairs intermediate range loss. Complex
 exponentials and arguments expose all three source precision levels; scalar

@@ -1,5 +1,12 @@
 # DSP reference fixture
 
+`prediction-float.bin` and `prediction-double.bin` use `LPC1`: little-endian
+u32 scalar width and 64-case count; each case stores u32 sample count/order,
+sample-count waveform values, order+1 autocorrelation values, order+1
+coefficient values and one gain. The source function bodies and headers are
+unchanged. Each precision compares 1288 scalar outputs. See
+`docs/prediction-compatibility.md` and `tests/generate_prediction_reference.py`.
+
 `complex-float.bin` and `complex-double.bin` use `CPX1`: little-endian u32
 scalar width and 64-case count; each case has four operand components, eight
 complex outputs (conjugate, sum, difference, product, quotient, then levels

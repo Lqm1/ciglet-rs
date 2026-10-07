@@ -2,6 +2,22 @@
 
 These findings refer to ciglet commit 895ba9b1c0eabee83d3544208bbc82420efa3206. Recording a finding does not establish that its Rust replacement is implemented or verified.
 
+## Levinson short inputs and silence
+
+cig_levinson unconditionally reads R[1] and writes a[1]. Empty and singleton
+arrays therefore access outside their allocation, including the otherwise
+valid order-zero lpc workflow. The original-C bounds driver reproduces these
+errors under AddressSanitizer for float and double. prediction::levinson
+rejects an empty correlation and returns the leading unit coefficient for a
+singleton. from_samples supports order zero when a waveform has a sample.
+
+Zero-energy correlation produces 0/0 reflection coefficients and nonfinite
+coefficients. The source driver confirms this for both precisions. Rust returns
+the zero predictor [1,0,...] for entirely zero correlation, yielding zero gain;
+nonzero lags with zero energy are rejected. Negative/nonfinite energy, invalid
+shapes and nonpositive recursion residuals return errors. General extreme-scale
+stability remains part of the final numerical audit. See prediction-compatibility.md.
+
 ## Complex division and approximate argument range loss
 
 c_div squares its divisor and multiplies operands before dividing. Maximum
