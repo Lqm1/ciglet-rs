@@ -1,5 +1,11 @@
 # Dependency choices
 
+Complex scalar helpers reuse RustFFT's existing num-complex 0.4.6 re-export.
+Construction, conjugation and arithmetic operators retain the C grouping,
+checked against f32/f64 fixtures. The new checked division and precision-aware
+exponential/argument helpers need no additional dependency. The existing
+num-complex MIT notice remains retained.
+
 RustFFT 6.4.1 provides reusable f32/f64 complex transform plans and explicit
 scratch-buffer processing. Default features select available AVX/SSE/Neon
 acceleration and retain a scalar fallback. The WASM SIMD feature is not enabled

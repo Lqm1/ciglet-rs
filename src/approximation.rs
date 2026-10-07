@@ -1,6 +1,134 @@
-//! Compatible single-precision trigonometric approximations.
+//! Source-compatible scalar approximations and explicit numerical precision.
 // Adapted from Paul Mineiro's fastapprox. See LICENSES/fastapprox-BSD.txt.
 use crate::Error;
+
+/// Upstream numerical levels, from the fastest approximation to host libm.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Precision {
+    Fast,
+    Approximate,
+    Exact,
+}
+
+/// Level-one base-two logarithm, preserving its linear bit approximation.
+pub fn logarithm2_fast(value: f32) -> Result<f32, Error> {
+    if !value.is_finite() || value <= 0.0 {
+        return Err(Error(
+            "approximate logarithm requires a positive finite value",
+        ));
+    }
+    Ok(value.to_bits() as f32 * 1.192_092_9e-7 - 126.942_696)
+}
+
+/// The natural logarithm has its own source coefficients, not ln(2) times log2.
+pub fn logarithm_fast(value: f32) -> Result<f32, Error> {
+    if !value.is_finite() || value <= 0.0 {
+        return Err(Error(
+            "approximate logarithm requires a positive finite value",
+        ));
+    }
+    Ok(value.to_bits() as f32 * 8.262_958e-8 - 87.989_97)
+}
+
+pub fn exponential2_fast(exponent: f32) -> Result<f32, Error> {
+    if !exponent.is_finite() || exponent >= 128.0 {
+        return Err(Error("approximate exponential exceeds the legacy range"));
+    }
+    let bits = 8_388_608.0 * (exponent.max(-126.0) + 126.942_696);
+    if !(0.0..4_294_967_296.0).contains(&bits) {
+        return Err(Error(
+            "approximate exponential bit conversion exceeds the legacy range",
+        ));
+    }
+    let result = f32::from_bits(bits as u32);
+    if !result.is_finite() {
+        return Err(Error("approximate exponential overflowed"));
+    }
+    Ok(result)
+}
+
+pub fn exponential_fast(exponent: f32) -> Result<f32, Error> {
+    exponential2_fast(std::f32::consts::LOG2_E * exponent)
+}
+
+/// Source rational atan2 approximation with selected-precision arithmetic.
+pub fn atan2_fast<T: crate::statistics::Scalar>(y: T, x: T) -> Result<T, Error> {
+    crate::vector::validate(&[y, x])?;
+    let half_pi = std::f64::consts::FRAC_PI_2;
+    if x == T::zero() {
+        return crate::vector::scalar(if y > T::zero() {
+            half_pi
+        } else if y == T::zero() {
+            0.0
+        } else {
+            -half_pi
+        });
+    }
+    let ratio = y / x;
+    if !ratio.into().is_finite() {
+        return crate::vector::scalar(if y > T::zero() { half_pi } else { -half_pi });
+    }
+    let coefficient = T::from_f32(0.28).unwrap();
+    let angle = if ratio.into().abs() < 1.0 {
+        let angle = ratio / (T::one() + coefficient * ratio * ratio);
+        if x < T::zero() {
+            crate::vector::scalar(
+                angle.into()
+                    + if y < T::zero() {
+                        -std::f64::consts::PI
+                    } else {
+                        std::f64::consts::PI
+                    },
+            )?
+        } else {
+            angle
+        }
+    } else {
+        let square = ratio * ratio;
+        let fraction = if square.into().is_finite() {
+            ratio / (square + coefficient)
+        } else {
+            // Avoid a spurious zero from an overflowing square while retaining
+            // source arithmetic throughout its ordinary range.
+            let inverse = T::one() / ratio;
+            inverse / (T::one() + coefficient * inverse * inverse)
+        };
+        let angle: T = crate::vector::scalar(half_pi - fraction.into())?;
+        if y < T::zero() {
+            crate::vector::scalar(angle.into() - std::f64::consts::PI)?
+        } else {
+            angle
+        }
+    };
+    Ok(angle)
+}
+
+pub fn exponential_with<T: crate::statistics::Scalar>(
+    value: T,
+    precision: Precision,
+) -> Result<T, Error> {
+    crate::vector::validate(&[value])?;
+    crate::vector::scalar(match precision {
+        Precision::Fast => exponential_fast(value.into() as f32)? as f64,
+        Precision::Approximate => exponential(value.into() as f32)? as f64,
+        Precision::Exact => value.into().exp(),
+    })
+}
+
+pub fn logarithm_with<T: crate::statistics::Scalar>(
+    value: T,
+    precision: Precision,
+) -> Result<T, Error> {
+    crate::vector::validate(&[value])?;
+    if value <= T::zero() {
+        return Err(Error("logarithm requires a positive value"));
+    }
+    crate::vector::scalar(match precision {
+        Precision::Fast => logarithm_fast(value.into() as f32)? as f64,
+        Precision::Approximate => logarithm(value.into() as f32)? as f64,
+        Precision::Exact => value.into().ln(),
+    })
+}
 
 /// Upstream level-one sine, retaining fastapprox's binary32 arithmetic.
 pub fn sine_fast(angle: f32) -> Result<f32, Error> {

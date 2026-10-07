@@ -2,6 +2,12 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Complex construction, conjugation and arithmetic use the existing RustFFT
+`Complex` type. Checked division repairs intermediate range loss. Complex
+exponentials and arguments expose all three source precision levels; scalar
+logarithm/exponential helpers include the original level-one approximations.
+See [complex compatibility](docs/complex-compatibility.md).
+
 Vector differences, cumulative sums, reversal, inclusive grids, checked integer
 progressions and scalar interpolation support the original workflows. Phase
 wrapping/unwrapping, directed differences, Cartesian magnitude/argument, polar

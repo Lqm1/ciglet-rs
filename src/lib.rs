@@ -4,6 +4,7 @@
 pub mod approximation;
 pub mod cepstrum;
 pub mod chirp_z;
+pub mod complex;
 pub mod cosine;
 pub mod extrema;
 pub mod filterbank;

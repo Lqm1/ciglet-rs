@@ -2,6 +2,26 @@
 
 These findings refer to ciglet commit 895ba9b1c0eabee83d3544208bbc82420efa3206. Recording a finding does not establish that its Rust replacement is implemented or verified.
 
+## Complex division and approximate argument range loss
+
+c_div squares its divisor and multiplies operands before dividing. Maximum
+values divided by themselves yield NaNs through infinity/infinity; smallest
+positive values divided by themselves yield NaNs through zero/zero. A finite
+quotient can also disappear when numerator products completely underflow.
+The original-C bounds driver confirms all three in both precisions.
+complex::divide preserves normal source grouping and uses scaled arithmetic
+only on intermediate range loss or nonfinite results. Independent Rust tests
+recover the unit quotient, maximum finite quotient and the lost tiny quotient.
+Zero divisors and unrepresentable results return errors. Partially subnormal
+arithmetic remains part of the final numerical-stability audit.
+
+fastatan2 can compute infinity/infinity after the initial y/x ratio overflows,
+returning NaN for finite Cartesian components. The same driver confirms this
+through c_arg_1. The Rust implementation returns the signed half-pi limit for
+an overflowing ratio and uses a reciprocal rational form when only its square
+overflows. Ordinary rational arithmetic and its signed-zero conventions are
+preserved. See complex-compatibility.md and tests/complex.rs.
+
 ## Empty vector helpers and integer progression
 
 diff, cumsum and unwrap access element zero for an empty array. complete_symm

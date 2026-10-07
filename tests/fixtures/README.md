@@ -1,5 +1,16 @@
 # DSP reference fixture
 
+`complex-float.bin` and `complex-double.bin` use `CPX1`: little-endian u32
+scalar width and 64-case count; each case has four operand components, eight
+complex outputs (conjugate, sum, difference, product, quotient, then levels
+one/two/three of exp), and levels one/two of argument. A u32 count of fifteen
+scalar cases follows, each holding a log operand and exponent, three logarithm
+outputs, three exponential outputs, faster base-two log and faster base-two exp.
+Each precision compares 1272 scalar output slots. The canonical files use
+Windows Zig 0.16.0 and unmodified pinned C headers. Linux GCC checks all data
+exactly except the measured host-dependent scalar double exp difference. See
+`docs/complex-compatibility.md` and the reproducible generator/bounds oracle.
+
 `vector-phase-float.bin` and `vector-phase-double.bin` use `VPH1`: little-endian
 u32 scalar width and 24-case count, then each case's u32 length, real/imaginary/
 angle input arrays and twelve output arrays in the order declared in
