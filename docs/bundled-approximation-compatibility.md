@@ -11,7 +11,8 @@ scalar functions already map to existing approximation APIs. Eight further
 scalar functions map to `approximation::hyperbolic`. Nine additional scalar
 functions map to restricted trigonometry, full tangent and faster power.
 The remaining fourteen scalar functions now map to `approximation::special`,
-leaving all 44 four-lane functions pending. Existing mappings do not establish
+Ten four-lane exponential/logarithm/power functions now map to
+`approximation::lanes`, leaving 34 four-lane functions pending. Existing mappings do not establish
 complete bundled-specific verification by themselves.
 
 ## Hyperbolic and sigmoid functions
@@ -182,14 +183,82 @@ Clippy and Rustdoc pass with warnings denied, as do formatting and whitespace
 checks. This is focused verification; final combined native acceptance must
 also include the corrected refinement and four-lane implementation.
 
-## Remaining interfaces
+## Portable four-lane exponential, logarithm and power
 
-The four-lane functions require their own source arithmetic audit; mapping
+`approximation::lanes` accepts owned `[f32; 4]` arrays and returns a checked
+four-element result. It introduces no platform-specific alignment requirement,
+unsafe operation or dependency. One invalid lane aborts the entire calculation;
+no partly computed output escapes. The same algorithm is available on targets
+without SSE2. This is portable numerical functionality, not a promise that the
+compiler emits native SIMD instructions.
+
+| Source | Rust function |
+| --- | --- |
+| vfastpow2 / vfasterpow2 | exponential2 / exponential2_fast |
+| vfastexp / vfasterexp | exponential / exponential_fast |
+| vfastlog2 / vfasterlog2 | logarithm2 / logarithm2_fast |
+| vfastlog / vfasterlog | logarithm / logarithm_fast |
+| vfastpow / vfasterpow | power / power_fast |
+
+Source inspection establishes matching lane expression order for these ten
+functions on their checked domains. Positive finite log inputs have a clear
+sign bit, so the original signed vector bit-to-float conversion agrees with
+the scalar unsigned bit conversion. Representable exponential result bits also
+fit signed 32-bit conversion. This permits sharing the verified scalar kernels
+here; it does not establish equivalence for other vector functions.
+
+| Original helper/type | Safe Rust representation |
+| --- | --- |
+| v4sf / v4si | Floats = [f32; 4] / Integers = [i32; 4] |
+| v4sfl / v4sil | ordinary [value; 4] array construction |
+| v2dil | from_integer64_lanes([value; 2]) |
+| v4sfindexer / v4siindexer, indexing macros | owned arrays and checked indexing |
+| v4sfv4sipun | to_bits / from_bits |
+| v4sf_fabs | absolute |
+| v4sf_to_v4si | to_integers |
+| v4si_to_v4sf | from_integers |
+
+Float-to-integer conversion explicitly returns the SSE2 indefinite value
+i32::MIN for NaN, infinity and out-of-range values. A plain Rust float cast
+would instead saturate or return zero, so it is not used unchecked here.
+Integer-to-float conversion follows Rust's documented
+[nearest-even numeric-cast rules](https://doc.rust-lang.org/reference/expressions/operator-expr.html#numeric-cast).
+The APIs assume the ordinary nearest-even arithmetic environment. Floating-point
+exception flags and alternate native rounding modes are not exposed by these
+portable value APIs. Array construction/indexing follow the standard
+[Rust array API](https://doc.rust-lang.org/std/primitive.array.html).
+
+The original integer splat macro has a signed-promotion defect: evaluating
+v4sil(-2) produces [-2, -1, -2, -1]. An isolated unchanged-header C probe
+reproduces this result. Ordinary Rust [-2; 4] correctly fills all four lanes;
+the source macro's accidental high-word sign extension is not retained.
+
+The unchanged original SSE2 header provides eighty four-lane reference records:
+64 function evaluations and sixteen conversion/absolute-value records. Mixed
+lanes cover sign and zero differences, exponential clamp neighbors and upper
+range, subnormal/normal log inputs, neighboring mantissas, wide magnitudes,
+distinct power exponents, integer rounding ties and invalid conversion lanes.
+Seventy-nine complete arrays match original bits, 316 lane comparisons. The
+remaining array has an infinite source exponential result at the last float
+below 128; the checked Rust calculation returns an error for the whole array.
+Windows Zig and Linux GCC regenerate identical fixtures with contraction
+disabled. Separate tests cover error position in every lane and safe owned
+bit/splat/index/64-bit-word representations.
+
+All five native targets pass the six affected integration suites in Debug and
+Release, fourteen tests per configuration. The suites include the new lanes,
+scalar math, special functions, Lambert correction, hyperbolic and trigonometric
+operations. Clippy and Rustdoc with warnings denied, formatting and whitespace
+checks pass. This focused result still precedes final combined native acceptance.
+
+## Remaining four-lane interfaces
+
+The remaining four-lane functions require their own source arithmetic audit; mapping
 each to a scalar call must not be presumed bit-equivalent. Portable owned
 four-element arrays can replace platform vector types without requiring C/SSE
 layout in the Rust API. Conversion/index/splat/absolute-value helper macros
-and union representations also require explicit safe ownership/bit-operation
-mappings. They are not removed from the audit because they are macros/types.
+and union representations now have explicit safe mappings documented above.
+They remain part of the audit rather than being excluded as macros/types.
 
 The header's include guards, compiler conditional selection and the single-file
 packaging mode have no independent runtime algorithm. The single Cargo library

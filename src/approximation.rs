@@ -3,6 +3,7 @@
 use crate::Error;
 
 pub mod hyperbolic;
+pub mod lanes;
 pub mod special;
 pub mod trigonometric;
 
