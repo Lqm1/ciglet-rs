@@ -2,6 +2,12 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Owned generic row-major arrays support initialization, copying, flattening,
+reshape and transpose. In-place transpose moves non-Clone elements safely;
+floating-point storage preserves every bit pattern. These arrays are distinct
+from the column-major numerical matrices. See
+[array compatibility](docs/array-compatibility.md).
+
 Real cepstra, inverse reconstruction, minimum-phase angles and frame-major
 magnitude/cepstrum conversion support f32/f64 with reusable FFT workspaces.
 Explicit Legacy policies retain original Nyquist and lifter behavior; defaults
