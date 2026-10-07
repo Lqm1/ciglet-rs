@@ -56,8 +56,8 @@ fn selection_preserves_values_and_sort_indices() {
 
 #[test]
 fn invalid_and_degenerate_inputs_have_defined_behavior() {
-    assert!(mean(&[]).is_err());
-    assert!(median(&[]).is_err());
+    assert!(mean::<f32>(&[]).is_err());
+    assert!(median::<f32>(&[]).is_err());
     assert!(dot(&[1.0], &[]).is_err());
     assert!(select_nth(&mut [1.0], 1).is_err());
     assert_eq!(Window::Hann.generate(1), [1.0]);

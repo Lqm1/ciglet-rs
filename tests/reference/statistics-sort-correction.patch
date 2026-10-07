@@ -1,0 +1,14 @@
+--- a/ciglet.c
++++ b/ciglet.c
+@@ -106,7 +106,10 @@
+ } sort_struct;
+ 
+ int compare_sort_struct(const void* a, const void* b) {
+- return ((sort_struct*)a) -> val > ((sort_struct*)b) -> val ? 1 : -1;
++ const sort_struct *x=a,*y=b;
++ if(x->val<y->val)return -1;
++ if(x->val>y->val)return 1;
++ return (x->idx>y->idx)-(x->idx<y->idx);
+ }
+ 
+ FP_TYPE* cig_sort(FP_TYPE* x, int nx, int* outidx) {

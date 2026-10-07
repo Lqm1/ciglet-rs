@@ -1,5 +1,14 @@
 # DSP reference fixture
 
+`statistics-float.bin` and `statistics-double.bin` use `STA1`: little-endian u32
+scalar width and case count, followed by input length, lag count, both input
+vectors, nine basic statistics, a correlation-valid flag and correlation value,
+all selection ranks, sorted values, original sort indices and cross correlation.
+Invalid correlation values use a zero placeholder. The only C source correction
+is the finite-value sort comparator in `statistics-sort-correction.patch`.
+See `docs/statistics-compatibility.md` for precision, IEEE edge handling and
+generator commands.
+
 The four `matrix-{legacy,corrected}-{float,double}.bin` fixtures use `MAT1`:
 scalar width and correction flag, then counts of product, row-swap and LU cases,
 all integers as little-endian u32. Product records store rows, inner size and
