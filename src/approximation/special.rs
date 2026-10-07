@@ -178,23 +178,51 @@ fn lambert_exp(value: f32, fast: bool) -> Result<f32, Error> {
     let estimate =
         exponential2_fast(power_argument)? * (log_argument - log_value + log_value / log_argument);
     let log_estimate = log(estimate, fast)?;
-    if fast {
-        finite(estimate * (1.0 + value - log_estimate) / (1.0 + estimate))
+    let result = if fast {
+        estimate * (1.0 + value - log_estimate) / (1.0 + estimate)
     } else {
         let difference = value - log_estimate;
-        finite(
-            estimate * (2.0 + difference + estimate * (3.0 + 2.0 * difference))
-                / (2.0 - difference + estimate * (5.0 + 2.0 * estimate)),
-        )
+        estimate * (2.0 + difference + estimate * (3.0 + 2.0 * difference))
+            / (2.0 - difference + estimate * (5.0 + 2.0 * estimate))
+    };
+    if result.is_finite() && result > 0.0 {
+        Ok(result)
+    } else {
+        lambert_exp_corrected(value)
     }
 }
 
+// The original refinement can cross zero or overflow its intermediate products.
+// Preserve ordinary positive finite approximations; repair only invalid results.
+fn lambert_exp_corrected(value: f32) -> Result<f32, Error> {
+    let argument = f64::from(value);
+    let mut estimate;
+    if argument < 0.0 {
+        let target = argument.exp();
+        estimate = target;
+        for _ in 0..8 {
+            let exponential = estimate.exp();
+            estimate -= (estimate * exponential - target) / (exponential * (1.0 + estimate));
+        }
+    } else {
+        // W + ln(W) = argument avoids ever constructing exp(argument).
+        estimate = argument.max(1.0);
+        for _ in 0..8 {
+            estimate -= (estimate + estimate.ln() - argument) / (1.0 + 1.0 / estimate);
+        }
+    }
+    finite(estimate as f32)
+}
+
 /// Source `fastlambertwexpx`, evaluating W(exp(value)) without forming exp(value).
+/// Nonpositive/nonfinite source refinements use a double-precision correction.
+/// Results below binary32's representable range round to positive zero.
 pub fn lambert_w_exp(value: f32) -> Result<f32, Error> {
     lambert_exp(value, false)
 }
 
 /// Source `fasterlambertwexpx`, retaining the source's faster refinement.
+/// Invalid source results use the same correction as [`lambert_w_exp`].
 pub fn lambert_w_exp_fast(value: f32) -> Result<f32, Error> {
     lambert_exp(value, true)
 }

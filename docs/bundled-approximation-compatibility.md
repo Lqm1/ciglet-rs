@@ -120,7 +120,8 @@ Lambert W requires value >= -1/e; this comparison widens the binary32 input
 before applying the double constant. Intermediate logarithms and exponentials
 use existing checked APIs. Defined ordinary source values match; out-of-domain
 or unrepresentable stages return errors rather than unchecked bit conversions.
-No saturation or exact-root solver replaces the source approximations.
+Ordinary valid refinements retain the source approximations. Invalid Lambert
+exponential refinements use the numerical correction described below.
 
 The unchanged original header supplies 232 bit-encoded records: eighty for
 error/complementary error, twenty-eight for inverse error, sixty for
@@ -128,25 +129,58 @@ gamma/digamma, twenty-four for W(value), and forty for W(exp(value)). The inputs
 include zero signs, tiny values, inverse-error values next to +/-1, positive
 gamma inputs from 0.0001 through 1e6 and twelve valid negative gamma/digamma
 cases, negative and positive principal-branch
-arguments, and adjacent floats around both Lambert branch thresholds. All
-232 results match binary32 bits, and Windows Zig/Linux GCC generate identical
+arguments, and adjacent floats around both Lambert branch thresholds.
+The initial port matched all 232 binary32 results; after the disclosed numerical
+correction, 226 still match source bits and six negative results are repaired.
+Windows Zig/Linux GCC generate identical
 fixture bytes with contraction disabled. Domain and nonfinite tests are
 separate from this source comparison. Approximation accuracy for unmeasured
 extreme conditioning is not established by bit compatibility.
 
-The corpus exposes a reproduced source defect: both W(exp(value)) variants
-produce a negative value at -100, although exp(value) is positive and the
-principal real W must be positive. This checkpoint records the original bits
-so a subsequent numerical correction can be distinguished from a porting
-error. That correction remains required before native acceptance. Source bit
-compatibility is not a correctness claim for this exceptional input.
+## Lambert exponential correction
 
-All five native targets pass the special-function, scalar-math, hyperbolic
-and trigonometric integration suites in Debug and Release, nine tests per
-configuration. The final ten logs include the negative-domain expansion.
+Both original W(exp(value)) refinements can produce negative values, including
+at -8, -40 and -100. Large positive arguments can also overflow intermediate
+products even though the actual result is finite. These are reproduced source
+defects, corrected under the accepted bug-fix policy. The original header and
+fixtures remain unchanged so the intentional differences remain reviewable.
+
+Positive finite source outputs retain their original bits. Nonpositive or
+nonfinite refinements use eight Newton steps in double precision. Negative
+arguments solve W * exp(W) = exp(value), where the exponential is bounded by
+one. Positive arguments solve W + ln(W) = value without forming exp(value).
+This avoids both the invalid negative tail and positive exponential overflow.
+Binary32 underflow rounds to positive zero, and representable subnormals are
+retained. There is no new dependency or change to the shared source exponential
+or logarithm kernels.
+
+The new independent reference computes real roots at 80 and 120 decimal digits,
+checks convergence residuals and nearest binary32 rounding intervals, and
+requires identical rounded bits at both precisions. Its 481 inputs cover
+-120 through -4 at quarter steps, neighboring floats around underflow/normal
+boundaries, -200/-1000, extreme negative binary32 input and large positive
+inputs through f32::MAX. The separate C oracle includes the unmodified bundled
+header and canonicalizes only nonfinite output classification. Among 962
+function/input pairs, 941 require correction and 21 retain original bits.
+Corrected results are checked within one binary32 ULP of the independent real
+reference; zero results additionally require positive-zero bits. Original
+positive finite results are checked bit-for-bit. Windows Zig/Linux GCC
+regenerate identical mathematical and source fixture bytes.
+
+The correction uses standard [f64 exponential](https://doc.rust-lang.org/std/primitive.f64.html#method.exp)
+and [natural logarithm](https://doc.rust-lang.org/std/primitive.f64.html#method.ln)
+APIs. Their precision is unspecified by Rust's platform contract, so the
+one-ULP corpus tolerance is a measured acceptance check, not a universal
+correct-rounding guarantee. Positive source approximations are deliberately
+preserved and are not claimed to have one-ULP mathematical accuracy.
+
+All five native targets pass the Lambert correction, special-function,
+scalar-math, hyperbolic and trigonometric integration suites in Debug and
+Release, eleven tests per configuration. The final ten logs include the
+negative-domain expansion and numerical correction.
 Clippy and Rustdoc pass with warnings denied, as do formatting and whitespace
 checks. This is focused verification; final combined native acceptance must
-also include subsequent numerical corrections and four-lane implementation.
+also include the corrected refinement and four-lane implementation.
 
 ## Remaining interfaces
 
