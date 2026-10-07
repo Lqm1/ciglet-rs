@@ -2,6 +2,8 @@
 // Adapted from Paul Mineiro's fastapprox. See LICENSES/fastapprox-BSD.txt.
 use crate::Error;
 
+pub mod hyperbolic;
+
 /// Upstream numerical levels, from the fastest approximation to host libm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Precision {

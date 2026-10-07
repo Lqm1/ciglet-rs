@@ -20,19 +20,33 @@ semantic mapping and precision/build configuration has concrete evidence.
 | M_PI, M_PI_2 | Standard Rust constants replace both names; mixed-precision use sites remain part of the broader numeric audit |
 | CIGLET_H | Include guard has no runtime API; Rust module/package ownership replaces repeated header inclusion |
 
-Public header structs also require field/configuration review: cplx,
-ifdetector, filterbank, lfmodel and the POSIX-only figure. Complex scalars reuse
-num-complex; detector kernels and LF fields are public. Ownership invariants
-may replace raw field writes with checked constructors/mutators, but every
-defined configuration capability must remain available. Figure remains part of
-the owned plotting implementation, with mutable Rust writer access. Verify
-filterbank custom support/response, metadata and explicit empty-frame
-configurations are now checked independently of construction fixtures through
-33 unchanged-C records per precision. See filterbank-configuration-audit.md.
+## Own-header structure fields
 
-This initial audit covers ciglet.h only. A complete audit must also examine
-implementation export locations, build-selected FP_TYPE behavior and bundled
-public interfaces, plus the independent SHIRO/liblrhsmm inventories. Numeric
+| C fields | Rust configuration and evidence |
+| --- | --- |
+| cplx.real, imag | complex::Complex.re, im; construction/arithmetic/bit comparisons in tests/complex.rs |
+| ifdetector.fc | Detector::center_frequency, set_center_frequency and from_kernels; tests/instantaneous_frequency.rs |
+| ifdetector.nh, hr, hi, hdr, hdi | Kernels::real, imaginary, derivative_real, derivative_imaginary; length follows the vectors; from_kernels and kernels_mut preserve caller-designed filters and revalidate them before use |
+| filterbank.nchannel, nf | FilterBank::channels and bins; checked owned construction ties dimensions to response storage |
+| filterbank.fnyq | nyquist_hz and set_nyquist_hz; arbitrary metadata remains supported without changing custom responses |
+| filterbank.fresp, lower_idx, upper_idx | response, support and set_channel expose channel response and half-open support; 33 unchanged-C records per precision cover signed/custom responses and empty-frame behavior |
+| lfmodel.T0, te, tp, ta, Ee | Model::period, closure, peak, return_time, excitation; all five remain public; tests/glottal.rs and the 208-case preparation corpus |
+| figure.handle | Commands<W> accepts a caller-owned Write implementation; Figure owns native process/stdin lifetime and exposes mutable command writer access; tests/plotting.rs exercises both command bytes and actual Gnuplot |
+
+Independent dimension or owning-pointer mutation is replaced by checked owned
+construction. Callers can reconstruct resized detectors/banks rather than leave
+counts inconsistent with allocations. Mutable detector kernels are checked on
+use; filterbank channel changes validate shape/support before committing.
+These mappings describe safe Rust functionality, not original C layout/ABI.
+See instantaneous-frequency-compatibility.md, filterbank-configuration-audit.md,
+complex-compatibility.md, glottal-compatibility.md and plotting-audit.md for
+source arithmetic, corrections and reference reproduction.
+
+This initial audit covers ciglet.h only. The installed fastapprox header now
+has a separate 88-function inventory and concrete pending implementation rows;
+see bundled-approximation-compatibility.md. Implementation export locations,
+build-selected FP_TYPE behavior and bundled helper macros/types also require
+mapping, alongside the independent SHIRO/liblrhsmm inventories. Numeric
 stability fixes and native workflow acceptance remain separate requirements.
 
 Custom window/reduction evidence and the intentionally corrected Blackman

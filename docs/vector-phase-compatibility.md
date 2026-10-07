@@ -19,7 +19,9 @@ Complex magnitude preserves scalar squares and addition followed by a double
 square root. A double hypot fallback handles intermediate overflow or complete
 underflow when the final magnitude is representable. Complex argument uses
 double atan2 followed by conversion to the selected precision, matching c_arg,
-c_arg_2, c_arg_3 and argcplx. The approximate c_arg_1 variant is still pending.
+c_arg_2, c_arg_3 and argcplx. The c_arg_1 variant is implemented through
+`complex::argument` with `Precision::Fast`; its independent comparison and
+numerical boundary evidence are recorded in complex-compatibility.md.
 Polar conversion retains the upstream level-two f32 sine/cosine approximation,
 including in the double build. No exact-trigonometry substitution is made.
 
