@@ -4,6 +4,69 @@ use ciglet_rs::c_api::*;
 use std::mem::MaybeUninit;
 
 #[test]
+fn vector_buffers_support_overlap_and_empty_inputs() {
+    let mut values = [1.0_f32, 3.0, 6.0, 10.0, 99.0];
+    let pointer = values.as_mut_ptr();
+    // SAFETY: Both ranges are within values, with no concurrent accesses.
+    unsafe {
+        assert_eq!(ciglet_rs_difference_f32(pointer, 4, pointer.add(1), 4), 0);
+        assert_eq!(
+            ciglet_rs_cumulative_sum_f32(pointer.add(1), 4, pointer, 4),
+            0
+        );
+    }
+    assert_eq!(values, [1.0, 3.0, 6.0, 10.0, 4.0]);
+    let mut wide = [-0.0_f64, 2.0, 5.0];
+    let pointer = wide.as_mut_ptr();
+    // SAFETY: Same-allocation in-place buffers are supported by the ABI.
+    unsafe {
+        assert_eq!(ciglet_rs_reverse_f64(pointer, 3, pointer, 3), 0);
+        assert_eq!(
+            ciglet_rs_difference_f64(std::ptr::null(), 0, std::ptr::null_mut(), 0),
+            0
+        );
+    }
+    assert_eq!(wide[0], 5.0);
+    assert_eq!(wide[2].to_bits(), (-0.0_f64).to_bits());
+}
+
+#[test]
+fn vector_failures_leave_output_unchanged() {
+    let input = [f32::MAX, f32::MAX];
+    let mut output = [71.0_f32, 72.0];
+    // SAFETY: Real buffers are valid; invalid null/oversized ranges are rejected.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_cumulative_sum_f32(input.as_ptr(), 2, output.as_mut_ptr(), 2),
+            3
+        );
+        assert_eq!(
+            ciglet_rs_difference_f32(input.as_ptr(), 2, output.as_mut_ptr(), 1),
+            2
+        );
+        assert_eq!(
+            ciglet_rs_reverse_f32(std::ptr::null(), 2, output.as_mut_ptr(), 2),
+            1
+        );
+        assert_eq!(
+            ciglet_rs_difference_f32(
+                std::ptr::null(),
+                usize::MAX,
+                std::ptr::null_mut(),
+                usize::MAX
+            ),
+            2
+        );
+        let nan = [f32::NAN, 1.0];
+        assert_eq!(
+            ciglet_rs_difference_f32(nan.as_ptr(), 2, output.as_mut_ptr(), 2),
+            3
+        );
+    }
+    assert_eq!(output, [71.0, 72.0]);
+}
+
+#[test]
 fn scalar_outputs_preserve_ties_and_nan_payloads() {
     assert_eq!(ciglet_rs_abi_version(), 1);
     let mut result = MaybeUninit::<f32>::uninit();

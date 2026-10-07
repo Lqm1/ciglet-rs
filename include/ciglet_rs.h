@@ -9,6 +9,90 @@
 #include <stdlib.h>
 
 /**
+ * Compute difference into equally sized caller storage.
+ * Empty buffers accept null pointers; errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one allocation and readable until
+ * computation ends. Nonempty output must be writable for output_length values.
+ * No concurrent access may conflict; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_difference_f32(const float *input,
+                                  uintptr_t length,
+                                  float *output,
+                                  uintptr_t output_length);
+
+/**
+ * Compute cumulative sum into equally sized caller storage.
+ * Empty buffers accept null pointers; errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one allocation and readable until
+ * computation ends. Nonempty output must be writable for output_length values.
+ * No concurrent access may conflict; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_cumulative_sum_f32(const float *input,
+                                      uintptr_t length,
+                                      float *output,
+                                      uintptr_t output_length);
+
+/**
+ * Compute reverse into equally sized caller storage.
+ * Empty buffers accept null pointers; errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one allocation and readable until
+ * computation ends. Nonempty output must be writable for output_length values.
+ * No concurrent access may conflict; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_reverse_f32(const float *input,
+                               uintptr_t length,
+                               float *output,
+                               uintptr_t output_length);
+
+/**
+ * Compute difference into equally sized caller storage.
+ * Empty buffers accept null pointers; errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one allocation and readable until
+ * computation ends. Nonempty output must be writable for output_length values.
+ * No concurrent access may conflict; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_difference_f64(const double *input,
+                                  uintptr_t length,
+                                  double *output,
+                                  uintptr_t output_length);
+
+/**
+ * Compute cumulative sum into equally sized caller storage.
+ * Empty buffers accept null pointers; errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one allocation and readable until
+ * computation ends. Nonempty output must be writable for output_length values.
+ * No concurrent access may conflict; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_cumulative_sum_f64(const double *input,
+                                      uintptr_t length,
+                                      double *output,
+                                      uintptr_t output_length);
+
+/**
+ * Compute reverse into equally sized caller storage.
+ * Empty buffers accept null pointers; errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one allocation and readable until
+ * computation ends. Nonempty output must be writable for output_length values.
+ * No concurrent access may conflict; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_reverse_f64(const double *input,
+                               uintptr_t length,
+                               double *output,
+                               uintptr_t output_length);
+
+/**
  * First revision of the Rust port's C interface.
  */
 uint32_t ciglet_rs_abi_version(void);

@@ -23,5 +23,19 @@ int main(void) {
     memcpy(&wide_bits, &wide, sizeof wide_bits);
     assert(wide_bits == 0);
     assert(ciglet_rs_minimum_f32(1.0f, 2.0f, NULL) == 1);
+    float samples[] = {1.0f, 3.0f, 6.0f};
+    assert(ciglet_rs_difference_f32(samples, 3, samples, 3) == 0);
+    assert(samples[0] == 1.0f && samples[1] == 2.0f && samples[2] == 3.0f);
+    assert(ciglet_rs_cumulative_sum_f32(samples, 3, samples, 3) == 0);
+    assert(samples[2] == 6.0f);
+    assert(ciglet_rs_reverse_f32(samples, 3, samples, 3) == 0);
+    assert(samples[0] == 6.0f && samples[2] == 1.0f);
+    double doubles[] = {1.0, 3.0, 6.0};
+    assert(ciglet_rs_difference_f64(doubles, 3, doubles, 3) == 0);
+    assert(ciglet_rs_cumulative_sum_f64(doubles, 3, doubles, 3) == 0);
+    assert(ciglet_rs_reverse_f64(doubles, 3, doubles, 3) == 0);
+    assert(doubles[0] == 6.0 && doubles[2] == 1.0);
+    assert(ciglet_rs_difference_f32(NULL, 0, NULL, 0) == 0);
+    assert(ciglet_rs_difference_f32(samples, 3, samples, 2) == 2);
     return 0;
 }

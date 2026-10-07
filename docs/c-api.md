@@ -6,6 +6,7 @@ calculation backend; unsafe code is allowed only in `src/c_api.rs`.
 
 This is the first binding checkpoint, not complete binding coverage. Currently
 the ABI version and binary32/binary64 minimum/maximum operations are exported.
+Binary32/binary64 first difference, cumulative sum and reverse are also exported.
 All remaining public ciglet operations, including the bundled approximation
 functions, still require bindings. Liblrhsmm and SHIRO bindings and all browser/
 Node WebAssembly bindings remain required work.
@@ -59,3 +60,35 @@ Primary references:
 - https://doc.rust-lang.org/cargo/reference/cargo-targets.html
 - https://doc.rust-lang.org/beta/rustc/platform-support.html
 - https://github.com/mozilla/cbindgen/blob/main/docs.md
+
+## Vector boundary checkpoint
+
+Vector operations take input pointer/count and output pointer/count. Counts must
+match and fit the native vector bound, `isize` byte limit and address arithmetic.
+Status two reports invalid lengths; status three reports calculation/allocation
+errors returned by the Rust core; status four reports a caught unwinding panic.
+Zero-length buffers accept null pointers. Nonempty buffers require initialized
+single-allocation input and writable output. Computation finishes into a separate
+owned buffer before any output write, supporting identical or partially overlapping
+input/output ranges. Failure leaves caller output unchanged. Reverse retains the
+native operation's acceptance of nonfinite values; difference/cumulative sum keep
+their existing finite-value and overflow validation.
+
+The unwind boundary does not catch aborting panics or allocator aborts, and the
+existing panic hook runs before an unwind is caught. On the exceptional panic path
+the opaque payload is intentionally retained, because its destructor could panic
+again. This leaks that payload only on an unexpected panic. A unit test supplies
+a payload with a panicking destructor and verifies the status without dropping it.
+
+Windows MSVC x86_64 and i686 Debug pass all four Rust boundary integration tests
+and actual independently compiled C callers. Windows x86_64 additionally passes
+Python ctypes vector calls in both precisions. The Rust tests include partial
+overlap, in-place writes, empty null buffers, length mismatch, oversized lengths,
+nonfinite rejection and arithmetic overflow with unchanged output. Other targets
+and Release remain pending; Windows 32-bit Python has not been tested.
+
+Additional primary references:
+
+- https://doc.rust-lang.org/std/slice/fn.from_raw_parts.html
+- https://doc.rust-lang.org/std/ptr/fn.copy_nonoverlapping.html
+- https://doc.rust-lang.org/std/panic/fn.catch_unwind.html
