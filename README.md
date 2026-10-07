@@ -75,3 +75,5 @@ FFT API references: https://docs.rs/rustfft/6.4.1/rustfft/struct.FftPlanner.html
 Framewise correlograms support ACF, AMDF, squared difference and YIN, with period-to-frequency mapping, selected-scalar Legacy arithmetic and Stable centered ACF. See docs/correlogram-compatibility.md.
 
 Reusable spectral-envelope plans return the complete log-envelope and one-sided cepstrum, with explicit harmonic counts and Nyquist compatibility policies. See docs/spectral-envelope-compatibility.md.
+
+LF glottal models support Rd construction, direct public timing/amplitude configuration, reusable derived parameters, analytic magnitude/phase response and sampled periods. Signed excitation and source approximation stages are retained. See docs/glottal-compatibility.md.
