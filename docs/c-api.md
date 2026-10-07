@@ -118,6 +118,11 @@ demonstrate stable mean of two f32::MAX values remains finite while Legacy
 retains infinity, and verify a scalar output overlapping its input. Ordinary
 nonexact Python mean/variance expectations use explicit small rounding bounds;
 no native numerical comparison tolerance was changed.
+Windows x86_64 Release subsequently passes the same six integration tests and
+all 32 exports through independent C and Python callers. Windows i686 Release,
+Linux and Windows GNU binding validation remain pending. Cbindgen's `--verify`
+confirms the checked-in header matches generation. All-target Clippy and Rustdoc
+with warnings denied, formatting and whitespace checks pass.
 
 Statistics bindings still need selection/partition mutation, stable sorting
 with original indices, dot product, covariance/correlation with both policies
