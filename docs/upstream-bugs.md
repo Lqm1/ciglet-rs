@@ -2,6 +2,24 @@
 
 These findings refer to ciglet commit 895ba9b1c0eabee83d3544208bbc82420efa3206. Recording a finding does not establish that its Rust replacement is implemented or verified.
 
+## Magnitude prediction sizing and spectrum range loss
+
+flpc with a singleton spectrum derives a zero FFT length, then writes into a
+zero allocation. lpspec writes every coefficient into its fixed transform
+workspace without checking its length; a sufficiently long polynomial overruns
+the allocation. The original-C bounds oracle confirms both heap errors under
+AddressSanitizer in float and double. Rust requires at least two magnitude bins,
+a bounded transform/order and nonempty coefficients that fit the transform.
+
+lpspec squares FFT components in the selected precision. A maximum constant
+polynomial/gain loses the finite unit ratio through an infinite denominator;
+a minimum positive constant/gain instead divides by zero after square underflow.
+Zero gain at a grid pole produces NaN. The driver confirms each original result.
+Rust uses double hypot on square range loss, validates nonzero-gain divisors
+and returns signed zeros for zero gain. Independent tests recover finite unit
+spectra and zero output and verify plan reuse after failures. Legacy/default
+Nyquist behavior remains explicit as in STFT. See prediction-spectrum-compatibility.md.
+
 ## Levinson short inputs and silence
 
 cig_levinson unconditionally reads R[1] and writes a[1]. Empty and singleton

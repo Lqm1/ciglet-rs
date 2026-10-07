@@ -50,7 +50,8 @@ silence, invalid correlation/energy, mismatched shapes and excessive order.
 The dedicated original-C bounds oracle demonstrates empty/singleton accesses
 under AddressSanitizer and nonfinite silence coefficients in both precisions.
 Frequency-domain estimation, prediction spectra and resonance extraction are
-separate remaining work; this chapter does not claim those functions complete.
+covered separately in prediction-spectrum-compatibility.md. This chapter's
+fixture covers waveform estimation only.
 
 Primary Rust references are
 [slice::copy_from_slice](https://doc.rust-lang.org/std/primitive.slice.html#method.copy_from_slice)
@@ -64,4 +65,4 @@ this corpus matches the C bit patterns on all five targets. Formatting, Clippy
 and Rustdoc with warnings denied pass. AddressSanitizer reproduces both short
 length errors independently for float and double; the silence driver confirms
 nonfinite coefficients in both precisions. These checks cover the estimation
-core and do not replace remaining frequency-domain or full-port acceptance.
+core and do not replace separate frequency-domain or full-port acceptance.

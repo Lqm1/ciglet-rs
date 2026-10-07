@@ -1,5 +1,14 @@
 # DSP reference fixture
 
+`prediction-spectrum-float.bin` and `prediction-spectrum-double.bin` use `LPS1`:
+little-endian u32 scalar width and 48-case count. Each case has u32 bin count,
+FFT length/order, input magnitudes, order+1 correlation values, order+1
+coefficients, gain and full FFT-length prediction spectrum. Eleven resonance
+cases follow with u32 coefficient count, coefficients, u32 pole count,
+frequencies and interleaved selected real/imaginary poles. Each precision has
+1560 output slots. Unmodified C reproduction, numeric bounds, corrected/Legacy
+policies and independent checks are in `docs/prediction-spectrum-compatibility.md`.
+
 `prediction-float.bin` and `prediction-double.bin` use `LPC1`: little-endian
 u32 scalar width and 64-case count; each case stores u32 sample count/order,
 sample-count waveform values, order+1 autocorrelation values, order+1

@@ -1,9 +1,183 @@
 //! Autoregressive prediction with source-compatible Levinson recursion.
+pub use crate::phase::NyquistPolicy;
 use crate::{
     Error,
+    fourier::{Complex, Direction, FftPlan},
+    polynomial,
     statistics::{self, Scalar},
     vector,
 };
+
+fn used_magnitudes<T>(values: &[T], length: usize, policy: NyquistPolicy) -> &[T] {
+    if policy == NyquistPolicy::Legacy && values.len() == length / 2 + 1 {
+        &values[..values.len() - 1]
+    } else {
+        values
+    }
+}
+
+/// Reusable transform/workspace for magnitude-domain estimation and spectra.
+#[derive(Debug)]
+pub struct SpectrumPlan<T: Scalar> {
+    fft: FftPlan<T>,
+    workspace: Vec<Complex<T>>,
+}
+impl<T: Scalar> SpectrumPlan<T> {
+    pub fn new(length: usize) -> Result<Self, Error> {
+        let fft = FftPlan::new(length)?;
+        let mut workspace = vector::buffer(length)?;
+        workspace.resize(length, Complex::new(T::zero(), T::zero()));
+        Ok(Self { fft, workspace })
+    }
+    pub fn len(&self) -> usize {
+        self.fft.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        false
+    }
+
+    /// Zero-pad squared magnitudes, mirror their upper spectrum and invert.
+    pub fn estimate(
+        &mut self,
+        magnitudes: &[T],
+        order: usize,
+        policy: NyquistPolicy,
+    ) -> Result<Prediction<T>, Error> {
+        let n = self.len();
+        if magnitudes.len() < 2 || magnitudes.len() > n / 2 + 1 {
+            return Err(Error(
+                "magnitude spectrum does not fit the prediction transform",
+            ));
+        }
+        let magnitudes = used_magnitudes(magnitudes, n, policy);
+        vector::validate(magnitudes)?;
+        let count = order
+            .checked_add(1)
+            .filter(|&count| count <= n)
+            .ok_or(Error("prediction order exceeds the transform lag range"))?;
+        self.workspace.fill(Complex::new(T::zero(), T::zero()));
+        for (value, &magnitude) in self.workspace.iter_mut().zip(magnitudes) {
+            value.re = magnitude * magnitude;
+            if !value.re.into().is_finite() {
+                return Err(Error("squared magnitude overflowed"));
+            }
+        }
+        if policy == NyquistPolicy::Legacy {
+            self.workspace[n / 2].re = self.workspace[n / 2 - 1].re;
+        }
+        for i in n / 2 + 1..n {
+            self.workspace[i].re = self.workspace[n - i].re;
+        }
+        self.fft.process(&mut self.workspace, Direction::Inverse)?;
+        let mut autocorrelation = vector::buffer(count)?;
+        autocorrelation.extend(self.workspace[..count].iter().map(|value| value.re));
+        let coefficients = levinson(&autocorrelation)?;
+        Ok(Prediction {
+            coefficients,
+            autocorrelation,
+        })
+    }
+
+    /// Evaluate the full FFT-grid prediction magnitude, retaining signed gain.
+    pub fn spectrum(&mut self, coefficients: &[T], gain: T) -> Result<Vec<T>, Error> {
+        vector::validate(coefficients)?;
+        vector::validate(&[gain])?;
+        let n = self.len();
+        if coefficients.is_empty()
+            || coefficients.len() > n
+            || coefficients.iter().all(|&value| value == T::zero())
+        {
+            return Err(Error(
+                "prediction spectrum requires a nonzero polynomial fitting the transform",
+            ));
+        }
+        let mut output = vector::buffer(n)?;
+        if gain == T::zero() {
+            output.resize(n, gain);
+            return Ok(output);
+        }
+        self.workspace.fill(Complex::new(T::zero(), T::zero()));
+        for (value, &coefficient) in self.workspace.iter_mut().zip(coefficients) {
+            value.re = coefficient;
+        }
+        self.fft.process(&mut self.workspace, Direction::Forward)?;
+        for value in &self.workspace {
+            let square = value.re * value.re + value.im * value.im;
+            let magnitude = if !square.into().is_finite()
+                || (square == T::zero() && (value.re != T::zero() || value.im != T::zero()))
+            {
+                value.re.into().hypot(value.im.into())
+            } else {
+                square.into().sqrt()
+            };
+            if magnitude == 0.0 {
+                return Err(Error(
+                    "prediction spectrum has a pole on the transform grid",
+                ));
+            }
+            output.push(vector::scalar(gain.into() / magnitude)?);
+        }
+        Ok(output)
+    }
+}
+
+/// Source transform sizing: next power of two at least twice bins minus one.
+pub fn from_magnitude<T: Scalar>(magnitudes: &[T], order: usize) -> Result<Prediction<T>, Error> {
+    from_magnitude_with(magnitudes, order, NyquistPolicy::Preserve)
+}
+pub fn from_magnitude_with<T: Scalar>(
+    magnitudes: &[T],
+    order: usize,
+    policy: NyquistPolicy,
+) -> Result<Prediction<T>, Error> {
+    let length = magnitudes
+        .len()
+        .checked_sub(1)
+        .filter(|&length| length > 0)
+        .and_then(|length| length.checked_mul(2))
+        .and_then(usize::checked_next_power_of_two)
+        .ok_or(Error(
+            "prediction magnitude spectrum requires at least two bounded bins",
+        ))?;
+    vector::validate(used_magnitudes(magnitudes, length, policy))?;
+    SpectrumPlan::new(length)?.estimate(magnitudes, order, policy)
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Resonance<T> {
+    pub frequency_nyquist: T,
+    pub pole: Complex<T>,
+}
+#[derive(Debug, Clone)]
+pub struct ResonanceEstimate<T> {
+    pub resonances: Vec<Resonance<T>>,
+    pub iterations: usize,
+    pub converged: bool,
+    pub maximum_residual: f64,
+}
+/// Keep source positive-frequency poles strictly inside 0.001..0.999 Nyquist.
+pub fn resonances<T: Scalar>(coefficients: &[T]) -> Result<ResonanceEstimate<T>, Error> {
+    let roots = polynomial::roots_real(coefficients)?;
+    let mut resonances = vector::buffer(roots.values.len())?;
+    for &pole in &roots.values {
+        let frequency_nyquist: T =
+            vector::scalar(pole.im.into().atan2(pole.re.into()) / std::f64::consts::PI)?;
+        if frequency_nyquist.into() > 0.001 && frequency_nyquist.into() < 0.999 {
+            resonances.push(Resonance {
+                frequency_nyquist,
+                pole,
+            });
+        }
+    }
+    resonances
+        .sort_by(|first, second| T::total_cmp(&first.frequency_nyquist, &second.frequency_nyquist));
+    Ok(ResonanceEstimate {
+        resonances,
+        iterations: roots.iterations,
+        converged: roots.converged,
+        maximum_residual: roots.maximum_residual,
+    })
+}
 
 /// Owned prediction coefficients and the autocorrelation used to estimate them.
 #[derive(Debug, Clone, PartialEq)]
