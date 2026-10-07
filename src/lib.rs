@@ -15,6 +15,7 @@ pub mod interpolation;
 pub mod kalman;
 pub mod median;
 pub mod resampling;
+pub mod root;
 pub mod smoothing;
 pub mod statistics;
 pub mod stft;
