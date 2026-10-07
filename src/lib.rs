@@ -2,6 +2,7 @@
 //! The complete public upstream API is being ported in stages.
 #![forbid(unsafe_code)]
 pub mod approximation;
+pub mod cepstrum;
 pub mod chirp_z;
 pub mod cosine;
 pub mod filterbank;
