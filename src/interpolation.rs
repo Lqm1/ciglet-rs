@@ -1,5 +1,30 @@
 //! Finite linear interpolation with the upstream coordinate conventions.
 use crate::Error;
+
+/// Scalar interpolation/extrapolation with source operation order on finite
+/// arithmetic and a weighted-sum fallback when the endpoint difference overflows.
+pub fn between<T: rustfft::FftNum + Into<f64>>(start: T, end: T, ratio: T) -> Result<T, Error> {
+    if !start.into().is_finite() || !end.into().is_finite() || !ratio.into().is_finite() {
+        return Err(Error("scalar interpolation requires finite inputs"));
+    }
+    let value = start + (end - start) * ratio;
+    if value.into().is_finite() {
+        return Ok(value);
+    }
+    let weight = ratio.into();
+    let fallback = if weight == 0.0 {
+        start.into()
+    } else if weight == 1.0 {
+        end.into()
+    } else {
+        (1.0 - weight) * start.into() + weight * end.into()
+    };
+    let value = T::from_f64(fallback).unwrap();
+    if !value.into().is_finite() {
+        return Err(Error("scalar interpolation overflowed"));
+    }
+    Ok(value)
+}
 use rustfft::FftNum;
 
 fn validate<T: FftNum + Into<f64>>(values: &[T], positions: &[T]) -> Result<(), Error> {

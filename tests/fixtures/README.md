@@ -1,5 +1,17 @@
 # DSP reference fixture
 
+`vector-phase-float.bin` and `vector-phase-double.bin` use `VPH1`: little-endian
+u32 scalar width and 24-case count, then each case's u32 length, real/imaginary/
+angle input arrays and twelve output arrays in the order declared in
+`tests/reference/vector_phase_oracle.c`. Eighteen grid records follow, containing
+u32 count, scalar bounds, grid points, interpolation ratio and interpolated
+value. Nine integer progression records contain u32 count, i32 starting value
+and step, and i32 outputs. Each precision has 3954 scalar output slots and 45
+integer outputs. The generator uses pinned unmodified C headers; Zig and GCC
+produce identical bytes. Scalar complex helper aliases are checked against
+array results inside the C oracle. See `docs/vector-phase-compatibility.md` for
+corrected empty/range boundaries and explicit Legacy Nyquist behavior.
+
 `statistics-float.bin` and `statistics-double.bin` use `STA1`: little-endian u32
 scalar width and case count, followed by input length, lag count, both input
 vectors, nine basic statistics, a correlation-valid flag and correlation value,
