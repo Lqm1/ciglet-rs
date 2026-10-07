@@ -2,6 +2,11 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Quadratic spectral peak interpolation returns fractional bin positions and
+capped magnitudes for f32/f64 with source arithmetic rounding. Missing neighbors
+and invalid participating samples return errors. See
+[spectral peak compatibility](docs/spectral-peak-compatibility.md).
+
 Linear prediction supports waveform and magnitude inputs, f32/f64 Levinson
 recursion, owned autocorrelation/coefficient results and gain estimation.
 Reusable spectrum plans support source precision and an explicit Legacy

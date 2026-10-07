@@ -101,3 +101,7 @@ Specification references: https://learn.microsoft.com/en-us/windows/win32/multim
 ## Resampling first-sample omission
 
 The original cig_rresample interpolation checks ix_base + j > 0, excluding source index zero for every nonidentity ratio. A single nonzero input sample therefore produces only zeros after upsampling. resampling::resample uses corrected first-sample inclusion. resample_with offers BoundaryPolicy::LegacySkipFirst for unchanged-C comparisons and pipelines requiring original boundary values. Ratio one still copies every input sample exactly. The independent impulse regression in tests/filter_resample.rs distinguishes corrected and legacy outputs. See docs/filter-resample-compatibility.md for the original-C corpus and precision measurements.
+
+## Spectral peak neighbor bounds
+
+The original cig_qifft reads both neighbors without checking k or the input length. spectral_peak::interpolate rejects endpoint and missing-neighbor indices before indexing. Flat parabolas take an explicit zero-displacement path rather than computing a zero divisor; their finite outputs retain C behavior. Nonfinite inputs and overflowing polynomial arithmetic return errors. Extreme finite-input rescaling remains under audit. See docs/spectral-peak-compatibility.md.

@@ -185,3 +185,5 @@ Safe overlapping coefficient relocation uses slice::copy_within, matching the pr
 
 
 The c-filter-resample-f32.bin and c-filter-resample-f64.bin fixtures contain 300 FIR, 60 convolution and 105 resampling cases per precision from pinned unmodified C. The FRS1 layout, build command, numerical bounds and corrected boundary policy are documented in docs/filter-resample-compatibility.md. tests/reference/filter_resample_oracle.c is the reproducible driver. No C code is linked into the Rust library.
+
+The spectral-peak-float.bin and spectral-peak-double.bin fixtures use the unchanged pinned cig_qifft body. QIF1 stores magic, uint32 scalar width and case count, then 64 records of three input scalars, fractional bin position and interpolated magnitude. All fields are little-endian. See docs/spectral-peak-compatibility.md and tests/generate_spectral_peak_reference.py for reproduction and verification.
