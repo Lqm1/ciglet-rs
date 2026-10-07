@@ -2,6 +2,16 @@
 
 These findings refer to ciglet commit 895ba9b1c0eabee83d3544208bbc82420efa3206. Recording a finding does not establish that its Rust replacement is implemented or verified.
 
+## Blackman generator ignores the caller trig function
+
+CIG_DEF_BLACKMAN accepts cosfunc but invokes hard-coded cos_3 twice per sample.
+The custom-window oracle verifies a supplied callback receives zero calls.
+Window::generate_custom honors the caller function and specifies sample-major,
+increasing-harmonic invocation order. Disclosed C macro instantiation adapters
+provide corrected callback references; all other window and reduction macros
+remain unchanged. Existing generate_with Blackman/Blackman_2 behavior retains
+accurate cosine for compatibility. See docs/custom-window-compatibility.md.
+
 ## Plotting process errors and unreaped children
 
 Original plotopenv ignores pipe/fork/dup2/fdopen errors and returns no parent-side

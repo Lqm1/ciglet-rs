@@ -2,11 +2,24 @@
 use crate::{Error, array::Array2, interpolation, statistics::Scalar, vector};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(i32)]
 pub enum Method {
-    Autocorrelation,
-    AbsoluteDifference,
-    SquaredDifference,
-    Yin,
+    Autocorrelation = 0,
+    AbsoluteDifference = 1,
+    SquaredDifference = 2,
+    Yin = 3,
+}
+impl TryFrom<i32> for Method {
+    type Error = Error;
+    fn try_from(value: i32) -> Result<Self, Error> {
+        match value {
+            0 => Ok(Self::Autocorrelation),
+            1 => Ok(Self::AbsoluteDifference),
+            2 => Ok(Self::SquaredDifference),
+            3 => Ok(Self::Yin),
+            _ => Err(Error("unknown correlogram method code")),
+        }
+    }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Policy {

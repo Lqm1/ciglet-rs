@@ -2,6 +2,10 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
+Custom window generation accepts stateful/fallible trig callbacks with independent
+f32/f64 weight and callback precision. Standard Iterator::fold covers the source
+reduction generator. See [custom macro compatibility](docs/custom-window-compatibility.md).
+
 Gnuplot line/matrix commands support arbitrary Rust writers, nonfinite data,
 source-compatible formatting and all source colors. Native figures manage stdin,
 captured output and background child reaping on Windows and Unix. See
