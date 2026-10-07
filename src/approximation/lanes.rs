@@ -5,6 +5,7 @@
 use crate::Error;
 
 pub mod hyperbolic;
+pub mod trigonometric;
 
 /// Four binary32 lanes in source index order.
 pub type Floats = [f32; 4];

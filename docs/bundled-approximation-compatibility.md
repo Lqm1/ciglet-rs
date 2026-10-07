@@ -13,7 +13,9 @@ functions map to restricted trigonometry, full tangent and faster power.
 The remaining fourteen scalar functions now map to `approximation::special`,
 Ten four-lane exponential/logarithm/power functions now map to
 `approximation::lanes`. Eight hyperbolic/sigmoid functions now map to its
-`hyperbolic` module, leaving 26 four-lane functions pending. Existing mappings do not establish
+`hyperbolic` module. Twelve trigonometric functions now map to
+`lanes::trigonometric`, leaving fourteen four-lane special functions pending.
+Existing mappings do not establish
 complete bundled-specific verification by themselves.
 
 ## Hyperbolic and sigmoid functions
@@ -279,6 +281,40 @@ kernels and Lambert correction. The ten final logs have no failed or ignored
 tests. Clippy and Rustdoc pass with warnings denied; formatting and whitespace
 checks pass. This checkpoint does not replace final combined native acceptance.
 
+## Four-lane trigonometric functions
+
+`lanes::trigonometric` exposes sine, cosine and tangent, each with a separate
+full-range variant. Approximate/Fast cover the twelve original vector functions;
+Exact additionally selects host double trigonometry before binary32 conversion.
+Restricted variants retain their source polynomials without period reduction.
+Full sine reduces as center-angle; full tangent reduces as angle-center. Full
+cosine retains the binary32 half-pi addition before source reduction. Full
+approximation turn counts must fit signed 32-bit conversion; invalid inputs or
+nonfinite stages/results reject the whole owned array.
+
+The Approximate sine evaluates its unsigned correction polynomial before
+XORing the input sign into the correction, matching vector source order.
+Approximate cosine selects its negative offset at angle >= half-pi, while
+scalar cosine uses strictly greater. The isolated original C probe gives scalar
+b4c8d15f versus vector 00000000 at binary32 half-pi; the Rust vector API retains
+00000000. Faster restricted kernels share scalar code only where source order
+is identical. Full tangent uses the vector cosine branch in its denominator.
+
+The unchanged-header SSE2 oracle supplies 144 mixed arrays, twelve per original
+function. Forty-eight input values include signed zeros, tiny magnitudes,
+adjacent floats around half-pi/pi/two-pi, both signs, fractions, and magnitudes
+through 1e9. All 128 finite arrays match original bits, 512 lane comparisons.
+Sixteen arrays include source infinities or NaNs and are checked as Rust errors;
+NaN reference bits are canonicalized because only classification is compared.
+Windows Zig and Linux GCC generate identical fixtures with contraction disabled.
+Separate tests cover nonfinite/error position in every lane, signed-conversion
+bounds, the cosine equality branch and Exact signed-zero/zero results.
+
+All five native targets pass eight affected integration suites in Debug and
+Release, eighteen tests per configuration. Each of the ten final logs has no
+failed or ignored tests. Clippy and Rustdoc with warnings denied, formatting
+and whitespace checks pass. Final combined native acceptance remains pending.
+
 ## Remaining four-lane interfaces
 
 The remaining four-lane functions require their own source arithmetic audit; mapping
@@ -288,12 +324,9 @@ layout in the Rust API. Conversion/index/splat/absolute-value helper macros
 and union representations now have explicit safe mappings documented above.
 They remain part of the audit rather than being excluded as macros/types.
 
-One concrete pending trigonometric difference is already reproduced:
-vfastcos selects its negative offset at angle >= half-pi, whereas scalar
-fastcos selects it only at angle > half-pi. An isolated unchanged-header probe
-at binary32 half-pi produces scalar bits b4c8d15f and vector bits 00000000.
-The upcoming four-lane implementation must preserve the vector branch instead
-of delegating this case to the scalar cosine function.
+The remaining fourteen special functions require their own per-lane formula,
+domain and numerical-correction audit. Completed trigonometric mappings retain
+the reproduced vector-specific branch and sign-order differences documented above.
 
 The header's include guards, compiler conditional selection and the single-file
 packaging mode have no independent runtime algorithm. The single Cargo library
