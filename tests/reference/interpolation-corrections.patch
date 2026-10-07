@@ -1,0 +1,31 @@
+--- a/ciglet.c
++++ b/ciglet.c
+@@ -813,7 +813,7 @@
+ }
+ 
+ FP_TYPE* cig_sincinterpu(FP_TYPE xi0, FP_TYPE xi1, FP_TYPE* yi, int ni, FP_TYPE* x, int nx) {
+-  FP_TYPE* y = malloc(nx * sizeof(FP_TYPE));
++  FP_TYPE* y = calloc(nx, sizeof(FP_TYPE));
+   for(int i = 0; i < nx; i ++) {
+     FP_TYPE srcidx = (x[i] - xi0) / (xi1 - xi0) * ni;
+     int ix_base = floor(srcidx);
+--- a/ciglet.h
++++ b/ciglet.h
+@@ -969,7 +969,7 @@
+   FP_TYPE* i_sample = calloc(nx + 2, sizeof(FP_TYPE));
+   int n = 1;
+   for(int i = 0; i < nx; i ++)
+-    if(x[i] != blank || (isnan(blank) && (! isnan(x[i])))) {
++    if(((! isnan(blank)) && x[i] != blank) || (isnan(blank) && (! isnan(x[i])))) {
+       x_sample[n] = x[i];
+       i_sample[n] = i;
+       n ++;
+@@ -979,7 +979,7 @@
+   x_sample[n] = x_sample[n - 1];
+   i_sample[n] = nx;
+   FP_TYPE* yi = linspace(0, nx - 1, nx);
+-  FP_TYPE* y = interp1(i_sample, x_sample, n + 2, yi, nx);
++  FP_TYPE* y = interp1(i_sample, x_sample, n + 1, yi, nx);
+   free(yi);
+   free(x_sample);
+   free(i_sample);

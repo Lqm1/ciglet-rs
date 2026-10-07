@@ -1,0 +1,11 @@
+--- a/ciglet.c
++++ b/ciglet.c
+@@ -819,7 +819,7 @@
+     int ix_base = floor(srcidx);
+     FP_TYPE a = srcidx - ix_base;
+     for(int j = -3; j <= 4; j ++)
+-      if(ix_base + j > 0 && ix_base + j < ni)
++      if(ix_base + j >= 0 && ix_base + j < ni)
+         y[i] += interp_kernel(a - j, 4) * yi[ix_base + j];
+   }
+   return y;

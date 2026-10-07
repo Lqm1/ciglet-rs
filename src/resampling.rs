@@ -11,7 +11,7 @@ pub enum BoundaryPolicy {
     LegacySkipFirst,
 }
 
-fn kernel<T: FftNum + Into<f64>>(distance: T) -> Result<T, Error> {
+pub(crate) fn kernel<T: FftNum + Into<f64>>(distance: T) -> Result<T, Error> {
     let x = distance.into();
     if x == 0.0 {
         return Ok(T::one());
