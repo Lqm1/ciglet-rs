@@ -1240,3 +1240,56 @@ corrects the documentation link without changing executable code. The inventory
 now has 134 implemented C mappings, 198 pending public C rows, two nonpublic macro
 formals and 332 pending public WASM rows. This checkpoint does not replace final
 combined acceptance. Remaining bindings across all three crates stay in scope.
+
+
+## FIR, convolution and recursive filtering
+
+Twelve f32/f64 functions expose all native filtering.rs operations. Windowed FIR
+selects passband zero lowpass, one highpass, two bandpass and three bandstop;
+cutoffs use cycles per sample. fir and bandpass_fir retain Nyquist-normalized
+cutoffs. fir highpass zero selects false and one true. All seven existing window
+codes remain available. FIR counts equal the requested tap length. Fractional
+bins, even-length Nyquist replacement, native cosine precision and calculation
+order are unchanged. Unknown selectors return three.
+
+Convolution outputs signal_count + impulse_count - 1 elements when both inputs
+are nonempty, otherwise zero. Counts and sum overflow are checked before
+borrowing. Empty convolution still calls the native input validation, so NaN in
+a nonempty operand is rejected even when the other is empty. Native convolution
+finite-input and result behavior is retained without adding a new result policy.
+
+filter and forward_backward_filter expose startup zero ZeroState, one
+LegacyZeroPrefix. The native convenience filter/forward_backward calls are policy
+zero. Both retain the monic denominator convention: denominator element zero is
+ignored numerically, without skipping native validation or normalizing other
+coefficients. Empty numerator yields zeros. Outputs have exactly signal length.
+Two-pass filtering reverses between and after passes without endpoint padding.
+All scalar arrays are staged; errors leave output unchanged even when a later
+sample overflows. Complete staging permits input/output overlap. Empty null
+buffers never form null slices or copies. Input/output safety and allocation
+limitations remain those of the shared boundary. Nine arguments on recursive
+entry points retain explicit three independent slice lengths and startup rather
+than hiding them in unchecked layout assumptions.
+
+Six host tests and warning-denied all-target Clippy pass. Both IIR1 corpora
+consume all210 cases, both startup policies and causal/two-pass output with exact
+source agreement. Both FRS1 corpora cover all300 FIR and60 convolution records
+with unchanged2e-7/2e-15 bounds;105 resampling records are consumed without
+claiming resampling ABI coverage. Native-kernel equivalence additionally covers
+Nuttall98/MLT sine selectors absent from FRS1. Independent impulse and two-pass
+examples, overlap, empty/nonfinite inputs, unknown selectors, invalid tap ranges,
+count overflow and later recursive overflow are tested. Initial compilation
+required the same RefUnwindSafe bound used by other scalar boundary adapters;
+no native kernel, old fixture, dependency or threshold changed. Generated header
+has310 functions/eighteen opaque types. Warning-denied Rustdoc passes. All five required targets pass107 boundary tests plus six focused frame/DSP
+tests, exact21 summary counts10,4,4,5,6,6,3,4,6,9,6,6,3,6,6,6,5,6,6,3,3 and zero
+failed/ignored or compiler-error diagnostics. MSVC64/32, GNU64 and Linux64/32
+runners terminate with exit zero. Actual optimized assert-enabled C callers
+invoke all310 exports on every target; Python callers pass on all three64bit
+environments. Expanded optimized MSVC C source references every declaration.
+Formatting, whitespace, generated-header verification and warning-denied Rustdoc
+pass. The334-row inventory has142 implemented C mappings,190 pending public C
+rows, two nonpublic macro formals and332 pending public WASM rows; every mapped
+export exists in the header. Current family Release, Python32 and static-link
+callers remain unverified. This family checkpoint does not replace final combined
+acceptance. Full remaining binding scope across all three crates is unchanged.

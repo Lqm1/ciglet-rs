@@ -668,6 +668,39 @@ int main(void) {
     CHECK_MATRIX(float, f32, CigletRsMatrixF32, CigletRsLuF32);
     CHECK_MATRIX(double, f64, CigletRsMatrixF64, CigletRsLuF64);
     #undef CHECK_MATRIX
+
+    #define CHECK_FILTERING(type, suffix) do { \
+        type impulse[] = {1,0,0}, numerator[] = {0.5,0}, denominator[] = {1,-0.5}, output[4] = {71,71,71,71}; \
+        assert(ciglet_rs_filter_##suffix(impulse,3,numerator,2,denominator,2,0,output,3) == 0); \
+        assert(output[0] == 0.5 && output[1] == 0.25 && output[2] == 0.125); \
+        assert(ciglet_rs_filter_##suffix(impulse,3,numerator,2,denominator,2,1,output,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(output[i] == 0); \
+        type signal[] = {1,2,3}, coefficients[] = {1,2}, kernel[] = {2,-1}; \
+        assert(ciglet_rs_forward_backward_filter_##suffix(signal,3,coefficients,2,NULL,0,0,output,3) == 0); \
+        assert(output[0] == 9 && output[1] == 18 && output[2] == 7); \
+        assert(ciglet_rs_convolve_##suffix(signal,3,kernel,2,output,4) == 0); \
+        assert(output[0] == 2 && output[1] == 3 && output[2] == 4 && output[3] == -3); \
+        type taps[4], normalized[4]; \
+        for(uint32_t band=0;band<4;++band) { \
+            assert(ciglet_rs_windowed_fir_##suffix(4,band,0.125,0.375,0,taps,4) == 0); \
+            if(band<2) { \
+                assert(ciglet_rs_fir_##suffix(4,0.25,band,0,normalized,4) == 0); \
+                for(size_t i=0;i<4;++i) assert(taps[i] == normalized[i]); \
+            } else if(band==2) { \
+                assert(ciglet_rs_bandpass_fir_##suffix(4,0.25,0.75,0,normalized,4) == 0); \
+                for(size_t i=0;i<4;++i) assert(taps[i] == normalized[i]); \
+            } \
+        } \
+        for(size_t i=0;i<4;++i) output[i] = 71; \
+        assert(ciglet_rs_filter_##suffix(impulse,3,numerator,2,denominator,2,2,output,3) == 3); \
+        assert(ciglet_rs_windowed_fir_##suffix(4,4,0,0,0,output,4) == 3); \
+        for(size_t i=0;i<4;++i) assert(output[i] == 71); \
+        assert(ciglet_rs_convolve_##suffix(NULL,0,kernel,2,NULL,0) == 0); \
+        assert(ciglet_rs_forward_backward_filter_##suffix(NULL,0,NULL,0,NULL,0,0,NULL,0) == 0); \
+    } while (0)
+    CHECK_FILTERING(float, f32);
+    CHECK_FILTERING(double, f64);
+    #undef CHECK_FILTERING
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

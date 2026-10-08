@@ -7,7 +7,7 @@ use crate::{
 };
 use std::ffi::c_void;
 
-fn kind(code: u32) -> Result<Window, Error> {
+pub(super) fn kind(code: u32) -> Result<Window, Error> {
     match code {
         0 => Ok(Window::Boxcar),
         1 => Ok(Window::Hann),

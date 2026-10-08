@@ -915,6 +915,40 @@ def main():
         assert matrices["matrix_multiply_vector"](a,None,0,solution,2) == 0 and list(solution)[:2] == [0,0]
         assert matrices["matrix_release"](ctypes.byref(a)) == 0 and a.value is None
         assert matrices["matrix_release"](ctypes.byref(a)) == 0
+        filtering_signatures = {
+            "windowed_fir": [size,ctypes.c_uint32,scalar,scalar,ctypes.c_uint32,pointer,size],
+            "fir": [size,scalar,ctypes.c_uint32,ctypes.c_uint32,pointer,size],
+            "bandpass_fir": [size,scalar,scalar,ctypes.c_uint32,pointer,size],
+            "convolve": [pointer,size,pointer,size,pointer,size],
+            "filter": [pointer,size,pointer,size,pointer,size,ctypes.c_uint32,pointer,size],
+            "forward_backward_filter": [pointer,size,pointer,size,pointer,size,ctypes.c_uint32,pointer,size],
+        }
+        filters = {}
+        for operation,arguments in filtering_signatures.items():
+            function = getattr(library,f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            filters[operation] = function
+        impulse,numerator,denominator,output = (scalar*3)(1,0,0),(scalar*2)(0.5,0),(scalar*2)(1,-0.5),(scalar*4)(71,71,71,71)
+        assert filters["filter"](impulse,3,numerator,2,denominator,2,0,output,3) == 0
+        assert list(output)[:3] == [0.5,0.25,0.125]
+        assert filters["filter"](impulse,3,numerator,2,denominator,2,1,output,3) == 0 and list(output)[:3] == [0,0,0]
+        signal,coefficients,kernel = (scalar*3)(1,2,3),(scalar*2)(1,2),(scalar*2)(2,-1)
+        assert filters["forward_backward_filter"](signal,3,coefficients,2,None,0,0,output,3) == 0 and list(output)[:3] == [9,18,7]
+        assert filters["convolve"](signal,3,kernel,2,output,4) == 0 and list(output) == [2,3,4,-3]
+        taps,normalized = (scalar*4)(),(scalar*4)()
+        for band in range(4):
+            assert filters["windowed_fir"](4,band,0.125,0.375,0,taps,4) == 0
+            if band < 2:
+                assert filters["fir"](4,0.25,band,0,normalized,4) == 0 and list(taps) == list(normalized)
+            elif band == 2:
+                assert filters["bandpass_fir"](4,0.25,0.75,0,normalized,4) == 0 and list(taps) == list(normalized)
+        for index in range(4):
+            output[index] = 71
+        assert filters["filter"](impulse,3,numerator,2,denominator,2,2,output,3) == 3
+        assert filters["windowed_fir"](4,4,0,0,0,output,4) == 3 and list(output) == [71]*4
+        assert filters["convolve"](None,0,kernel,2,None,0) == 0
+        assert filters["forward_backward_filter"](None,0,None,0,None,0,0,None,0) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

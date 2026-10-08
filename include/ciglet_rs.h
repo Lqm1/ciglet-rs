@@ -4270,6 +4270,224 @@ uint32_t ciglet_rs_prediction_resonances_f64(const double *input,
                                              double *maximum_residual);
 
 /**
+ * Design a frequency-sampling FIR. Passband 0 low, 1 high, 2 band, 3 stop; cutoffs in cycles/sample.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_windowed_fir_f32(uintptr_t length,
+                                    uint32_t passband,
+                                    float lower,
+                                    float upper,
+                                    uint32_t window,
+                                    float *output,
+                                    uintptr_t count);
+
+/**
+ * Design FIR with Nyquist-normalized cutoff. Highpass zero false, one true.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_fir_f32(uintptr_t length,
+                           float cutoff,
+                           uint32_t highpass,
+                           uint32_t window,
+                           float *output,
+                           uintptr_t count);
+
+/**
+ * Design bandpass FIR with Nyquist-normalized cutoffs.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_bandpass_fir_f32(uintptr_t length,
+                                    float lower,
+                                    float upper,
+                                    uint32_t window,
+                                    float *output,
+                                    uintptr_t count);
+
+/**
+ * Full convolution in source accumulation order; either empty input produces empty output.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_convolve_f32(const float *signal,
+                                uintptr_t signal_count,
+                                const float *impulse,
+                                uintptr_t impulse_count,
+                                float *output,
+                                uintptr_t count);
+
+/**
+ * Filter with startup zero corrected zero state, one source legacy zero prefix. Denominator element zero is not normalized.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_filter_f32(const float *signal,
+                              uintptr_t signal_count,
+                              const float *numerator,
+                              uintptr_t numerator_count,
+                              const float *denominator,
+                              uintptr_t denominator_count,
+                              uint32_t startup,
+                              float *output,
+                              uintptr_t count);
+
+/**
+ * Filter with startup zero corrected zero state, one source legacy zero prefix. Denominator element zero is not normalized.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_forward_backward_filter_f32(const float *signal,
+                                               uintptr_t signal_count,
+                                               const float *numerator,
+                                               uintptr_t numerator_count,
+                                               const float *denominator,
+                                               uintptr_t denominator_count,
+                                               uint32_t startup,
+                                               float *output,
+                                               uintptr_t count);
+
+/**
+ * Design a frequency-sampling FIR. Passband 0 low, 1 high, 2 band, 3 stop; cutoffs in cycles/sample.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_windowed_fir_f64(uintptr_t length,
+                                    uint32_t passband,
+                                    double lower,
+                                    double upper,
+                                    uint32_t window,
+                                    double *output,
+                                    uintptr_t count);
+
+/**
+ * Design FIR with Nyquist-normalized cutoff. Highpass zero false, one true.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_fir_f64(uintptr_t length,
+                           double cutoff,
+                           uint32_t highpass,
+                           uint32_t window,
+                           double *output,
+                           uintptr_t count);
+
+/**
+ * Design bandpass FIR with Nyquist-normalized cutoffs.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_bandpass_fir_f64(uintptr_t length,
+                                    double lower,
+                                    double upper,
+                                    uint32_t window,
+                                    double *output,
+                                    uintptr_t count);
+
+/**
+ * Full convolution in source accumulation order; either empty input produces empty output.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_convolve_f64(const double *signal,
+                                uintptr_t signal_count,
+                                const double *impulse,
+                                uintptr_t impulse_count,
+                                double *output,
+                                uintptr_t count);
+
+/**
+ * Filter with startup zero corrected zero state, one source legacy zero prefix. Denominator element zero is not normalized.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_filter_f64(const double *signal,
+                              uintptr_t signal_count,
+                              const double *numerator,
+                              uintptr_t numerator_count,
+                              const double *denominator,
+                              uintptr_t denominator_count,
+                              uint32_t startup,
+                              double *output,
+                              uintptr_t count);
+
+/**
+ * Filter with startup zero corrected zero state, one source legacy zero prefix. Denominator element zero is not normalized.
+ * Results are fully staged; errors retain output. Counts must match the complete
+ * native output shape. Unknown selectors return three. Empty buffers permit null.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging permits input/output overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_forward_backward_filter_f64(const double *signal,
+                                               uintptr_t signal_count,
+                                               const double *numerator,
+                                               uintptr_t numerator_count,
+                                               const double *denominator,
+                                               uintptr_t denominator_count,
+                                               uint32_t startup,
+                                               double *output,
+                                               uintptr_t count);
+
+/**
  * Own initialized finite column-major values, index row + column * rows.
  *
  * # Safety
