@@ -74,6 +74,16 @@
 #define CIGLET_RS_APPROXIMATION_EXACT 2
 
 /**
+ * Stable Gaussian calculation; zero first draws are retried when sampling.
+ */
+#define CIGLET_RS_RANDOM_STABLE 0
+
+/**
+ * Original approximate Gaussian arithmetic, including the zero-draw artifact.
+ */
+#define CIGLET_RS_RANDOM_LEGACY 1
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -192,6 +202,11 @@ typedef struct CigletRsPredictionSpectrumF32 CigletRsPredictionSpectrumF32;
  * Opaque reusable binary64 prediction spectrum plan.
  */
 typedef struct CigletRsPredictionSpectrumF64 CigletRsPredictionSpectrumF64;
+
+/**
+ * Opaque seeded ChaCha8 sampler. Calls serialize access to its owned state.
+ */
+typedef struct CigletRsRandom CigletRsRandom;
 
 /**
  * Opaque binary32 real-cepstrum plan with reusable synchronized scratch.
@@ -9014,6 +9029,270 @@ uint32_t ciglet_rs_scalar_fold_f64(const double *input,
                                    double (*callback)(double, double, void*),
                                    void *context,
                                    double *output);
+
+/**
+ * Create a default-grid sampler from exactly 32 seed bytes, without OS entropy.
+ * Output is unchanged on error. Successful creation transfers ownership.
+ *
+ * # Safety
+ * Seed is stable initialized storage for seed_count bytes. Output is aligned
+ * exclusively writable pointer-slot storage; caller must release any old owner.
+ */
+uint32_t ciglet_rs_random_create(const uint8_t *seed,
+                                 uintptr_t seed_count,
+                                 struct CigletRsRandom **output);
+
+/**
+ * Create a seeded sampler with inclusive integer grid maximum in 1..=i32::MAX.
+ * The portable ChaCha8 stream is distinct from platform-dependent C rand.
+ *
+ * # Safety
+ * Seed is initialized stable storage for exactly 32 bytes. Output is an aligned
+ * exclusively writable pointer slot, independent of input, for a new owner.
+ */
+uint32_t ciglet_rs_random_create_with_maximum(const uint8_t *seed,
+                                              uintptr_t seed_count,
+                                              uint32_t maximum,
+                                              struct CigletRsRandom **output);
+
+/**
+ * Clone the current continuation into an independent owned sampler.
+ *
+ * # Safety
+ * Handle is a live retained owner. Output is aligned exclusively writable
+ * pointer-slot storage independent of the owner, for a new allocation.
+ */
+uint32_t ciglet_rs_random_clone(const struct CigletRsRandom *handle,
+                                struct CigletRsRandom **output);
+
+/**
+ * Release an owner and clear its pointer slot. A null owner is already released.
+ *
+ * # Safety
+ * Slot is aligned initialized exclusively writable pointer storage. Its nonnull
+ * owner was created here and is exclusively transferred, with no outstanding calls.
+ */
+uint32_t ciglet_rs_random_release(struct CigletRsRandom **slot);
+
+/**
+ * Read the inclusive integer draw-grid maximum without consuming a draw.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned exclusively writable scalar storage.
+ */
+uint32_t ciglet_rs_random_maximum(const struct CigletRsRandom *handle, uint32_t *output);
+
+/**
+ * Consume one unbiased inclusive grid draw. Invalid output consumes none.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned exclusively writable scalar storage.
+ */
+uint32_t ciglet_rs_random_draw(const struct CigletRsRandom *handle, uint32_t *output);
+
+/**
+ * Sample from the owned generator using native validation and draw consumption.
+ * Normal uses Stable arithmetic; normal_with selects zero Stable or one Legacy.
+ * Invalid pointers/parameters consume no draws; numerical failures may advance state.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned independently exclusively writable.
+ */
+uint32_t ciglet_rs_random_uniform_f32(const struct CigletRsRandom *handle, float *output);
+
+/**
+ * Sample from the owned generator using native validation and draw consumption.
+ * Normal uses Stable arithmetic; normal_with selects zero Stable or one Legacy.
+ * Invalid pointers/parameters consume no draws; numerical failures may advance state.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned independently exclusively writable.
+ */
+uint32_t ciglet_rs_random_normal_f32(const struct CigletRsRandom *handle,
+                                     float mean,
+                                     float variance,
+                                     float *output);
+
+/**
+ * Sample from the owned generator using native validation and draw consumption.
+ * Normal uses Stable arithmetic; normal_with selects zero Stable or one Legacy.
+ * Invalid pointers/parameters consume no draws; numerical failures may advance state.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned independently exclusively writable.
+ */
+uint32_t ciglet_rs_random_normal_with_f32(const struct CigletRsRandom *handle,
+                                          float mean,
+                                          float variance,
+                                          uint32_t mode,
+                                          float *output);
+
+/**
+ * Sample a complete white-noise buffer, committing output only on success.
+ * Zero count permits null output and consumes no draws. Invalid pointer/count or
+ * amplitude consumes none; a later numerical error may advance generator state.
+ *
+ * # Safety
+ * Handle is live and retained. Nonempty output is aligned exclusively writable
+ * single-allocation storage for count scalars, independent of the owner.
+ */
+uint32_t ciglet_rs_random_white_noise_f32(const struct CigletRsRandom *handle,
+                                          float amplitude,
+                                          float *output,
+                                          uintptr_t count);
+
+/**
+ * Sample from the owned generator using native validation and draw consumption.
+ * Normal uses Stable arithmetic; normal_with selects zero Stable or one Legacy.
+ * Invalid pointers/parameters consume no draws; numerical failures may advance state.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned independently exclusively writable.
+ */
+uint32_t ciglet_rs_random_uniform_f64(const struct CigletRsRandom *handle, double *output);
+
+/**
+ * Sample from the owned generator using native validation and draw consumption.
+ * Normal uses Stable arithmetic; normal_with selects zero Stable or one Legacy.
+ * Invalid pointers/parameters consume no draws; numerical failures may advance state.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned independently exclusively writable.
+ */
+uint32_t ciglet_rs_random_normal_f64(const struct CigletRsRandom *handle,
+                                     double mean,
+                                     double variance,
+                                     double *output);
+
+/**
+ * Sample from the owned generator using native validation and draw consumption.
+ * Normal uses Stable arithmetic; normal_with selects zero Stable or one Legacy.
+ * Invalid pointers/parameters consume no draws; numerical failures may advance state.
+ *
+ * # Safety
+ * Handle is live and retained; output is aligned independently exclusively writable.
+ */
+uint32_t ciglet_rs_random_normal_with_f64(const struct CigletRsRandom *handle,
+                                          double mean,
+                                          double variance,
+                                          uint32_t mode,
+                                          double *output);
+
+/**
+ * Sample a complete white-noise buffer, committing output only on success.
+ * Zero count permits null output and consumes no draws. Invalid pointer/count or
+ * amplitude consumes none; a later numerical error may advance generator state.
+ *
+ * # Safety
+ * Handle is live and retained. Nonempty output is aligned exclusively writable
+ * single-allocation storage for count scalars, independent of the owner.
+ */
+uint32_t ciglet_rs_random_white_noise_f64(const struct CigletRsRandom *handle,
+                                          double amplitude,
+                                          double *output,
+                                          uintptr_t count);
+
+/**
+ * Transform one original inclusive C integer draw.
+ * Errors retain output. Gaussian mode zero is Stable and one is Legacy.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_random_uniform_from_draw_f32(uint32_t draw, uint32_t maximum, float *output);
+
+/**
+ * Transform one original white-noise draw, retaining negative or zero amplitude.
+ * Errors retain output. Gaussian mode zero is Stable and one is Legacy.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_random_white_from_draw_f32(float amplitude,
+                                              uint32_t draw,
+                                              uint32_t maximum,
+                                              float *output);
+
+/**
+ * Transform two original Gaussian draws; variance is not standard deviation.
+ * Errors retain output. Gaussian mode zero is Stable and one is Legacy.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_random_normal_from_draws_f32(float mean,
+                                                float variance,
+                                                uint32_t first,
+                                                uint32_t second,
+                                                uint32_t maximum,
+                                                uint32_t mode,
+                                                float *output);
+
+/**
+ * Transform a complete array of caller-provided inclusive integer draws.
+ * Output may overlap input; commits only after the borrowed input ends.
+ *
+ * # Safety
+ * Nonempty draws are aligned initialized stable single-allocation storage for
+ * count u32 values. Output is independently exclusively writable after computation
+ * for count scalars, and may overlap draws. Empty buffers may be null.
+ */
+uint32_t ciglet_rs_random_white_from_draws_f32(float amplitude,
+                                               const uint32_t *draws,
+                                               uintptr_t count,
+                                               uint32_t maximum,
+                                               float *output);
+
+/**
+ * Transform one original inclusive C integer draw.
+ * Errors retain output. Gaussian mode zero is Stable and one is Legacy.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_random_uniform_from_draw_f64(uint32_t draw, uint32_t maximum, double *output);
+
+/**
+ * Transform one original white-noise draw, retaining negative or zero amplitude.
+ * Errors retain output. Gaussian mode zero is Stable and one is Legacy.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_random_white_from_draw_f64(double amplitude,
+                                              uint32_t draw,
+                                              uint32_t maximum,
+                                              double *output);
+
+/**
+ * Transform two original Gaussian draws; variance is not standard deviation.
+ * Errors retain output. Gaussian mode zero is Stable and one is Legacy.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_random_normal_from_draws_f64(double mean,
+                                                double variance,
+                                                uint32_t first,
+                                                uint32_t second,
+                                                uint32_t maximum,
+                                                uint32_t mode,
+                                                double *output);
+
+/**
+ * Transform a complete array of caller-provided inclusive integer draws.
+ * Output may overlap input; commits only after the borrowed input ends.
+ *
+ * # Safety
+ * Nonempty draws are aligned initialized stable single-allocation storage for
+ * count u32 values. Output is independently exclusively writable after computation
+ * for count scalars, and may overlap draws. Empty buffers may be null.
+ */
+uint32_t ciglet_rs_random_white_from_draws_f64(double amplitude,
+                                               const uint32_t *draws,
+                                               uintptr_t count,
+                                               uint32_t maximum,
+                                               double *output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

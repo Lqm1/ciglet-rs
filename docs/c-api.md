@@ -2191,3 +2191,57 @@ Native kernels, Cargo manifest/lock and original fixtures remain unchanged.
 This checkpoint covers Debug shared libraries; Release, 32bit Python and static
 link callers are not claimed here. Full combined project/binding acceptance remains
 required.
+
+### Original random draws and owned seeded generators
+
+The stateless `ciglet_rs_random_uniform_from_draw_f32/f64`,
+`ciglet_rs_random_normal_from_draws_f32/f64`,
+`ciglet_rs_random_white_from_draw_f32/f64` and
+`ciglet_rs_random_white_from_draws_f32/f64` accept the caller's integer draws and
+inclusive maximum. The division is evaluated in the selected scalar precision
+before the original double-precision stages. Bulk white-noise conversion stages
+all output before committing, permits source-storage reuse and validates the
+maximum and amplitude even for an empty buffer.
+
+Gaussian mode `CIGLET_RS_RANDOM_STABLE` (zero) uses native stable arithmetic;
+`CIGLET_RS_RANDOM_LEGACY` (one) preserves original binary32 approximations and the
+finite zero-first-draw artifact. The scale parameter is variance, not standard
+deviation. Explicit Stable positive-variance transformation rejects a zero first
+draw. Owned Stable sampling uses the native bounded retry policy instead.
+
+`CigletRsRandom` owns a Mutex-protected native Generator. Creation uses exactly
+32 caller-provided seed bytes and optionally a configured inclusive maximum in
+`1..=i32::MAX`. Clone copies the current continuation into an independent owner;
+release clears its pointer slot. Maximum does not consume a draw. Draw, uniform,
+normal, normal_with and white_noise expose native sampling in both precisions.
+Default normal selects Stable. Zero-variance normal still consumes two grid draws;
+zero-amplitude white noise consumes one grid draw per output. Empty white-noise
+output consumes none. Invalid parameters and pointers are rejected before drawing.
+A later numerical failure may advance state while retaining caller output.
+The owner must remain alive throughout all calls and may be shared concurrently;
+release requires all calls to have finished. Output storage is independent of the
+owner and any concurrently accessed storage.
+
+The seeded portable ChaCha8 stream is distinct from platform-dependent C `rand`.
+To retain a platform C stream, provide its original integer draws to the stateless
+transformations. No global RNG or OS entropy is introduced. The native sampler
+performs range sampling and controls its RNG word consumption.
+Primary algorithm/seed/clone documentation:
+https://docs.rs/rand_chacha/0.10.0/rand_chacha/struct.ChaCha8Rng.html
+
+Boundary tests compare both unchanged 128-record RND1 corpora with their original
+bit criteria, verify Stable/Legacy domains, late-invalid-draw output retention,
+input/output alias, cloned continuation, pointer/count errors, invalid-input
+nonconsumption and concurrent draws from one owner. Independent C/Python callers
+compare selected source fixture bits and compare cloned grid draws with scalar and
+buffer sampling from the other owner.
+Validation checkpoint: all five native targets passed all 61 selected suites:
+234 boundary tests and 69 focused native tests, with no failures or ignored tests.
+The three independent optimized assert-enabled C callers passed on each target;
+the three Python callers passed on each of the three64bit targets. All 22 random
+exports are invoked by the new C caller. The complete header contains 598 functions,
+27 opaque types, 25 concrete descriptors and 19 policy/flag constants. Clippy,
+Rust documentation, formatting and generated-header verification passed.
+Native kernels, Cargo manifest/lock and original fixture files remain unchanged.
+This checkpoint validates Debug shared-library boundaries; Release, 32bit Python
+and static linkage are not claimed here. Full combined acceptance remains required.
