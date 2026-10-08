@@ -125,6 +125,8 @@ pub use complex::{
 };
 mod complex_functions;
 pub use complex_functions::*;
+mod approximation_functions;
+pub use approximation_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

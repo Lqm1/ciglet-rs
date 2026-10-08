@@ -59,6 +59,21 @@
 #define CIGLET_RS_COMPLEX_EXACT 2
 
 /**
+ * Fast approximation mode.
+ */
+#define CIGLET_RS_APPROXIMATION_FAST 0
+
+/**
+ * Source-compatible approximation mode.
+ */
+#define CIGLET_RS_APPROXIMATION_APPROXIMATE 1
+
+/**
+ * Host libm mode, retaining native conversion and validation.
+ */
+#define CIGLET_RS_APPROXIMATION_EXACT 2
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -7613,6 +7628,144 @@ uint32_t ciglet_rs_complex_exponential_f64(struct CigletRsComplexF64 value,
 uint32_t ciglet_rs_complex_argument_f64(struct CigletRsComplexF64 value,
                                         uint32_t mode,
                                         double *output);
+
+/**
+ * Precision-selected sine: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64. Source full-range reduction is retained.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f32.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_sine_f32(float value,
+                                          uint32_t mode,
+                                          float *output);
+
+/**
+ * Precision-selected cosine: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64. Source full-range reduction is retained.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f32.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_cosine_f32(float value,
+                                            uint32_t mode,
+                                            float *output);
+
+/**
+ * Precision-selected atan2: Fast=0, Approximate=1, Exact=2.
+ * Both host atan2 modes preserve the identical source levels two/three.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f32.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_atan2_f32(float y, float x, uint32_t mode, float *output);
+
+/**
+ * Precision-selected logarithm: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f32.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_logarithm_f32(float value, uint32_t mode, float *output);
+
+/**
+ * Precision-selected exponential: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f32.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_exponential_f32(float value, uint32_t mode, float *output);
+
+/**
+ * Precision-selected sine: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64. Source full-range reduction is retained.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f64.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_sine_f64(double value,
+                                          uint32_t mode,
+                                          double *output);
+
+/**
+ * Precision-selected cosine: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64. Source full-range reduction is retained.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f64.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_cosine_f64(double value,
+                                            uint32_t mode,
+                                            double *output);
+
+/**
+ * Precision-selected atan2: Fast=0, Approximate=1, Exact=2.
+ * Both host atan2 modes preserve the identical source levels two/three.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f64.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_atan2_f64(double y, double x, uint32_t mode, double *output);
+
+/**
+ * Precision-selected logarithm: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f64.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_logarithm_f64(double value, uint32_t mode, double *output);
+
+/**
+ * Precision-selected exponential: Fast=0, Approximate=1, Exact=2.
+ * Approximate modes retain source binary32 stages, including for binary64.
+ * Native validation/domain/clamping applies; errors retain the result slot.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable storage for one f64.
+ * Scalar inputs are copied by value, permitting reuse of their original storage.
+ * Null/misaligned outputs and unknown selectors are checked before writing.
+ * Existing caught-panic and allocation limits apply.
+ */
+uint32_t ciglet_rs_approximation_exponential_f64(double value, uint32_t mode, double *output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

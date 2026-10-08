@@ -1538,6 +1538,49 @@ def main():
         alias = ctypes.cast(ctypes.byref(value), ctypes.POINTER(scalar))
         assert operations["argument"](value, 2, alias) == 0
         assert abs(value.real - math.atan2(-2, 6)) < tolerance
+    for suffix, scalar, maximum, tolerance in [
+        ("f32", ctypes.c_float, float.fromhex("0x1.fffffep+127"), 2e-7),
+        ("f64", ctypes.c_double, sys.float_info.max, 1e-15),
+    ]:
+        functions = {}
+        for name in ("sine", "cosine", "logarithm", "exponential", "atan2"):
+            function = getattr(library, f"ciglet_rs_approximation_{name}_{suffix}")
+            function.argtypes = ([scalar, scalar] if name == "atan2" else [scalar]) + [ctypes.c_uint32, ctypes.POINTER(scalar)]
+            function.restype = ctypes.c_uint32
+            functions[name] = function
+        expected_hex = {'f32': [['0x1.f908240000000p-3', '0x1.efeb500000000p-1', '0x1.773b000000000p-1', '0x1.62a9000000000p+1'], ['0x1.fab4d60000000p-3', '0x1.f015a40000000p-1', '0x1.62e3f80000000p-1', '0x1.5bf1000000000p+1'], ['0x1.faaeee0000000p-3', '0x1.f0154a0000000p-1', '0x1.62e4300000000p-1', '0x1.5bf0a80000000p+1']], 'f64': [['0x1.f908240000000p-3', '0x1.efeb500000000p-1', '0x1.773b000000000p-1', '0x1.62a9000000000p+1'], ['0x1.fab4d60000000p-3', '0x1.f015a40000000p-1', '0x1.62e3f80000000p-1', '0x1.5bf1000000000p+1'], ['0x1.faaeed4f31577p-3', '0x1.f01549f7deea1p-1', '0x1.62e42fefa39efp-1', '0x1.5bf0a8b14576ap+1']]}
+        result, retained = scalar(71), scalar(71)
+        for mode in [0, 1, 2]:
+            for field, (name, argument) in enumerate([("sine", 0.25), ("cosine", 0.25), ("logarithm", 2), ("exponential", 1)]):
+                expected = float.fromhex(expected_hex[suffix][mode][field])
+                assert functions[name](argument, mode, ctypes.byref(result)) == 0
+                if mode == 2 and name != "logarithm":
+                    actual_bits = struct.unpack("<Q", struct.pack("<d", result.value))[0]
+                    expected_bits = struct.unpack("<Q", struct.pack("<d", expected))[0]
+                    assert abs(actual_bits-expected_bits) <= 1
+                    assert abs(result.value-expected)/(1+abs(expected)) <= sys.float_info.epsilon
+                else:
+                    assert struct.pack("<d", result.value) == struct.pack("<d", expected)
+            assert functions["atan2"](-0.0, -1, mode, ctypes.byref(result)) == 0
+            assert abs(result.value - (-math.pi if mode else math.pi)) < tolerance
+        assert functions["sine"](-0.0, 2, ctypes.byref(result)) == 0
+        assert result.value == 0 and math.copysign(1, result.value) == -1
+        for name, value, expected in [("cosine", 0, 1), ("logarithm", 1, 0), ("exponential", 0, 1)]:
+            assert functions[name](value, 2, ctypes.byref(result)) == 0 and result.value == expected
+        assert functions["sine"](maximum, 2, ctypes.byref(result)) == 0 and math.isfinite(result.value)
+        result.value = 71
+        for name, value, mode in [("sine", maximum, 0), ("cosine", float("nan"), 0), ("logarithm", 0, 1), ("exponential", 1000, 2)]:
+            assert functions[name](value, mode, ctypes.byref(result)) == 3
+        assert functions["atan2"](1, 1, 3, ctypes.byref(result)) == 3
+        assert functions["sine"](0, 0, None) == 1 and result.value == 71
+        for mode in [0, 1]:
+            assert functions["exponential"](-200, mode, ctypes.byref(result)) == 0
+            assert functions["exponential"](-1000, mode, ctypes.byref(retained)) == 0 and result.value == retained.value
+        result.value = 0.25
+        assert functions["sine"](result, 2, ctypes.byref(result)) == 0
+        assert abs(result.value - math.sin(0.25)) < tolerance
+        assert functions["atan2"](1, -1, 1, ctypes.byref(result)) == 0
+        assert functions["atan2"](1, -1, 2, ctypes.byref(retained)) == 0 and result.value == retained.value
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

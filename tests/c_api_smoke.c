@@ -10,6 +10,20 @@
 #include <stddef.h>
 #include <string.h>
 
+/* Original exact/one-ULP and epsilon bounds, not an approximation accuracy gate. */
+static void check_core_reference(double actual, double expected, int host) {
+    assert(isfinite(actual) && isfinite(expected));
+    if (!host || actual == 0 || expected == 0) {
+        assert(actual == expected && signbit(actual) == signbit(expected));
+    } else {
+        uint64_t actual_bits, expected_bits;
+        memcpy(&actual_bits,&actual,sizeof(actual_bits));
+        memcpy(&expected_bits,&expected,sizeof(expected_bits));
+        uint64_t distance = actual_bits > expected_bits ? actual_bits-expected_bits : expected_bits-actual_bits;
+        assert(distance <= 1 && fabs(actual-expected)/(1+fabs(expected)) <= DBL_EPSILON);
+    }
+}
+
 struct RootContext { double target; size_t calls; int kind; };
 static float root_callback_f32(float value, void *opaque) {
     if (!opaque) return value - 0.25f;
@@ -1148,6 +1162,51 @@ int main(void) {
     CHECK_COMPLEX(float, f32, F32, FLT_MAX, FLT_TRUE_MIN, 2e-7);
     CHECK_COMPLEX(double, f64, F64, DBL_MAX, DBL_TRUE_MIN, 1e-15);
     #undef CHECK_COMPLEX
+    /* Source SCM1 case 33 and CPX1 scalar cases 9/11, unchanged binary fixtures. */
+    static const float core_expected_f32[3][4] = {
+        {0x1.f908240000000p-3f,0x1.efeb500000000p-1f,0x1.773b000000000p-1f,0x1.62a9000000000p+1f},
+        {0x1.fab4d60000000p-3f,0x1.f015a40000000p-1f,0x1.62e3f80000000p-1f,0x1.5bf1000000000p+1f},
+        {0x1.faaeee0000000p-3f,0x1.f0154a0000000p-1f,0x1.62e4300000000p-1f,0x1.5bf0a80000000p+1f}
+    };
+    static const double core_expected_f64[3][4] = {
+        {0x1.f908240000000p-3,0x1.efeb500000000p-1,0x1.773b000000000p-1,0x1.62a9000000000p+1},
+        {0x1.fab4d60000000p-3,0x1.f015a40000000p-1,0x1.62e3f80000000p-1,0x1.5bf1000000000p+1},
+        {0x1.faaeed4f31577p-3,0x1.f01549f7deea1p-1,0x1.62e42fefa39efp-1,0x1.5bf0a8b14576ap+1}
+    };
+    assert(CIGLET_RS_APPROXIMATION_FAST == 0 && CIGLET_RS_APPROXIMATION_APPROXIMATE == 1 && CIGLET_RS_APPROXIMATION_EXACT == 2);
+    #define CHECK_APPROXIMATION(type, suffix, maximum, tolerance) do { \
+        type result = 71, retained = 71; \
+        for(uint32_t mode=0;mode<3;++mode) { \
+            assert(ciglet_rs_approximation_sine_##suffix(0.25,mode,&result) == 0); check_core_reference(result,core_expected_##suffix[mode][0],mode == 2 && 0 != 2); \
+            assert(ciglet_rs_approximation_cosine_##suffix(0.25,mode,&result) == 0); check_core_reference(result,core_expected_##suffix[mode][1],mode == 2 && 1 != 2); \
+            assert(ciglet_rs_approximation_logarithm_##suffix(2,mode,&result) == 0); check_core_reference(result,core_expected_##suffix[mode][2],mode == 2 && 2 != 2); \
+            assert(ciglet_rs_approximation_exponential_##suffix(1,mode,&result) == 0); check_core_reference(result,core_expected_##suffix[mode][3],mode == 2 && 3 != 2); \
+            assert(ciglet_rs_approximation_atan2_##suffix(-0.0,-1,mode,&result) == 0 && fabs((double)result-(mode ? -acos(-1.0) : acos(-1.0))) < tolerance); \
+        } \
+        assert(ciglet_rs_approximation_sine_##suffix(-0.0,2,&result) == 0 && result == 0 && signbit(result)); \
+        assert(ciglet_rs_approximation_cosine_##suffix(0,2,&result) == 0 && result == 1); \
+        assert(ciglet_rs_approximation_logarithm_##suffix(1,2,&result) == 0 && result == 0); \
+        assert(ciglet_rs_approximation_exponential_##suffix(0,2,&result) == 0 && result == 1); \
+        assert(ciglet_rs_approximation_sine_##suffix(maximum,2,&result) == 0 && isfinite(result)); \
+        result = 71; \
+        assert(ciglet_rs_approximation_sine_##suffix(maximum,0,&result) == 3); \
+        assert(ciglet_rs_approximation_cosine_##suffix(NAN,0,&result) == 3); \
+        assert(ciglet_rs_approximation_logarithm_##suffix(0,1,&result) == 3); \
+        assert(ciglet_rs_approximation_exponential_##suffix(1000,2,&result) == 3); \
+        assert(ciglet_rs_approximation_atan2_##suffix(1,1,3,&result) == 3); \
+        assert(ciglet_rs_approximation_sine_##suffix(0,0,NULL) == 1 && result == 71); \
+        for(uint32_t mode=0;mode<2;++mode) { \
+            assert(ciglet_rs_approximation_exponential_##suffix(-200,mode,&result) == 0); \
+            assert(ciglet_rs_approximation_exponential_##suffix(-1000,mode,&retained) == 0 && result == retained); \
+        } \
+        result = 0.25; \
+        assert(ciglet_rs_approximation_sine_##suffix(result,2,&result) == 0 && fabs((double)result-sin(0.25)) < tolerance); \
+        assert(ciglet_rs_approximation_atan2_##suffix(1,-1,1,&result) == 0); \
+        assert(ciglet_rs_approximation_atan2_##suffix(1,-1,2,&retained) == 0 && result == retained); \
+    } while (0)
+    CHECK_APPROXIMATION(float, f32, FLT_MAX, 2e-7);
+    CHECK_APPROXIMATION(double, f64, DBL_MAX, 1e-15);
+    #undef CHECK_APPROXIMATION
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

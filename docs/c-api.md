@@ -6,9 +6,9 @@ calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
 modules under `src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
-exports 461 status-returning functions, 26 opaque types, 20 concrete descriptors
-and fourteen constants. The checkpoints below record implementation and verification
-evidence. Of 332 public upstream mappings, 207 have verified C bindings and 125
+exports 471 status-returning functions, 26 opaque types, 20 concrete descriptors
+and seventeen constants. The checkpoints below record implementation and verification
+evidence. Of 332 public upstream mappings, 223 have verified C bindings and 109
 remain pending, including the bundled approximation functions. Liblrhsmm and SHIRO
 bindings and all browser/Node WebAssembly bindings remain required work.
 
@@ -2000,3 +2000,70 @@ function/constant mappings exist in the generated header. Existing native source
 and Cargo manifests/lock remain unchanged from the last full native gate.
 Current-family Release, Python32 and static-link callers remain unverified.
 Final combined acceptance and all remaining bindings remain required.
+
+## Core numerical approximation bindings
+
+Ten status-returning functions expose precision-selected binary32/binary64 sine,
+cosine, atan2, natural logarithm and exponential. Three named constants select
+Fast=0, Approximate=1 or Exact=2. Sixteen ciglet.h aliases map explicitly to their
+required mode. Every calculation delegates to the existing native *_with API,
+retaining binary32 approximation stages for binary64 input, source range reduction,
+validation, underflow clamp and double host libm before scalar conversion. The
+Approximate and Exact atan2 modes preserve the identical source levels two/three.
+Core sine/cosine use the source full-range reduction and must not be substituted
+for bundled fastsin/fastcos restricted polynomials. All 88 bundled approximation
+bindings remain required independently; no bundled mapping is marked by this
+checkpoint.
+
+Scalar inputs pass by value and result pointers use existing checked owned-result
+staging. Results retain signed zeros. Output slots are aligned and exclusively
+writable for one scalar; by-value inputs permit reusing their original storage.
+Null/misaligned output returns one; invalid precision/native domain or range errors
+return three; existing caught-panic/allocation limits apply. Every failure retains
+the output. Exact accepts large finite trigonometric inputs for which native
+approximation range checks reject Fast/Approximate. Checked logarithm requires
+positive representable approximation input; valid Exact computations retain
+native double range. Underflow clamps belong to the approximate modes and do not
+replace host exponential behavior.
+
+Eight host tests and warning-denied all-target Clippy pass. Both SCM1 corpora
+compare all 64 sine/cosine/atan2 cases per precision with unchanged exact or
+one-ULP/f64-epsilon host bounds, including signed zeros. Their comparator tails
+are consumed and verified natively. Both CPX1 fifteen-case logarithm/exponential
+tails compare through the new C exports, with unchanged exact log/all approximate
+criteria and the existing double host-exp one-ULP/f64-epsilon bound. CPX1's complex
+section remains independently covered by tests/c_api_complex.rs. Remaining
+base-two fields are checked natively and still require bundled C bindings.
+Independent Exact identities, signed-zero atan2 mode differences, maximal finite
+trigonometric inputs, minimal subnormal logarithm, approximate exponential clamps,
+host atan2 equivalence, source-slot reuse, all selectors/domains, nonfinite inputs,
+null/misaligned pointers and retained error outputs are checked. No native
+arithmetic, fixture, dependency or existing numerical tolerance changed.
+
+Foreign callers check all ten functions and all modes against selected original
+SCM1 case 33 and CPX1 scalar cases 9/11 values. Hexadecimal constants retain fixture
+bits exactly. Approximate values and every selected log value compare exactly;
+host trigonometric/exponential results use the unchanged one-ULP/f64-epsilon
+criteria. Early caller sanity checks were strengthened before the five-target
+proof; the final callers use source-derived values rather than a broad accuracy
+threshold. Independent signed-zero/identity/range/error/clamp/slot-reuse checks
+also exercise the actual C/Python calling convention.
+
+
+All three five-target runners terminate with exit zero. Verification checks all
+50 suite names and individual counts: 216 boundary plus 49 focused native tests
+per target, with zero failed/ignored tests and no error diagnostics. Cargo stderr
+headers and stdout summaries can interleave in merged Windows logs; the verifier
+checks both complete ordered inventories before associating them. Optimized
+assert-enabled C callers pass on MSVC64/MSVC32/GNU64/Linux64/Linux32, and Python
+passes on MSVC64/GNU64/Linux64. All ten functions and three modes are exercised.
+Header verification confirms 471 unique status-returning exports, 26 opaque types,
+20 concrete descriptors and seventeen constants; every export is referenced by
+expanded optimized C main. Three new precision constants are checked. Rustdoc,
+formatting and whitespace checks pass. The 334-row inventory records 223
+implemented C mappings, 109 pending public C rows, two nonpublic formals and 332
+pending public WASM rows. Every implemented mapping exists in the header, and
+all 88 bundled fastapprox rows remain pending. Native source and Cargo manifests/
+lock are unchanged from the full native gate. Current-family Release, Python32
+and static-link callers remain unverified. Final combined acceptance and all
+remaining ciglet/liblrhsmm/SHIRO bindings remain required.
