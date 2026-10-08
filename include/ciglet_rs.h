@@ -4622,6 +4622,284 @@ uint32_t ciglet_rs_resample_with_kernel_f64(const double *input,
                                             uintptr_t output_count);
 
 /**
+ * Scalar interpolation and extrapolation with native overflow fallback.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_between_f32(float start, float end, float ratio, float *output);
+
+/**
+ * Interpolate increasing irregular coordinates, unordered queries and clamped endpoints.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_linear_f32(const float *coordinates,
+                                          const float *values,
+                                          uintptr_t count,
+                                          const float *positions,
+                                          uintptr_t query_count,
+                                          float *output,
+                                          uintptr_t output_count);
+
+/**
+ * Uniform coordinates occupy the half-open bounds; retain near-final-sample clamp.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_uniform_f32(float start,
+                                           float end,
+                                           const float *values,
+                                           uintptr_t count,
+                                           const float *positions,
+                                           uintptr_t query_count,
+                                           float *output,
+                                           uintptr_t output_count);
+
+/**
+ * Sinc interpolation with corrected IncludeFirst boundary and Stable kernel.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_sinc_f32(float start,
+                                        float end,
+                                        const float *values,
+                                        uintptr_t count,
+                                        const float *positions,
+                                        uintptr_t query_count,
+                                        float *output,
+                                        uintptr_t output_count);
+
+/**
+ * Boundary zero IncludeFirst, one LegacySkipFirst; original Legacy kernel.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_sinc_with_f32(float start,
+                                             float end,
+                                             const float *values,
+                                             uintptr_t count,
+                                             const float *positions,
+                                             uintptr_t query_count,
+                                             uint32_t boundary,
+                                             float *output,
+                                             uintptr_t output_count);
+
+/**
+ * Independent boundary and kernel selectors. Kernel zero Stable, one Legacy.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_sinc_with_kernel_f32(float start,
+                                                    float end,
+                                                    const float *values,
+                                                    uintptr_t count,
+                                                    const float *positions,
+                                                    uintptr_t query_count,
+                                                    uint32_t boundary,
+                                                    uint32_t kernel,
+                                                    float *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Replace sentinel gaps, including NaN sentinel; all missing yields zero.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_fill_missing_f32(const float *values,
+                                                uintptr_t count,
+                                                float blank,
+                                                float *output,
+                                                uintptr_t output_count);
+
+/**
+ * Scalar interpolation and extrapolation with native overflow fallback.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_between_f64(double start, double end, double ratio, double *output);
+
+/**
+ * Interpolate increasing irregular coordinates, unordered queries and clamped endpoints.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_linear_f64(const double *coordinates,
+                                          const double *values,
+                                          uintptr_t count,
+                                          const double *positions,
+                                          uintptr_t query_count,
+                                          double *output,
+                                          uintptr_t output_count);
+
+/**
+ * Uniform coordinates occupy the half-open bounds; retain near-final-sample clamp.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_uniform_f64(double start,
+                                           double end,
+                                           const double *values,
+                                           uintptr_t count,
+                                           const double *positions,
+                                           uintptr_t query_count,
+                                           double *output,
+                                           uintptr_t output_count);
+
+/**
+ * Sinc interpolation with corrected IncludeFirst boundary and Stable kernel.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_sinc_f64(double start,
+                                        double end,
+                                        const double *values,
+                                        uintptr_t count,
+                                        const double *positions,
+                                        uintptr_t query_count,
+                                        double *output,
+                                        uintptr_t output_count);
+
+/**
+ * Boundary zero IncludeFirst, one LegacySkipFirst; original Legacy kernel.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_sinc_with_f64(double start,
+                                             double end,
+                                             const double *values,
+                                             uintptr_t count,
+                                             const double *positions,
+                                             uintptr_t query_count,
+                                             uint32_t boundary,
+                                             double *output,
+                                             uintptr_t output_count);
+
+/**
+ * Independent boundary and kernel selectors. Kernel zero Stable, one Legacy.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_sinc_with_kernel_f64(double start,
+                                                    double end,
+                                                    const double *values,
+                                                    uintptr_t count,
+                                                    const double *positions,
+                                                    uintptr_t query_count,
+                                                    uint32_t boundary,
+                                                    uint32_t kernel,
+                                                    double *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Replace sentinel gaps, including NaN sentinel; all missing yields zero.
+ * Native operations and complete output staging retain source precision and
+ * documented corrections. Failures leave outputs unchanged. Null empty buffers
+ * are never borrowed. Unknown compatibility selectors return three.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage. Outputs are aligned exclusively writable single-allocation storage.
+ * Complete staging allows input/output overlap after every input borrow ends.
+ * Scalar outputs provide one element. Arrays require their complete stated counts.
+ */
+uint32_t ciglet_rs_interpolate_fill_missing_f64(const double *values,
+                                                uintptr_t count,
+                                                double blank,
+                                                double *output,
+                                                uintptr_t output_count);
+
+/**
  * Own initialized finite column-major values, index row + column * rows.
  *
  * # Safety

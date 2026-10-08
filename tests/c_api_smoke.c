@@ -723,6 +723,39 @@ int main(void) {
     CHECK_RESAMPLING(float, f32);
     CHECK_RESAMPLING(double, f64);
     #undef CHECK_RESAMPLING
+
+    #define CHECK_INTERPOLATION(type, suffix, maximum) do { \
+        type scalar = 71, coordinates[] = {0,2,5}, values[] = {1,5,-1}, queries[] = {4,1,-9,10}, output[4] = {71,71,71,71}; \
+        assert(ciglet_rs_interpolate_between_##suffix(-maximum,maximum,0.5,&scalar) == 0 && scalar == 0); \
+        assert(ciglet_rs_interpolate_linear_##suffix(coordinates,values,3,queries,4,output,4) == 0); \
+        assert(output[0] == 1 && output[1] == 3 && output[2] == 1 && output[3] == -1); \
+        type uniform[] = {1,3,5}, positions[] = {1.5,-1,8,0}; \
+        assert(ciglet_rs_interpolate_uniform_##suffix(0,3,uniform,3,positions,4,output,4) == 0); \
+        assert(output[0] == 4 && output[1] == 1 && output[2] == 5 && output[3] == 1); \
+        type impulse[] = {7,0}, distant[] = {0,100,-100}; \
+        assert(ciglet_rs_interpolate_sinc_##suffix(0,2,impulse,2,distant,3,output,3) == 0); \
+        assert(output[0] == 7 && output[1] == 0 && output[2] == 0); \
+        for(uint32_t boundary=0;boundary<2;++boundary) { \
+            assert(ciglet_rs_interpolate_sinc_with_##suffix(0,2,impulse,2,distant,3,boundary,output,3) == 0); \
+            assert(output[0] == (boundary == 0 ? 7 : 0)); \
+            for(uint32_t kernel=0;kernel<2;++kernel) { \
+                assert(ciglet_rs_interpolate_sinc_with_kernel_##suffix(0,2,impulse,2,distant,3,boundary,kernel,output,3) == 0); \
+                assert(output[0] == (boundary == 0 ? 7 : 0) && output[1] == 0 && output[2] == 0); \
+            } \
+        } \
+        type gaps[] = {NAN,2,NAN,6,NAN}; \
+        assert(ciglet_rs_interpolate_fill_missing_##suffix(gaps,5,NAN,gaps,5) == 0); \
+        assert(gaps[0] == 2 && gaps[1] == 2 && gaps[2] == 4 && gaps[3] == 6 && gaps[4] == 6); \
+        for(size_t i=0;i<4;++i) output[i] = 71; \
+        assert(ciglet_rs_interpolate_sinc_with_kernel_##suffix(0,2,impulse,2,distant,3,0,2,output,3) == 3); \
+        assert(ciglet_rs_interpolate_linear_##suffix(coordinates,values,3,queries,4,output,3) == 2); \
+        for(size_t i=0;i<4;++i) assert(output[i] == 71); \
+        assert(ciglet_rs_interpolate_uniform_##suffix(0,2,impulse,2,NULL,0,NULL,0) == 0); \
+        assert(ciglet_rs_interpolate_fill_missing_##suffix(NULL,0,NAN,NULL,0) == 0); \
+    } while (0)
+    CHECK_INTERPOLATION(float, f32, FLT_MAX);
+    CHECK_INTERPOLATION(double, f64, DBL_MAX);
+    #undef CHECK_INTERPOLATION
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

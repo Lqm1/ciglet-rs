@@ -978,6 +978,42 @@ def main():
         assert resamplers["resample"](input_values,1,0.25,None,0) == 0
         signed_zero = (scalar*1)(-0.0)
         assert resamplers["resample"](signed_zero,1,1,signed_zero,1) == 0 and math.copysign(1,signed_zero[0]) == -1
+        interpolation_signatures = {
+            "between": [scalar,scalar,scalar,pointer],
+            "linear": [pointer,pointer,size,pointer,size,pointer,size],
+            "uniform": [scalar,scalar,pointer,size,pointer,size,pointer,size],
+            "sinc": [scalar,scalar,pointer,size,pointer,size,pointer,size],
+            "sinc_with": [scalar,scalar,pointer,size,pointer,size,ctypes.c_uint32,pointer,size],
+            "sinc_with_kernel": [scalar,scalar,pointer,size,pointer,size,ctypes.c_uint32,ctypes.c_uint32,pointer,size],
+            "fill_missing": [pointer,size,scalar,pointer,size],
+        }
+        interpolators = {}
+        for operation,arguments in interpolation_signatures.items():
+            function = getattr(library,f"ciglet_rs_interpolate_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            interpolators[operation] = function
+        value = scalar(71)
+        assert interpolators["between"](-maximum,maximum,0.5,ctypes.byref(value)) == 0 and value.value == 0
+        coordinates,values,queries,output = (scalar*3)(0,2,5),(scalar*3)(1,5,-1),(scalar*4)(4,1,-9,10),(scalar*4)(71,71,71,71)
+        assert interpolators["linear"](coordinates,values,3,queries,4,output,4) == 0 and list(output) == [1,3,1,-1]
+        uniform,positions = (scalar*3)(1,3,5),(scalar*4)(1.5,-1,8,0)
+        assert interpolators["uniform"](0,3,uniform,3,positions,4,output,4) == 0 and list(output) == [4,1,5,1]
+        impulse,distant = (scalar*2)(7,0),(scalar*3)(0,100,-100)
+        assert interpolators["sinc"](0,2,impulse,2,distant,3,output,3) == 0 and list(output)[:3] == [7,0,0]
+        for boundary in (0,1):
+            expected = 7 if boundary == 0 else 0
+            assert interpolators["sinc_with"](0,2,impulse,2,distant,3,boundary,output,3) == 0 and output[0] == expected
+            for kernel in (0,1):
+                assert interpolators["sinc_with_kernel"](0,2,impulse,2,distant,3,boundary,kernel,output,3) == 0 and list(output)[:3] == [expected,0,0]
+        gaps = (scalar*5)(math.nan,2,math.nan,6,math.nan)
+        assert interpolators["fill_missing"](gaps,5,math.nan,gaps,5) == 0 and list(gaps) == [2,2,4,6,6]
+        for index in range(4):
+            output[index] = 71
+        assert interpolators["sinc_with_kernel"](0,2,impulse,2,distant,3,0,2,output,3) == 3
+        assert interpolators["linear"](coordinates,values,3,queries,4,output,3) == 2 and list(output) == [71]*4
+        assert interpolators["uniform"](0,2,impulse,2,None,0,None,0) == 0
+        assert interpolators["fill_missing"](None,0,math.nan,None,0) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

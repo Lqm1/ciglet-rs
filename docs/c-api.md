@@ -1348,3 +1348,47 @@ Release/Python32/static callers remain unverified. This checkpoint does not
 replace final combined native/bindings acceptance.
 No original fixture, tolerance or dependency changed. All remaining public
 interfaces and all three WASM bindings remain required.
+
+
+## Scalar, linear, sinc and missing-value interpolation
+
+Fourteen f32/f64 entry points expose all interpolation.rs public functions.
+Irregular linear interpolation shares the source count for coordinates/values,
+accepts unordered queries, retains source scalar arithmetic/preceding exact-knot
+intervals and clamps endpoints. Uniform linear interpolation retains half-open
+bounds and the native count-minus-1.01 clamp, with corrected singleton and empty
+query safety. Scalar interpolation exposes the native overflow fallback.
+
+Sinc variants mirror native convenience policies: default IncludeFirst+Stable,
+explicit boundary with Legacy kernel, and independent boundary/kernel selection.
+Boundary zero includes sample zero, one skips it; kernel zero Stable, one Legacy.
+Unknown selectors return three. Missing-value interpolation accepts exact finite
+or NaN sentinels, repeats nearest known values at leading/trailing gaps and yields
+zero when every value is missing. Known nonfinite values are rejected.
+
+Complete owned staging permits input/output overlap, retains all output on error
+and avoids null zero-length slices/copies. Array outputs require exact source or
+query counts. Empty queries still validate source values and bounds; empty source
+is rejected for linear/sinc but accepted for missing-value interpolation.
+
+Host nine tests, warning-denied all-target Clippy and Rustdoc pass. Both INT1
+corpora consume all24 original linear cases perprecision; four EXT1 corpora
+consume all28 disclosed-corrected cases perprecision/boundary with exact outputs.
+Independent unordered/clamped/singleton/empty/NaN-gap/scalar-extreme/overlap/error
+cases pass. Separate binary64 analytic near-integer sinc verification retains
+the3e-16 bound and confirms the original Legacy defect plus default Stable policy.
+Header332/eighteen opaque types. No native kernel, fixture, dependency or tolerance
+changed. All five target runners terminate with exit zero. Exact25 summary counts
+10,4,4,5,6,6,3,4,6,9,9,6,6,3,6,6,6,5,6,8,6,3,3,3,2 independently verify124
+boundary tests plus11 focused native tests per target, zero failed/ignored and
+no error diagnostics. Actual optimized assert-enabled C callers invoke all332
+exports on every target; Python passes on MSVC64/GNU64/Linux64. Expanded optimized
+MSVC C independently references every declaration. Header verification, formatting
+and whitespace checks pass. The334-row source inventory now has152 implemented
+C mappings,180 pending public C rows, two nonpublic macro formals and332 pending
+public WASM rows; all mapped exports exist in the header. Current family Release,
+Python32 and static-link callers remain unverified. This family evidence does not
+replace final combined native/bindings acceptance. Linux next-phase artifacts use a
+Linux filesystem target directory per official Cargo/Microsoft guidance; source
+repositories stay at the required Windows paths. Existing proof/cache retained.
+All remaining public interfaces and all three WASM bindings stay in scope.
