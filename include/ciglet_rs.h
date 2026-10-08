@@ -4488,6 +4488,140 @@ uint32_t ciglet_rs_forward_backward_filter_f64(const double *signal,
                                                uintptr_t count);
 
 /**
+ * Query full output length without allocation; does not validate sample contents.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_output_length_f32(uintptr_t count, float ratio, uintptr_t *output);
+
+/**
+ * Resample using corrected IncludeFirst boundary and Stable kernel.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_f32(const float *input,
+                                uintptr_t count,
+                                float ratio,
+                                float *output,
+                                uintptr_t output_count);
+
+/**
+ * Resample with boundary zero IncludeFirst, one LegacySkipFirst and original Legacy kernel.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_with_f32(const float *input,
+                                     uintptr_t count,
+                                     float ratio,
+                                     uint32_t boundary,
+                                     float *output,
+                                     uintptr_t output_count);
+
+/**
+ * Select boundary and kernel independently. Kernel zero Stable, one Legacy; unknown codes return three.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_with_kernel_f32(const float *input,
+                                            uintptr_t count,
+                                            float ratio,
+                                            uint32_t boundary,
+                                            uint32_t kernel,
+                                            float *output,
+                                            uintptr_t output_count);
+
+/**
+ * Query full output length without allocation; does not validate sample contents.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_output_length_f64(uintptr_t count, double ratio, uintptr_t *output);
+
+/**
+ * Resample using corrected IncludeFirst boundary and Stable kernel.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_f64(const double *input,
+                                uintptr_t count,
+                                double ratio,
+                                double *output,
+                                uintptr_t output_count);
+
+/**
+ * Resample with boundary zero IncludeFirst, one LegacySkipFirst and original Legacy kernel.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_with_f64(const double *input,
+                                     uintptr_t count,
+                                     double ratio,
+                                     uint32_t boundary,
+                                     double *output,
+                                     uintptr_t output_count);
+
+/**
+ * Select boundary and kernel independently. Kernel zero Stable, one Legacy; unknown codes return three.
+ * Results commit only on success. Counts use the native scalar product and
+ * f64 round, except ratio one preserves input length and sample bits.
+ *
+ * # Safety
+ * Nonempty inputs are aligned initialized stable readable single-allocation
+ * storage; outputs are aligned exclusively writable single-allocation storage.
+ * Empty buffers permit null. Owned staging permits input/output overlap after
+ * input borrowing ends. Length-query output is valid for one exclusive usize write.
+ */
+uint32_t ciglet_rs_resample_with_kernel_f64(const double *input,
+                                            uintptr_t count,
+                                            double ratio,
+                                            uint32_t boundary,
+                                            uint32_t kernel,
+                                            double *output,
+                                            uintptr_t output_count);
+
+/**
  * Own initialized finite column-major values, index row + column * rows.
  *
  * # Safety

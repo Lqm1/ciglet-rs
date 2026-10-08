@@ -102,13 +102,7 @@ pub fn resample_with_kernel<T: FftNum + Into<f64>>(
         output.copy_from_slice(signal);
         return Ok(output);
     }
-    let size =
-        T::from_usize(signal.len()).ok_or(Error("resampling length cannot be represented"))?;
-    let output_length = (size * ratio).into().round();
-    if !output_length.is_finite() || output_length > i32::MAX as f64 {
-        return Err(Error("resampling output exceeds the legacy range"));
-    }
-    let mut output = filtering::zeros(output_length as usize)?;
+    let mut output = filtering::zeros(output_length(signal.len(), ratio)?)?;
     if output.is_empty() {
         return Ok(output);
     }
@@ -142,4 +136,23 @@ pub fn resample_with_kernel<T: FftNum + Into<f64>>(
         }
     }
     Ok(output)
+}
+
+/// Source-precision length multiplication followed by double-precision rounding.
+/// Ratio one preserves the input count without lossy scalar conversion.
+pub(crate) fn output_length<T: FftNum + Into<f64>>(count: usize, ratio: T) -> Result<usize, Error> {
+    if count > i32::MAX as usize || !ratio.into().is_finite() || ratio.into() <= 0.0 {
+        return Err(Error(
+            "resampling requires a positive finite ratio and a bounded input length",
+        ));
+    }
+    if ratio == T::one() {
+        return Ok(count);
+    }
+    let size = T::from_usize(count).ok_or(Error("resampling length cannot be represented"))?;
+    let length = (size * ratio).into().round();
+    if !length.is_finite() || length > i32::MAX as f64 {
+        return Err(Error("resampling output exceeds the legacy range"));
+    }
+    Ok(length as usize)
 }

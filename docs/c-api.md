@@ -1293,3 +1293,58 @@ rows, two nonpublic macro formals and332 pending public WASM rows; every mapped
 export exists in the header. Current family Release, Python32 and static-link
 callers remain unverified. This family checkpoint does not replace final combined
 acceptance. Full remaining binding scope across all three crates is unchanged.
+
+
+## Resampling and allocation-free output sizing
+
+Eight f32/f64 functions expose all native resampling variants and output length
+queries. resample selects IncludeFirst plus Stable. resample_with selects boundary
+zero IncludeFirst or one LegacySkipFirst, retaining the Legacy kernel.
+resample_with_kernel selects boundary and kernel independently: kernel zero
+Stable, one Legacy. Unknown selectors return three. No compatibility policy is
+silently substituted. Output counts must exactly match native sizing; mismatch
+returns two before sample borrowing or allocation.
+
+The shared internal native output_length helper retains scalar-precision length
+conversion/multiplication followed by f64 round. Ratio one returns input count
+without scalar conversion and copies original sample bits. Queries allocate no
+signal/result and do not validate sample contents. Invalid ratio or native output
+range returns three; input counts outside the C legacy range return two. Actual array calls additionally require addressable scalar byte ranges; the query
+returns a mathematical native count without allocating or claiming an addressable
+array of that count. The native resampling
+path now calls this same helper without changing its arithmetic, antialiasing,
+16-sample compensation, kernel calculation or accumulation order.
+
+Resampling still validates nonfinite input even when a small ratio rounds to zero
+output. Null empty buffers are not borrowed or copied. Complete owned staging
+permits input/output overlap and retains all output on failure. Stable near-zero
+Lanczos evaluation and original Legacy sine behavior remain independently
+available. Ratio-one negative zero and subnormal bits are preserved.
+
+Host eight boundary tests plus five existing native resampling/FIR tests pass;
+warning-denied all-target Clippy and Rustdoc pass. Both FRS1 corpora consume all105
+resampling records with unchanged2e-7/2e-15 bounds under the original boundary and
+kernel. Other FRS1 records are consumed without new FIR/convolution coverage
+claims. Separate tests check all policy combinations across fractional rates,
+independent analytic near-integer sinc limits, the retained Legacy defect,
+float-vs-double length rounding, large ratio-one lengths, bit preservation,
+empty/nonfinite inputs, unknown selectors, shape/pointer errors and overlap.
+Header318/eighteen opaque types. All five targets pass115 boundary tests plus11 focused native tests with exact
+24counts10,4,4,5,6,6,3,4,6,9,6,6,3,6,6,6,5,6,8,6,3,3,3,2, zero failed/ignored
+and no error diagnostics. Actual optimized assert-enabled C callers invoke all318
+functions on every target; Python passes on MSVC64/GNU64/Linux64. Expanded
+optimized MSVC C source independently references every declaration. Header verify,
+formatting, whitespace and warning-denied Rustdoc pass.
+
+Complete default-feature Debug native refresh passes on all five targets:
+ciglet198, liblrhsmm120, SHIRO58. All15 package logs have exact73/35/36 summary
+counts, zero failed/ignored tests and the expected liblrhsmm negative ownership
+doctest diagnostics. Ignored tests are included, with Gnuplot/Lua/SPTK enabled.
+The tested native resampling source SHA256 is
+e99a849d0dd6fbf030e61743b012cedb19d3c48cce6353625fce12417b6c6981.
+The334-row inventory now has144 implemented C mappings,188 pending public C,
+two nonpublic macro formals and332 pending public WASM rows. Current family
+Release/Python32/static callers remain unverified. This checkpoint does not
+replace final combined native/bindings acceptance.
+No original fixture, tolerance or dependency changed. All remaining public
+interfaces and all three WASM bindings remain required.

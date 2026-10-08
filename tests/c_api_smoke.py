@@ -949,6 +949,35 @@ def main():
         assert filters["windowed_fir"](4,4,0,0,0,output,4) == 3 and list(output) == [71]*4
         assert filters["convolve"](None,0,kernel,2,None,0) == 0
         assert filters["forward_backward_filter"](None,0,None,0,None,0,0,None,0) == 0
+        resampling_signatures = {
+            "resample_output_length": [size,scalar,ctypes.POINTER(size)],
+            "resample": [pointer,size,scalar,pointer,size],
+            "resample_with": [pointer,size,scalar,ctypes.c_uint32,pointer,size],
+            "resample_with_kernel": [pointer,size,scalar,ctypes.c_uint32,ctypes.c_uint32,pointer,size],
+        }
+        resamplers = {}
+        for operation,arguments in resampling_signatures.items():
+            function = getattr(library,f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            resamplers[operation] = function
+        input_values,output,count = (scalar*1)(0.75),(scalar*2)(71,71),size(71)
+        assert resamplers["resample_output_length"](1,2,ctypes.byref(count)) == 0 and count.value == 2
+        assert resamplers["resample"](input_values,1,2,output,2) == 0 and output[0] == 0.75
+        assert resamplers["resample_with"](input_values,1,2,1,output,2) == 0 and list(output) == [0,0]
+        for boundary in (0,1):
+            for kernel in (0,1):
+                assert resamplers["resample_with_kernel"](input_values,1,2,boundary,kernel,output,2) == 0
+                assert output[0] == (0.75 if boundary == 0 else 0)
+        output[0] = output[1] = 71
+        assert resamplers["resample_with_kernel"](input_values,1,2,0,2,output,2) == 3 and list(output) == [71,71]
+        assert resamplers["resample"](input_values,1,2,output,1) == 2 and list(output) == [71,71]
+        count.value = 71
+        assert resamplers["resample_output_length"](1,0,ctypes.byref(count)) == 3 and count.value == 71
+        assert resamplers["resample"](None,0,2,None,0) == 0
+        assert resamplers["resample"](input_values,1,0.25,None,0) == 0
+        signed_zero = (scalar*1)(-0.0)
+        assert resamplers["resample"](signed_zero,1,1,signed_zero,1) == 0 and math.copysign(1,signed_zero[0]) == -1
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

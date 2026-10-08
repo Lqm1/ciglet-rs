@@ -701,6 +701,28 @@ int main(void) {
     CHECK_FILTERING(float, f32);
     CHECK_FILTERING(double, f64);
     #undef CHECK_FILTERING
+
+    #define CHECK_RESAMPLING(type, suffix) do { \
+        type input[] = {0.75}, output[2] = {71,71}; size_t count = 71; \
+        assert(ciglet_rs_resample_output_length_##suffix(1,2,&count) == 0 && count == 2); \
+        assert(ciglet_rs_resample_##suffix(input,1,2,output,2) == 0 && output[0] == 0.75); \
+        assert(ciglet_rs_resample_with_##suffix(input,1,2,1,output,2) == 0 && output[0] == 0 && output[1] == 0); \
+        for(uint32_t boundary=0;boundary<2;++boundary) for(uint32_t kernel=0;kernel<2;++kernel) { \
+            assert(ciglet_rs_resample_with_kernel_##suffix(input,1,2,boundary,kernel,output,2) == 0); \
+            assert(output[0] == (boundary == 0 ? 0.75 : 0)); \
+        } \
+        output[0] = output[1] = 71; \
+        assert(ciglet_rs_resample_with_kernel_##suffix(input,1,2,0,2,output,2) == 3 && output[0] == 71 && output[1] == 71); \
+        assert(ciglet_rs_resample_##suffix(input,1,2,output,1) == 2 && output[0] == 71 && output[1] == 71); \
+        count = 71; assert(ciglet_rs_resample_output_length_##suffix(1,0,&count) == 3 && count == 71); \
+        assert(ciglet_rs_resample_##suffix(NULL,0,2,NULL,0) == 0); \
+        assert(ciglet_rs_resample_##suffix(input,1,0.25,NULL,0) == 0); \
+        type signed_zero[] = {-0.0}; \
+        assert(ciglet_rs_resample_##suffix(signed_zero,1,1,signed_zero,1) == 0 && signbit(signed_zero[0])); \
+    } while (0)
+    CHECK_RESAMPLING(float, f32);
+    CHECK_RESAMPLING(double, f64);
+    #undef CHECK_RESAMPLING
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
