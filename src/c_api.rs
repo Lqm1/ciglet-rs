@@ -67,6 +67,9 @@ mod prediction_scaled;
 pub use prediction_scaled::{CigletRsScaledPredictionF32, CigletRsScaledPredictionF64};
 mod prediction_scaled_functions;
 pub use prediction_scaled_functions::*;
+mod prediction_estimate;
+mod prediction_estimate_functions;
+pub use prediction_estimate_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

@@ -540,6 +540,15 @@ int main(void) {
         type samples[] = {1,0}, coefficients[2], correlations[2], gain = 71; \
         double fractions[2], gain_fraction; int32_t exponents[2], gain_exponent; size_t count = 71; \
         handle_type *model = NULL, *copy = NULL; \
+        for(uint32_t arithmetic=0;arithmetic<2;++arithmetic) { \
+            assert(ciglet_rs_prediction_from_samples_##suffix(samples,2,1,arithmetic,coefficients,correlations,2) == 0); \
+            assert(coefficients[0] == 1 && coefficients[1] == 0 && correlations[0] == 1 && correlations[1] == 0); \
+            type magnitudes[] = {0,0,2}; \
+            for(uint32_t nyquist=0;nyquist<2;++nyquist) { \
+                assert(ciglet_rs_prediction_from_magnitude_##suffix(magnitudes,3,0,nyquist,arithmetic,coefficients,correlations,1) == 0); \
+                assert(coefficients[0] == 1 && correlations[0] == (nyquist == 0 ? 1 : 0)); \
+            } \
+        } \
         assert(ciglet_rs_scaled_prediction_from_samples_##suffix(samples,2,1,&model) == 0); \
         assert(ciglet_rs_scaled_prediction_length_##suffix(model,&count) == 0 && count == 2); \
         assert(ciglet_rs_scaled_prediction_ordinary_##suffix(model,coefficients,correlations,2) == 0); \
@@ -564,6 +573,10 @@ int main(void) {
         assert(ciglet_rs_scaled_prediction_from_samples_##suffix(NULL,0,0,&model) == 3 && model == retained); \
         assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0 && model == NULL); \
         assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0); \
+        type scaled_magnitudes[] = {maximum,maximum,maximum}; \
+        assert(ciglet_rs_scaled_prediction_from_magnitude_##suffix(scaled_magnitudes,3,3,0,&model) == 0); \
+        assert(ciglet_rs_scaled_prediction_gain_##suffix(model,&gain) == 0 && gain == maximum); \
+        assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0 && model == NULL); \
     } while (0)
     CHECK_SCALED_PREDICTION(float, f32, CigletRsScaledPredictionF32, FLT_MAX);
     CHECK_SCALED_PREDICTION(double, f64, CigletRsScaledPredictionF64, DBL_MAX);

@@ -2,7 +2,7 @@
 use super::{generated_result, pair_scalar_result, range};
 use crate::{prediction, statistics::Scalar};
 use std::panic::RefUnwindSafe;
-fn arithmetic(code: u32) -> Result<prediction::ArithmeticPolicy, u32> {
+pub(super) fn arithmetic(code: u32) -> Result<prediction::ArithmeticPolicy, u32> {
     match code {
         0 => Ok(prediction::ArithmeticPolicy::Stable),
         1 => Ok(prediction::ArithmeticPolicy::Legacy),

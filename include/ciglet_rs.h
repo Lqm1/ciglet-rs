@@ -3877,4 +3877,114 @@ uint32_t ciglet_rs_scaled_prediction_ordinary_f64(const struct CigletRsScaledPre
                                                   double *correlations,
                                                   uintptr_t count);
 
+/**
+ * Estimate from samples, returning both coefficients and autocorrelation.
+ * Arithmetic zero Stable, one Legacy. Sample order must be smaller than input count.
+ * Each output plane must contain exactly order+1 elements. All outputs are
+ * retained on failure, including unrepresentable ordinary correlations.
+ *
+ * # Safety
+ * Nonempty input must be initialized, stable, readable storage in one allocation.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint. Input/output
+ * overlap is supported after input borrowing ends and all results are staged.
+ */
+uint32_t ciglet_rs_prediction_from_samples_f32(const float *input,
+                                               uintptr_t input_count,
+                                               uintptr_t order,
+                                               uint32_t arithmetic,
+                                               float *coefficients,
+                                               float *correlations,
+                                               uintptr_t output_count);
+
+/**
+ * Estimate from magnitude, returning both coefficients and autocorrelation.
+ * Arithmetic zero Stable, one Legacy. Nyquist zero Preserve, one Legacy.
+ * Each output plane must contain exactly order+1 elements. All outputs are
+ * retained on failure, including unrepresentable ordinary correlations.
+ *
+ * # Safety
+ * Nonempty input must be initialized, stable, readable storage in one allocation.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint. Input/output
+ * overlap is supported after input borrowing ends and all results are staged.
+ */
+uint32_t ciglet_rs_prediction_from_magnitude_f32(const float *input,
+                                                 uintptr_t input_count,
+                                                 uintptr_t order,
+                                                 uint32_t nyquist,
+                                                 uint32_t arithmetic,
+                                                 float *coefficients,
+                                                 float *correlations,
+                                                 uintptr_t output_count);
+
+/**
+ * Estimate scaled correlations from magnitudes without requiring ordinary conversion.
+ * Nyquist zero Preserve, one Legacy. Native source transform sizing is retained.
+ *
+ * # Safety
+ * Nonempty input must be initialized stable readable single-allocation storage.
+ * Output is an independent initialized aligned exclusively writable owner slot.
+ * Retain and release ownership of any older slot value before successful replacement;
+ * replacement does not release that value. Failures preserve the output slot.
+ */
+uint32_t ciglet_rs_scaled_prediction_from_magnitude_f32(const float *input,
+                                                        uintptr_t input_count,
+                                                        uintptr_t order,
+                                                        uint32_t nyquist,
+                                                        struct CigletRsScaledPredictionF32 **output);
+
+/**
+ * Estimate from samples, returning both coefficients and autocorrelation.
+ * Arithmetic zero Stable, one Legacy. Sample order must be smaller than input count.
+ * Each output plane must contain exactly order+1 elements. All outputs are
+ * retained on failure, including unrepresentable ordinary correlations.
+ *
+ * # Safety
+ * Nonempty input must be initialized, stable, readable storage in one allocation.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint. Input/output
+ * overlap is supported after input borrowing ends and all results are staged.
+ */
+uint32_t ciglet_rs_prediction_from_samples_f64(const double *input,
+                                               uintptr_t input_count,
+                                               uintptr_t order,
+                                               uint32_t arithmetic,
+                                               double *coefficients,
+                                               double *correlations,
+                                               uintptr_t output_count);
+
+/**
+ * Estimate from magnitude, returning both coefficients and autocorrelation.
+ * Arithmetic zero Stable, one Legacy. Nyquist zero Preserve, one Legacy.
+ * Each output plane must contain exactly order+1 elements. All outputs are
+ * retained on failure, including unrepresentable ordinary correlations.
+ *
+ * # Safety
+ * Nonempty input must be initialized, stable, readable storage in one allocation.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint. Input/output
+ * overlap is supported after input borrowing ends and all results are staged.
+ */
+uint32_t ciglet_rs_prediction_from_magnitude_f64(const double *input,
+                                                 uintptr_t input_count,
+                                                 uintptr_t order,
+                                                 uint32_t nyquist,
+                                                 uint32_t arithmetic,
+                                                 double *coefficients,
+                                                 double *correlations,
+                                                 uintptr_t output_count);
+
+/**
+ * Estimate scaled correlations from magnitudes without requiring ordinary conversion.
+ * Nyquist zero Preserve, one Legacy. Native source transform sizing is retained.
+ *
+ * # Safety
+ * Nonempty input must be initialized stable readable single-allocation storage.
+ * Output is an independent initialized aligned exclusively writable owner slot.
+ * Retain and release ownership of any older slot value before successful replacement;
+ * replacement does not release that value. Failures preserve the output slot.
+ */
+uint32_t ciglet_rs_scaled_prediction_from_magnitude_f64(const double *input,
+                                                        uintptr_t input_count,
+                                                        uintptr_t order,
+                                                        uint32_t nyquist,
+                                                        struct CigletRsScaledPredictionF64 **output);
+
 #endif  /* CIGLET_RS_H */

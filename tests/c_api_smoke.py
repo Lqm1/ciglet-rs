@@ -735,6 +735,7 @@ def main():
         assert correlation[0] == 1 and -0.251 < correlation[1] < -0.249
         scaled_signatures = {
             "from_samples": [pointer,size,size,slot],
+            "from_magnitude": [pointer,size,size,ctypes.c_uint32,slot],
             "clone": [handle_type,slot],
             "release": [slot],
             "length": [handle_type,ctypes.POINTER(size)],
@@ -756,6 +757,19 @@ def main():
         coefficients,correlations = (scalar*2)(),(scalar*2)()
         fractions,exponents = (ctypes.c_double*2)(),(ctypes.c_int32*2)()
         gain_fraction,gain_exponent = ctypes.c_double(71),ctypes.c_int32(71)
+        estimate_samples = getattr(library,f"ciglet_rs_prediction_from_samples_{suffix}")
+        estimate_samples.argtypes = [pointer,size,size,ctypes.c_uint32,pointer,pointer,size]
+        estimate_samples.restype = ctypes.c_uint32
+        estimate_magnitude = getattr(library,f"ciglet_rs_prediction_from_magnitude_{suffix}")
+        estimate_magnitude.argtypes = [pointer,size,size,ctypes.c_uint32,ctypes.c_uint32,pointer,pointer,size]
+        estimate_magnitude.restype = ctypes.c_uint32
+        for arithmetic in (0,1):
+            assert estimate_samples(samples,2,1,arithmetic,coefficients,correlations,2) == 0
+            assert list(coefficients) == [1,0] and list(correlations) == [1,0]
+            magnitudes = (scalar*3)(0,0,2)
+            for nyquist in (0,1):
+                assert estimate_magnitude(magnitudes,3,0,nyquist,arithmetic,coefficients,correlations,1) == 0
+                assert coefficients[0] == 1 and correlations[0] == (1 if nyquist == 0 else 0)
         assert scaled_functions["from_samples"](samples,2,1,ctypes.byref(model)) == 0
         assert scaled_functions["length"](model,ctypes.byref(count)) == 0 and count.value == 2
         assert scaled_functions["ordinary"](model,coefficients,correlations,2) == 0
@@ -783,6 +797,10 @@ def main():
         assert scaled_functions["from_samples"](None,0,0,ctypes.byref(model)) == 3 and model.value == retained
         assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
         assert scaled_functions["release"](ctypes.byref(model)) == 0
+        scaled_magnitudes = (scalar*3)(maximum,maximum,maximum)
+        assert scaled_functions["from_magnitude"](scaled_magnitudes,3,3,0,ctypes.byref(model)) == 0
+        assert scaled_functions["gain"](model,ctypes.byref(gain)) == 0 and gain.value == maximum
+        assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

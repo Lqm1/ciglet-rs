@@ -1033,3 +1033,53 @@ unverified. Magnitude estimation/plans, ordinary waveform estimation, spectra an
 resonance reports remain required, alongside the other pending ciglet functions,
 all liblrhsmm/SHIRO C interfaces and all three WASM interfaces. This checkpoint
 does not replace final combined acceptance or reduce the complete public scope.
+
+## One-shot waveform and magnitude estimates
+
+Six f32/f64 entry points expose complete ordinary waveform/magnitude estimates
+and owned scaled magnitude estimates. Ordinary outputs include both native
+coefficients and autocorrelation, each with exactly order+1 elements. Checked
+count overflow, mismatched counts and overlapping output planes return two.
+All results are staged together, preserving both arrays on failure and allowing
+input/output overlap after input borrowing ends. Arithmetic zero selects Stable,
+one selects Legacy; magnitude Nyquist zero selects Preserve, one selects Legacy.
+Unknown selectors return three. All selectors reuse the native numerical paths.
+
+One-shot magnitudes retain source transform sizing and the exact native rule for
+discarding a Legacy Nyquist bin. Nonfinite values in a discarded bin remain
+ignored; Preserve validates them. Scaled magnitude construction publishes the
+existing typed scaled owner without attempting gain or ordinary conversion.
+Extreme estimates therefore remain available even when ordinary correlations
+overflow or underflow. Owner-slot and native allocation contracts remain those
+documented for scaled waveform owners. The header now declares 244 functions
+with twelve opaque types.
+
+Six host tests pass. Both precisions consume all 64 original LPC1 waveform
+records, comparing coefficient/correlation bits exactly under Legacy. All 48
+LPS1 magnitude records per precision preserve the existing correlation/coefficient
+bounds of 2e-8/3e-8 for f32 and 5e-17/2e-15 for f64. Separate resonance records
+are consumed without claiming resonance ABI coverage. Independent cases cover
+all arithmetic/Nyquist combinations, isolated Nyquist energy, ignored NaNs,
+input/output overlap, unknown selectors, count overflow, overlapping outputs,
+empty input, maximum/subnormal scaled magnitudes, conversion failures and owner
+retention. Initial test compilation required destructuring scalar references
+before conversion; no numerical behavior or acceptance criterion changed.
+Warning-denied all-target Clippy passes. All five required targets pass 81
+boundary integration tests across fifteen suites plus six focused frame/DSP
+tests. Each log independently verifies exact 10,4,4,5,6,3,4,6,6,6,3,6,6,6,6,3,3
+passing counts, zero failed/ignored tests and no error diagnostics. MSVC
+x86_64/i686, Windows GNU x86_64 and Linux GNU x86_64/i686 runners terminate with
+exit zero. Actual optimized assert-enabled C callers invoke all 244 exports on
+every target; Python ctypes callers pass on the three x86_64 environments.
+Expanded optimized MSVC C source references every declaration. Warning-denied
+Rustdoc, formatting, whitespace and generated-header verification pass.
+
+The ledger has 116 implemented C source mappings, 216 pending public C rows,
+two nonpublic macro formals and 332 pending public WASM rows. The lpc mapping
+includes both ordinary/scaled waveform construction and every scaled-owner
+access operation. flpc remains pending because its native mapping also includes
+reusable SpectrumPlan::estimate_scaled, which is not yet exposed. Current family
+Release, Python32 and static-link callers remain unverified. Reusable spectrum
+plans, full prediction spectra and complete resonance reports remain required,
+alongside all remaining binding work in the three crates. This boundary evidence
+does not replace final combined acceptance or reduce the complete public scope.
