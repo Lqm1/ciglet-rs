@@ -157,6 +157,15 @@ pub use wave_owner::{
 };
 mod wave_read_functions;
 pub use wave_read_functions::*;
+mod byte_payload;
+pub use byte_payload::*;
+mod wave_write_options;
+pub use wave_write_options::*;
+mod wave_writer_stream;
+pub use wave_writer_stream::*;
+mod wave_encoding;
+mod wave_write_functions;
+pub use wave_write_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

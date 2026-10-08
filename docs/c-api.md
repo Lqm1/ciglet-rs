@@ -2307,3 +2307,65 @@ Native kernels, manifests/lock and original fixtures remain unchanged. This
 checkpoint covers Debug shared-library boundaries; Release, 32bit Python and
 static linkage are not claimed here. WAVE writing remains required, along with
 the final combined project/binding acceptance.
+
+### Complete PCM WAVE encoding and owned byte payloads
+
+`CigletRsWaveWriteOptions` exposes all native fields: sample width, PCM8
+quantization (Centered=0, Legacy=1) and checked padding flag (zero/one). The default
+getter returns native 16bit, centered-PCM8, padded options. The legacy getter
+retains selected width, original PCM8 quantization and omitted odd-data padding;
+encoding validates the width. Legacy options reproduce source bytes in the
+original defined conversion range. Native finite validation, safe clipping and
+selected-scalar multiplication remain unchanged.
+
+The binary32/binary64 `ciglet_rs_wave_encode`, `write_stream` and `write_file`
+entry points delegate to native `wave_write` functions. Memory encoding publishes
+an immutable `CigletRsBytes` owner after successful validation/encoding, avoiding
+an encode-size-probe followed by a second encode. Length, checked interval copy,
+clone and release expose its contents without sharing Rust allocator ownership.
+Interval copies support large payloads by retrieving multiple bounded chunks.
+Count zero permits null destination when the offset lies within the payload.
+Cloning creates an independent owner of the same byte contents;
+release clears its slot. Buffer errors retain caller output.
+
+`CigletRsWriteStream` contains context, write and optional flush callbacks. Write
+returns zero status with consumed count no larger than the offered source length;
+nonzero status means I/O failure. Partial writes are retried by native `write_all`;
+zero progress produces WriteZero and oversized counts are rejected. The native
+encoder never flushes or closes the borrowed stream, never retains callbacks and
+validates all parameters before invoking write. The optional flush hook implements
+the internal Write adapter correctly but is not called during PCM encoding.
+Callbacks/context remain valid and must not unwind or modify/conflict with borrowed
+samples. I/O failures can leave a prefix of external output; they are reported.
+
+File encoding uses the same counted UTF-8/native path descriptor as decoding.
+Native validation precedes file creation/truncation; successful file output is
+explicitly flushed. Parameters/options/ranges are checked before external writes;
+a later I/O failure may leave partial file bytes. Empty samples may be null and
+produce a valid empty mono WAVE header. Native format algorithms are not duplicated
+at the C boundary.
+
+Primary short-write, error, WriteZero and flush contracts:
+https://doc.rust-lang.org/std/io/trait.Write.html
+
+Boundary tests preserve both unchanged WVW1 12-record byte oracles and compare
+memory, borrowed one-byte-per-call writers and actual files. They also verify all
+option fields/defaults, centered PCM8/padding/clipping, empty samples, byte cloning
+and interval copying, zero/error/excess-count/partial-prefix writers, no borrowed
+flush, invalid-input noninvocation and an existing file left unchanged. Independent
+C/Python callers retain all 24 original precision/case combinations and exercise
+every encoding/option/byte-owner export. Plotting interfaces remain required.
+Validation checkpoint: all five native targets passed all 65 selected suites:
+245 boundary and 79 focused native tests, with no failures or ignored tests.
+Five independent optimized assert-enabled C callers passed on each target; five
+Python callers passed on each of the three64bit targets. The new writer callers
+retain every original 12-record oracle in each precision and invoke all 12 added
+encoding/options/byte-owner operations. The complete header has 624 functions,
+30 opaque types, 30 concrete descriptors and 28 numeric policy/origin codes.
+Clippy, Rust documentation, formatting and generated-header verification passed.
+Native kernels, manifests/lock and original fixtures are unchanged. The Windows
+SDK emits standard fopen deprecation warnings in portable fixture readers; those
+assert-enabled callers execute successfully. This checkpoint covers Debug shared
+libraries; Release, 32bit Python and static linkage are not claimed here. All five
+remaining plotting source rows, other-crate C interfaces, all three WASM interfaces
+and final combined acceptance remain required.

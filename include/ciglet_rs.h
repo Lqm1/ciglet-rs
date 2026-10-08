@@ -119,6 +119,16 @@
 #define CIGLET_RS_WAVE_FLOAT 1
 
 /**
+ * Centered unsigned PCM8 quantization; silence is 128.
+ */
+#define CIGLET_RS_PCM8_CENTERED 0
+
+/**
+ * Original unsigned PCM8 quantization; silence is 127.
+ */
+#define CIGLET_RS_PCM8_LEGACY 1
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -147,6 +157,11 @@ typedef struct CigletRsArrayF32 CigletRsArrayF32;
  * Opaque binary64 array. Obtain and release it through its typed C functions.
  */
 typedef struct CigletRsArrayF64 CigletRsArrayF64;
+
+/**
+ * Opaque byte payload owned by this library; callers copy bytes without allocator transfer.
+ */
+typedef struct CigletRsBytes CigletRsBytes;
 
 /**
  * Opaque binary32 chirp-Z plan with a fixed grid and direction.
@@ -601,6 +616,29 @@ typedef struct CigletRsWaveInfo {
   uint32_t encoding;
   uintptr_t sample_count;
 } CigletRsWaveInfo;
+
+/**
+ * Every native write option. Padding is checked zero/one, not a C bool layout.
+ */
+typedef struct CigletRsWaveWriteOptions {
+  uint16_t bits_per_sample;
+  uint32_t pcm8_quantization;
+  uint32_t pad_odd_data;
+} CigletRsWaveWriteOptions;
+
+/**
+ * Borrowed writer; callback status zero means success, nonzero means I/O error.
+ * Write reports <= count initialized source bytes consumed. Partial writes are
+ * supported. PCM encoding never calls flush and never closes or retains context.
+ */
+typedef struct CigletRsWriteStream {
+  void *context;
+  uint32_t (*write)(void*, const uint8_t*, uintptr_t, uintptr_t*);
+  /**
+   * Optional native Write adapter hook; PCM encoding does not invoke it.
+   */
+  uint32_t (*flush)(void*);
+} CigletRsWriteStream;
 
 /**
  * Compute difference into equally sized caller storage.
@@ -9521,6 +9559,139 @@ uint32_t ciglet_rs_wave_info_f64(const struct CigletRsWaveF64 *handle,
 uint32_t ciglet_rs_wave_copy_samples_f64(const struct CigletRsWaveF64 *handle,
                                          double *output,
                                          uintptr_t count);
+
+/**
+ * Read byte payload length.
+ *
+ * # Safety
+ * Owner is live and retained; output is independent aligned exclusively writable usize storage.
+ */
+uint32_t ciglet_rs_bytes_length(const struct CigletRsBytes *handle, uintptr_t *output);
+
+/**
+ * Copy a checked byte interval. Count zero permits null output; offset may equal length.
+ * Partial copies allow retrieving payloads larger than the single-copy range limit.
+ *
+ * # Safety
+ * Owner remains live and immutable. Nonempty output is independent exclusively
+ * writable single-allocation storage for count bytes, without overlap with the owner.
+ */
+uint32_t ciglet_rs_bytes_copy(const struct CigletRsBytes *handle,
+                              uintptr_t offset,
+                              uint8_t *output,
+                              uintptr_t count);
+
+/**
+ * Clone a byte payload into an independent owner.
+ *
+ * # Safety
+ * Owner remains live; output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_bytes_clone(const struct CigletRsBytes *handle, struct CigletRsBytes **output);
+
+/**
+ * Release and clear a byte ownership slot; null owner is already released.
+ *
+ * # Safety
+ * Slot is aligned initialized exclusively writable pointer storage. Its nonnull
+ * owner was created here and is exclusively transferred with no outstanding users.
+ */
+uint32_t ciglet_rs_bytes_release(struct CigletRsBytes **slot);
+
+/**
+ * Read native modern defaults: 16bit PCM, centered PCM8, odd-data padding.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one option descriptor.
+ */
+uint32_t ciglet_rs_wave_write_options_default(struct CigletRsWaveWriteOptions *output);
+
+/**
+ * Read native legacy options for the selected width. Encoding validates the width.
+ *
+ * # Safety
+ * Output is aligned exclusively writable storage for one option descriptor.
+ */
+uint32_t ciglet_rs_wave_write_options_legacy(uint16_t bits_per_sample,
+                                             struct CigletRsWaveWriteOptions *output);
+
+/**
+ * Encode one mono PCM WAVE to an immutable owned byte payload. Errors retain output.
+ * Empty samples may use null input. Native quantization/clipping and padding are retained.
+ *
+ * # Safety
+ * Nonempty samples are aligned initialized stable single-allocation storage for count scalars. Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_wave_encode_f32(const float *samples,
+                                   uintptr_t count,
+                                   uint32_t sample_rate,
+                                   struct CigletRsWaveWriteOptions options,
+                                   struct CigletRsBytes **output);
+
+/**
+ * Write mono PCM through synchronous caller-owned callbacks without closing or flushing. Invalid parameters cause no writes; I/O failure may leave partial external output.
+ * Empty samples may use null input. Native quantization/clipping and padding are retained.
+ *
+ * # Safety
+ * Samples are initialized stable aligned storage for count scalars. Callback/context remain valid without unwinding throughout the call; write consumes and reports at most the supplied byte count. Callback may mutate independent context, but must not modify or create conflicting references to borrowed samples.
+ */
+uint32_t ciglet_rs_wave_write_stream_f32(struct CigletRsWriteStream stream,
+                                         const float *samples,
+                                         uintptr_t count,
+                                         uint32_t sample_rate,
+                                         struct CigletRsWaveWriteOptions options);
+
+/**
+ * Write and flush a mono PCM file, validating before creation or truncation. I/O failure may leave partial file output.
+ * Empty samples may use null input. Native quantization/clipping and padding are retained.
+ *
+ * # Safety
+ * Sample and path bytes are initialized stable single-allocation storage for their counts; nonempty samples are aligned. Path uses the declared counted encoding without terminator.
+ */
+uint32_t ciglet_rs_wave_write_file_f32(struct CigletRsPath path,
+                                       const float *samples,
+                                       uintptr_t count,
+                                       uint32_t sample_rate,
+                                       struct CigletRsWaveWriteOptions options);
+
+/**
+ * Encode one mono PCM WAVE to an immutable owned byte payload. Errors retain output.
+ * Empty samples may use null input. Native quantization/clipping and padding are retained.
+ *
+ * # Safety
+ * Nonempty samples are aligned initialized stable single-allocation storage for count scalars. Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_wave_encode_f64(const double *samples,
+                                   uintptr_t count,
+                                   uint32_t sample_rate,
+                                   struct CigletRsWaveWriteOptions options,
+                                   struct CigletRsBytes **output);
+
+/**
+ * Write mono PCM through synchronous caller-owned callbacks without closing or flushing. Invalid parameters cause no writes; I/O failure may leave partial external output.
+ * Empty samples may use null input. Native quantization/clipping and padding are retained.
+ *
+ * # Safety
+ * Samples are initialized stable aligned storage for count scalars. Callback/context remain valid without unwinding throughout the call; write consumes and reports at most the supplied byte count. Callback may mutate independent context, but must not modify or create conflicting references to borrowed samples.
+ */
+uint32_t ciglet_rs_wave_write_stream_f64(struct CigletRsWriteStream stream,
+                                         const double *samples,
+                                         uintptr_t count,
+                                         uint32_t sample_rate,
+                                         struct CigletRsWaveWriteOptions options);
+
+/**
+ * Write and flush a mono PCM file, validating before creation or truncation. I/O failure may leave partial file output.
+ * Empty samples may use null input. Native quantization/clipping and padding are retained.
+ *
+ * # Safety
+ * Sample and path bytes are initialized stable single-allocation storage for their counts; nonempty samples are aligned. Path uses the declared counted encoding without terminator.
+ */
+uint32_t ciglet_rs_wave_write_file_f64(struct CigletRsPath path,
+                                       const double *samples,
+                                       uintptr_t count,
+                                       uint32_t sample_rate,
+                                       struct CigletRsWaveWriteOptions options);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.
