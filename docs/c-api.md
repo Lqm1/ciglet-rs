@@ -1799,3 +1799,75 @@ mapped function or constant exists in the header. Current family Release, Python
 and static-link callers remain unverified. This evidence does not replace final
 combined native/bindings acceptance. All remaining public C interfaces and all
 three WASM bindings remain required.
+
+## Spectral-envelope plans and C descriptors
+
+Eighteen f32/f64 exports expose plan construction/release, every public metadata
+query (len, bins, is_empty), all three reusable estimation methods and one-shot
+estimation. Estimation returns both the full FFT-grid natural-log envelope and
+the one-sided cepstrum. Fundamental is a sampling-rate ratio in (0,0.5]. Harmonic
+count zero represents None; explicit counts >=2 remain available through the
+native bound, and one is rejected. Nyquist and smoothing policies remain independent:
+zero is Preserve/Stable and one Legacy. Default = Preserve + Stable.
+
+Named options and output descriptors use unpacked repr(C), passed by value. Options
+contain fundamental and harmonics; output describes log_spectrum/log_count and
+cepstrum/cepstrum_count. This follows the official [Rust C representation](https://doc.rust-lang.org/reference/type-layout.html#the-c-representation)
+and [FFI layout/ABI guidance](https://doc.rust-lang.org/nomicon/other-reprs.html#reprc).
+Concrete descriptors are generated using cbindgen's documented
+[struct export category](https://github.com/mozilla/cbindgen/blob/main/docs.md#export).
+Python callers define ordinary ctypes.Structure fields with the
+[default native C layout](https://docs.python.org/3/library/ctypes.html#structure-union-layout-alignment-and-byte-order),
+without packing, unions or bitfields. Actual foreign callers check member offsets
+and pass both descriptors by value; no manually constructed packed byte layout is
+used. Rust callers retain the original typed native API.
+
+Opaque plans serialize mutable FFT scratch through a mutex. Metadata queries also
+use the lock. Callers retain the live matching-precision owner through every call;
+release excludes all outstanding operations, invalidates aliases and clears the
+initialized ownership slot. Constructor output slots must not already own an
+unreleased object. Poisoned plans return error three. Computation validates output
+length n and coefficient count n/2+1 and pairwise disjoint output byte ranges before
+locking. Native owned Envelope vectors stage both outputs, with both returned
+lengths checked before either plane is committed. All failures retain both outputs.
+Input/output overlap is supported after input borrowing ends. Arrays must remain
+initialized/readable or exclusively writable, aligned and valid for declared
+counts; buffers are independent of private owner memory. Null arrays are accepted
+only for zero counts; empty input still fails the native one-sided-bin requirement.
+Pointer/alignment errors return one, count/range/overlap errors two and native
+calculation/selector/poison errors three. Native panic/allocation limits apply.
+
+Eight host tests and warning-denied all-target Clippy/Rustdoc pass. Both original
+144-case ENV1 corpora compare every envelope and coefficient output (18,288 scalars
+per precision) with unchanged 3e-7 binary32/5e-16 binary64 normalized bounds, using
+source-matching Legacy Nyquist and Legacy smoothing. Independent constant/symmetry,
+metadata, implicit/explicit harmonics, corrected zero cutoff, tiny two-point count,
+all four policy combinations, repeatable reuse, one-shot/default equivalence and
+in-place output are checked. Invalid options/counts/data/policies, null/misaligned
+buffers, exact/partial plane overlaps and excessive ranges retain both outputs.
+Four scoped workers perform 50 calculations each on the same owner with independent
+buffers, verifying repeatable results under scratch serialization. Scopes follow
+[std::thread::scope](https://doc.rust-lang.org/std/thread/fn.scope.html), joining every
+worker before releasing the owner. The first host run reported a filesystem warning
+while finalizing an incremental cache; rerunning with incremental compilation
+disabled passes cleanly. No native arithmetic, fixture, dependency or tolerance
+changed. The existing native acceptance evidence remains applicable.
+
+Generated header verification passes with 430 status-returning exports, twenty-four
+opaque types, four concrete descriptors and seven named constants. Expanded
+optimized assert-enabled C main references all exports. All initial five-target
+runners terminate with exit zero. Exact 43 summary counts
+10,4,4,5,6,8,6,6,3,4,6,6,6,9,8,9,6,6,3,6,6,6,5,6,8,6,6,8,6,6,6,3,3,3,3,3,3,4,2,3,3,2,4
+verify 190 boundary plus 36 focused native tests per target, zero failed/ignored
+and no error diagnostics. After adding independent constant-spectrum and invalid
+harmonic-count checks to the foreign callers, final focused caller runners pass
+again on all five targets without changing Rust sources or repeating Rust suites.
+Optimized assert-enabled C invokes all 430 exports on each target; Python passes
+on MSVC64/GNU64/Linux64. The natural C descriptor layout and value passing are
+therefore exercised on both 32bit platforms as well. Header verification, formatting
+and whitespace checks pass. The 334-row inventory has 190 implemented C mappings,
+142 pending public C rows, two nonpublic macro formals and 332 pending public WASM
+rows; every mapped function or constant exists in the header. Current family
+Release, Python32 and static-link callers remain unverified. This evidence does
+not replace final combined native/bindings acceptance. All remaining public C
+interfaces and all three WASM bindings remain required.

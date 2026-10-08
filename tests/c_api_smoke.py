@@ -1176,6 +1176,73 @@ def main():
         assert root_find(root_callback,None,3,1,ctypes.byref(value)) == 3 and value.value == 71
         root_state["kind"] = 0
         assert root_find(root_callback,None,0,1,ctypes.byref(value)) == 0 and value.value == 0.25
+        class EnvelopeOptions(ctypes.Structure):
+            _fields_ = [("fundamental",scalar),("harmonics",size)]
+        class EnvelopeOutput(ctypes.Structure):
+            _fields_ = [("log_spectrum",pointer),("log_count",size),("cepstrum",pointer),("cepstrum_count",size)]
+        assert EnvelopeOptions.fundamental.offset == 0
+        assert EnvelopeOptions.harmonics.offset >= ctypes.sizeof(scalar) and EnvelopeOptions.harmonics.offset % ctypes.alignment(size) == 0
+        assert ctypes.sizeof(EnvelopeOutput) == 4*ctypes.sizeof(ctypes.c_void_p)
+        assert EnvelopeOutput.log_count.offset == ctypes.sizeof(ctypes.c_void_p)
+        assert EnvelopeOutput.cepstrum.offset == 2*ctypes.sizeof(ctypes.c_void_p)
+        assert EnvelopeOutput.cepstrum_count.offset == 3*ctypes.sizeof(ctypes.c_void_p)
+        envelope_signatures = {
+            "create": [size,ctypes.POINTER(ctypes.c_void_p)],
+            "release": [ctypes.POINTER(ctypes.c_void_p)],
+            "len": [ctypes.c_void_p,ctypes.POINTER(size)],
+            "bins": [ctypes.c_void_p,ctypes.POINTER(size)],
+            "is_empty": [ctypes.c_void_p,ctypes.POINTER(size)],
+            "estimate": [ctypes.c_void_p,pointer,size,EnvelopeOptions,EnvelopeOutput],
+            "estimate_with": [ctypes.c_void_p,pointer,size,EnvelopeOptions,ctypes.c_uint32,EnvelopeOutput],
+            "estimate_with_smoothing": [ctypes.c_void_p,pointer,size,EnvelopeOptions,ctypes.c_uint32,ctypes.c_uint32,EnvelopeOutput],
+            "one_shot": [size,pointer,size,EnvelopeOptions,EnvelopeOutput],
+        }
+        envelope = {}
+        for operation,signature in envelope_signatures.items():
+            function = getattr(library,f"ciglet_rs_envelope_{operation}_{suffix}")
+            function.argtypes = signature
+            function.restype = ctypes.c_uint32
+            envelope[operation] = function
+        owner,metadata = ctypes.c_void_p(),size(71)
+        spectrum,log_values,cepstrum_values = (scalar*5)(0.25,0.5,1,2,4),(scalar*8)(),(scalar*5)()
+        options,output = EnvelopeOptions(0.125,5),EnvelopeOutput(log_values,8,cepstrum_values,5)
+        assert envelope["create"](8,ctypes.byref(owner)) == 0 and owner.value
+        for operation,expected in (("len",8),("bins",5),("is_empty",0)):
+            assert envelope[operation](owner,ctypes.byref(metadata)) == 0 and metadata.value == expected
+        assert envelope["estimate"](owner,spectrum,5,options,output) == 0
+        baseline = list(log_values),list(cepstrum_values)
+        assert envelope["estimate_with"](owner,spectrum,5,options,0,output) == 0
+        assert (list(log_values),list(cepstrum_values)) == baseline
+        assert envelope["estimate_with_smoothing"](owner,spectrum,5,options,0,0,output) == 0
+        assert (list(log_values),list(cepstrum_values)) == baseline
+        assert envelope["one_shot"](8,spectrum,5,options,output) == 0
+        assert (list(log_values),list(cepstrum_values)) == baseline
+        for nyquist in (0,1):
+            for smoothing in (0,1):
+                assert envelope["estimate_with_smoothing"](owner,spectrum,5,options,nyquist,smoothing,output) == 0
+        options.harmonics = 0
+        assert envelope["estimate"](owner,spectrum,5,options,output) == 0
+        options.fundamental = 0.375
+        assert envelope["one_shot"](8,(scalar*5)(0.5,0.5,0.5,0.5,0.5),5,options,output) == 0
+        assert all(abs(value+math.log(2)) < 2e-6 for value in log_values)
+        assert abs(cepstrum_values[0]+math.log(2)) < 2e-6
+        assert all(abs(value) < 2e-6 for value in list(cepstrum_values)[1:])
+        options.fundamental = 0.125
+        for index in range(8):
+            log_values[index] = 71
+        for index in range(5):
+            cepstrum_values[index] = 71
+        assert envelope["estimate_with"](owner,spectrum,5,options,2,output) == 3
+        overlap = EnvelopeOutput(log_values,8,ctypes.cast(ctypes.byref(log_values,ctypes.sizeof(scalar)),pointer),5)
+        assert envelope["estimate"](owner,spectrum,5,options,overlap) == 2
+        options.harmonics = 1
+        assert envelope["estimate"](owner,spectrum,5,options,output) == 3
+        options.harmonics = 0
+        options.fundamental = 0
+        assert envelope["estimate"](owner,spectrum,5,options,output) == 3
+        assert list(log_values) == [71]*8 and list(cepstrum_values) == [71]*5
+        assert envelope["release"](ctypes.byref(owner)) == 0 and owner.value is None
+        assert envelope["release"](ctypes.byref(owner)) == 0
         glottal_signatures = {
             "model_from_shape": [scalar,scalar,scalar,pointer,size],
             "model_spectrum": [pointer,size,pointer,size,pointer,pointer,size],

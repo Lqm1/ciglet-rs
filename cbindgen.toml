@@ -5,5 +5,5 @@ documentation = true
 
 [export]
 exclude = ["LEGACY_EPSILON", "LEGACY_INFINITY_SENTINEL"]
-item_types = ["functions", "opaque", "constants"]
+item_types = ["functions", "opaque", "constants", "structs"]
 include = ["ciglet_rs_abi_version", "ciglet_rs_minimum_f32", "ciglet_rs_maximum_f32", "ciglet_rs_minimum_f64", "ciglet_rs_maximum_f64"]

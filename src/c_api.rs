@@ -102,6 +102,13 @@ pub use glottal::{
 };
 mod glottal_functions;
 pub use glottal_functions::*;
+mod spectral_envelope;
+pub use spectral_envelope::{
+    CigletRsEnvelopeF32, CigletRsEnvelopeF64, CigletRsEnvelopeOptionsF32,
+    CigletRsEnvelopeOptionsF64, CigletRsEnvelopeOutputF32, CigletRsEnvelopeOutputF64,
+};
+mod spectral_envelope_functions;
+pub use spectral_envelope_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

@@ -64,6 +64,16 @@ typedef struct CigletRsCztF32 CigletRsCztF32;
 typedef struct CigletRsCztF64 CigletRsCztF64;
 
 /**
+ * Opaque binary32 spectral-envelope plan with serialized reusable scratch.
+ */
+typedef struct CigletRsEnvelopeF32 CigletRsEnvelopeF32;
+
+/**
+ * Opaque binary64 spectral-envelope plan with serialized reusable scratch.
+ */
+typedef struct CigletRsEnvelopeF64 CigletRsEnvelopeF64;
+
+/**
  * Opaque reusable binary32 FFT plan, with serialized scratch access.
  */
 typedef struct CigletRsFftF32 CigletRsFftF32;
@@ -152,6 +162,66 @@ typedef struct CigletRsScaledPredictionF32 CigletRsScaledPredictionF32;
  * Opaque immutable binary64 prediction with individually scaled correlations.
  */
 typedef struct CigletRsScaledPredictionF64 CigletRsScaledPredictionF64;
+
+/**
+ * Binary32 envelope options passed by value with the platform C layout.
+ */
+typedef struct CigletRsEnvelopeOptionsF32 {
+  /**
+   * Fundamental/sampling-rate ratio in (0, 0.5].
+   */
+  float fundamental;
+  /**
+   * Zero selects the implicit native count; explicit counts must be >= 2.
+   */
+  uintptr_t harmonics;
+} CigletRsEnvelopeOptionsF32;
+
+/**
+ * Binary32 disjoint output planes passed by value with the platform C layout.
+ */
+typedef struct CigletRsEnvelopeOutputF32 {
+  float *log_spectrum;
+  /**
+   * Must equal the full FFT length.
+   */
+  uintptr_t log_count;
+  float *cepstrum;
+  /**
+   * Must equal FFT length / 2 + 1.
+   */
+  uintptr_t cepstrum_count;
+} CigletRsEnvelopeOutputF32;
+
+/**
+ * Binary64 envelope options passed by value with the platform C layout.
+ */
+typedef struct CigletRsEnvelopeOptionsF64 {
+  /**
+   * Fundamental/sampling-rate ratio in (0, 0.5].
+   */
+  double fundamental;
+  /**
+   * Zero selects the implicit native count; explicit counts must be >= 2.
+   */
+  uintptr_t harmonics;
+} CigletRsEnvelopeOptionsF64;
+
+/**
+ * Binary64 disjoint output planes passed by value with the platform C layout.
+ */
+typedef struct CigletRsEnvelopeOutputF64 {
+  double *log_spectrum;
+  /**
+   * Must equal the full FFT length.
+   */
+  uintptr_t log_count;
+  double *cepstrum;
+  /**
+   * Must equal FFT length / 2 + 1.
+   */
+  uintptr_t cepstrum_count;
+} CigletRsEnvelopeOutputF64;
 
 /**
  * Compute difference into equally sized caller storage.
@@ -6263,6 +6333,424 @@ uint32_t ciglet_rs_glottal_prepared_sampled_period_f64(const struct CigletRsGlot
                                                        uintptr_t count,
                                                        double *output,
                                                        uintptr_t output_count);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_create_f32(uintptr_t length, struct CigletRsEnvelopeF32 **output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_release_f32(struct CigletRsEnvelopeF32 **handle);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_len_f32(const struct CigletRsEnvelopeF32 *handle, uintptr_t *output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_bins_f32(const struct CigletRsEnvelopeF32 *handle, uintptr_t *output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_is_empty_f32(const struct CigletRsEnvelopeF32 *handle,
+                                         uintptr_t *output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_estimate_f32(const struct CigletRsEnvelopeF32 *handle,
+                                         const float *spectrum,
+                                         uintptr_t count,
+                                         struct CigletRsEnvelopeOptionsF32 options,
+                                         struct CigletRsEnvelopeOutputF32 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_estimate_with_f32(const struct CigletRsEnvelopeF32 *handle,
+                                              const float *spectrum,
+                                              uintptr_t count,
+                                              struct CigletRsEnvelopeOptionsF32 options,
+                                              uint32_t nyquist,
+                                              struct CigletRsEnvelopeOutputF32 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_estimate_with_smoothing_f32(const struct CigletRsEnvelopeF32 *handle,
+                                                        const float *spectrum,
+                                                        uintptr_t count,
+                                                        struct CigletRsEnvelopeOptionsF32 options,
+                                                        uint32_t nyquist,
+                                                        uint32_t smoothing,
+                                                        struct CigletRsEnvelopeOutputF32 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_one_shot_f32(uintptr_t length,
+                                         const float *spectrum,
+                                         uintptr_t count,
+                                         struct CigletRsEnvelopeOptionsF32 options,
+                                         struct CigletRsEnvelopeOutputF32 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_create_f64(uintptr_t length, struct CigletRsEnvelopeF64 **output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_release_f64(struct CigletRsEnvelopeF64 **handle);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_len_f64(const struct CigletRsEnvelopeF64 *handle, uintptr_t *output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_bins_f64(const struct CigletRsEnvelopeF64 *handle, uintptr_t *output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_is_empty_f64(const struct CigletRsEnvelopeF64 *handle,
+                                         uintptr_t *output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_estimate_f64(const struct CigletRsEnvelopeF64 *handle,
+                                         const double *spectrum,
+                                         uintptr_t count,
+                                         struct CigletRsEnvelopeOptionsF64 options,
+                                         struct CigletRsEnvelopeOutputF64 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_estimate_with_f64(const struct CigletRsEnvelopeF64 *handle,
+                                              const double *spectrum,
+                                              uintptr_t count,
+                                              struct CigletRsEnvelopeOptionsF64 options,
+                                              uint32_t nyquist,
+                                              struct CigletRsEnvelopeOutputF64 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_estimate_with_smoothing_f64(const struct CigletRsEnvelopeF64 *handle,
+                                                        const double *spectrum,
+                                                        uintptr_t count,
+                                                        struct CigletRsEnvelopeOptionsF64 options,
+                                                        uint32_t nyquist,
+                                                        uint32_t smoothing,
+                                                        struct CigletRsEnvelopeOutputF64 output);
+
+/**
+ * Checked spectral-envelope operation with original native arithmetic.
+ * Harmonic count zero selects None; one is invalid. Default preserves Nyquist
+ * and uses Stable smoothing. Explicit policy zero is Preserve/Stable, one Legacy.
+ * Metadata returns length, bins or is_empty as usize zero/one. Outputs are the
+ * complete natural-log FFT grid and one-sided cepstrum; failures retain both.
+ *
+ * # Safety
+ * Handle is a live matching-precision constructor owner, with release excluded
+ * during all calls. Reusable scratch is serialized. Release requires exclusive
+ * owner access, invalidates aliases and clears its initialized slot. Constructors
+ * publish ownership only on success; output slot must not own an unreleased object.
+ * Nonempty arrays are aligned initialized stable readable inputs or exclusively
+ * writable outputs for their declared counts. Output planes are disjoint and
+ * independent of private owner memory. Input/output overlap is permitted after
+ * calculation ends. Descriptors use platform C layout, passed by value. Null arrays
+ * are accepted only for zero counts. Allocation validity is the caller's duty;
+ * native panic/allocation and poisoned-plan limits apply.
+ */
+uint32_t ciglet_rs_envelope_one_shot_f64(uintptr_t length,
+                                         const double *spectrum,
+                                         uintptr_t count,
+                                         struct CigletRsEnvelopeOptionsF64 options,
+                                         struct CigletRsEnvelopeOutputF64 output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

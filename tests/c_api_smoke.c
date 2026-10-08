@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <float.h>
 #include <math.h>
+#include <stddef.h>
 #include <string.h>
 
 struct RootContext { double target; size_t calls; int kind; };
@@ -918,6 +919,43 @@ int main(void) {
     CHECK_ROOT(float, f32, 1e-6);
     CHECK_ROOT(double, f64, 1e-7);
     #undef CHECK_ROOT
+    #define CHECK_ENVELOPE(type, suffix, owner_type, options_type, output_type) do { \
+        owner_type *owner = NULL; size_t metadata = 71; type spectrum[] = {0.25,0.5,1,2,4}, log[8], cepstrum[5], baseline[8], baseline_cepstrum[5]; \
+        options_type options = {0.125,5}; output_type output = {log,8,cepstrum,5}; \
+        assert(offsetof(options_type,fundamental) == 0); \
+        assert(offsetof(options_type,harmonics) >= sizeof(type) && offsetof(options_type,harmonics) % _Alignof(uintptr_t) == 0); \
+        assert(sizeof(output_type) == 4*sizeof(void *) && offsetof(output_type,log_count) == sizeof(void *) && offsetof(output_type,cepstrum) == 2*sizeof(void *) && offsetof(output_type,cepstrum_count) == 3*sizeof(void *)); \
+        assert(ciglet_rs_envelope_create_##suffix(8,&owner) == 0 && owner); \
+        assert(ciglet_rs_envelope_len_##suffix(owner,&metadata) == 0 && metadata == 8); \
+        assert(ciglet_rs_envelope_bins_##suffix(owner,&metadata) == 0 && metadata == 5); \
+        assert(ciglet_rs_envelope_is_empty_##suffix(owner,&metadata) == 0 && metadata == 0); \
+        assert(ciglet_rs_envelope_estimate_##suffix(owner,spectrum,5,options,output) == 0); \
+        for(size_t i=0;i<8;++i) baseline[i] = log[i]; for(size_t i=0;i<5;++i) baseline_cepstrum[i] = cepstrum[i]; \
+        assert(ciglet_rs_envelope_estimate_with_##suffix(owner,spectrum,5,options,0,output) == 0); \
+        for(size_t i=0;i<8;++i) assert(log[i] == baseline[i]); for(size_t i=0;i<5;++i) assert(cepstrum[i] == baseline_cepstrum[i]); \
+        assert(ciglet_rs_envelope_estimate_with_smoothing_##suffix(owner,spectrum,5,options,0,0,output) == 0); \
+        for(size_t i=0;i<8;++i) assert(log[i] == baseline[i]); for(size_t i=0;i<5;++i) assert(cepstrum[i] == baseline_cepstrum[i]); \
+        assert(ciglet_rs_envelope_one_shot_##suffix(8,spectrum,5,options,output) == 0); \
+        for(size_t i=0;i<8;++i) assert(log[i] == baseline[i]); for(size_t i=0;i<5;++i) assert(cepstrum[i] == baseline_cepstrum[i]); \
+        for(uint32_t n=0;n<2;++n) for(uint32_t s=0;s<2;++s) assert(ciglet_rs_envelope_estimate_with_smoothing_##suffix(owner,spectrum,5,options,n,s,output) == 0); \
+        options.harmonics = 0; assert(ciglet_rs_envelope_estimate_##suffix(owner,spectrum,5,options,output) == 0); \
+        type constant[] = {0.5,0.5,0.5,0.5,0.5}; options.fundamental = 0.375; \
+        assert(ciglet_rs_envelope_one_shot_##suffix(8,constant,5,options,output) == 0); \
+        for(size_t i=0;i<8;++i) assert(fabs((double)log[i]+0.6931471805599453) < 2e-6); \
+        assert(fabs((double)cepstrum[0]+0.6931471805599453) < 2e-6); for(size_t i=1;i<5;++i) assert(fabs((double)cepstrum[i]) < 2e-6); \
+        options.fundamental = 0.125; \
+        for(size_t i=0;i<8;++i) log[i] = 71; for(size_t i=0;i<5;++i) cepstrum[i] = 71; \
+        assert(ciglet_rs_envelope_estimate_with_##suffix(owner,spectrum,5,options,2,output) == 3); \
+        output_type overlap = {log,8,log+1,5}; assert(ciglet_rs_envelope_estimate_##suffix(owner,spectrum,5,options,overlap) == 2); \
+        options.harmonics = 1; assert(ciglet_rs_envelope_estimate_##suffix(owner,spectrum,5,options,output) == 3); \
+        options.harmonics = 0; options.fundamental = 0; assert(ciglet_rs_envelope_estimate_##suffix(owner,spectrum,5,options,output) == 3); \
+        for(size_t i=0;i<8;++i) assert(log[i] == 71); for(size_t i=0;i<5;++i) assert(cepstrum[i] == 71); \
+        assert(ciglet_rs_envelope_release_##suffix(&owner) == 0 && !owner); \
+        assert(ciglet_rs_envelope_release_##suffix(&owner) == 0); \
+    } while (0)
+    CHECK_ENVELOPE(float, f32, CigletRsEnvelopeF32, CigletRsEnvelopeOptionsF32, CigletRsEnvelopeOutputF32);
+    CHECK_ENVELOPE(double, f64, CigletRsEnvelopeF64, CigletRsEnvelopeOptionsF64, CigletRsEnvelopeOutputF64);
+    #undef CHECK_ENVELOPE
     #define CHECK_GLOTTAL(type, suffix, owner_type) do { \
         type fields[5], copied[5], frequencies[] = {-400,0,400}, magnitude[3], phase[3], selected[3], selected_phase[3], wave[16], one_wave[16]; \
         owner_type *owner = NULL, *clone = NULL; \
