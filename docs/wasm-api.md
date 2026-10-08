@@ -47,8 +47,8 @@ WASM Clippy and Rustdoc with warnings denied pass. The six existing native
 window regression tests and host all-target/all-feature Clippy also pass.
 An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
-added. The inventory records nineteen complete window mappings. The Fourier
-coverage below adds six more. Other DSP families and both remaining crates still
+added. The inventory records nineteen complete window mappings. Fourier adds
+six mappings and DCT/phase adds fifteen. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -90,12 +90,50 @@ Eight native and three C-interface Fourier regression tests pass. WASM Clippy
 and Rustdoc with warnings denied pass; an actual feature-disabled module
 contains none of the six functions or four owner classes.
 
+## DCT and phase operations
+
+Eighteen functions expose both precisions of the complete native DCT and phase
+operations: `dct`, `phase_wrap`, `phase_unwrap`, `phase_difference`, `magnitude`,
+`argument`, `polar_real`, `polar_imaginary` and `complete_spectrum`, with `_f32`
+or `_f64` suffixes. DCT is the original directly computed orthonormal DCT-II
+with approximate binary32 cosine in both precisions. The upstream public API
+has no inverse DCT or reusable DCT plan.
+
+Magnitude/argument accept complete real and imaginary typed-array planes;
+one-element planes implement the scalar complex aliases. Polar conversion
+retains approximate trigonometric stages. Spectrum completion accepts
+`SpectrumSymmetry` and optional `SpectrumNyquist`; omitted or null policy
+preserves supplied DC/Nyquist values. Legacy policy retains the original
+preceding-bin substitution, including positive antisymmetric Nyquist. Inputs
+remain unchanged and outputs own independent storage. Native validation,
+single-turn unwrap, directed differences and scaled magnitude fallbacks remain.
+
+Actual browser and Node checks compare all 64 DCT and 48 phase C cases, plus
+boundary cases, for 6,830 scalar comparisons. Original DCT normalized bounds
+remain 2e-7 for f32 and 1e-15 for f64. Phase comparisons remain bit-exact except
+binary64 argument: on the pinned WASM backend, 22 original `atan2` results
+differ by one ULP, at most 4.440892098500626e-16 absolute error. The full-corpus
+measurement established a one-ULP bound only for that operation and precision;
+signs and zeros remain exact. Native Rust calculations and C fixtures were not
+changed. Rust 1.94 documents `atan2` precision as platform-dependent, so this
+bound is evidence for the tested backend/corpus rather than a universal math
+guarantee. Tests include both Nyquist policies, ignored lower bins, empty and
+singleton cases, errors, immutable inputs, independent outputs, magnitude range
+fallbacks and continued instance use.
+
+Window/Fourier Node checks pass on the new artifact. Thirteen native/C-interface
+regression tests pass. WASM Clippy and Rustdoc with warnings denied pass, and an
+actual feature-disabled module exposes none of the eighteen functions. Fifteen
+upstream DCT/phase mappings are recorded, bringing WASM coverage to forty
+implemented mappings; the remaining 292 public mappings stay pending.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
 - [JavaScript callbacks](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/reference/receiving-js-closures-in-rust.md)
 - [Deployment targets](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html)
 - [Exported owner classes](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/exported-rust-types.html)
+- [Rust 1.94 atan2 precision](https://doc.rust-lang.org/1.94.0/std/primitive.f64.html#method.atan2)
 - [Version-matched CLI installation](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/wasm-bindgen-test/usage.md)
 - [Release library manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/Cargo.toml)
 - [Release CLI manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/crates/cli/Cargo.toml)
