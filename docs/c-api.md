@@ -868,3 +868,64 @@ interfaces and all three WASM interfaces remain required. This opt-in boundary
 checkpoint changes no native numerical implementation, original fixture or
 threshold and does not replace final combined acceptance. Symbol counts do not
 substitute for configuration, scratch, ownership or full functionality audits.
+
+## Polynomial interfaces
+
+Eight f32/f64 functions expose descending-order complex/real polynomial
+evaluation and complex/real root estimates. The header declares 216 functions;
+the ten existing opaque types are unchanged. Complex values use separate scalar
+planes, so no Rust Complex layout crosses the ABI. Missing complex coefficient
+planes represent zero components; nonempty real-only inputs require a readable
+pointer. Both evaluation scalar outputs are required and disjoint.
+
+Roots require exactly coefficient_count-1 elements in each output plane. Constant
+nonzero polynomials succeed with zero roots, accepting null root planes, and
+report iterations zero, converged one and residual zero. Diagnostics use separate
+required usize/u32/f64 pointers, avoiding a new structure-layout dependency.
+Nonconvergence is a successful native estimate with converged zero, not an
+error that discards useful roots. All original initialization/iteration order,
+radius clamp, 50-step limit, approximate trigonometry and residual threshold
+remain unchanged. Evaluation retains original power accumulation and does not
+regroup arithmetic into Horner form.
+
+All five root output ranges, including diagnostics, must be pairwise disjoint;
+overlap and output count errors return status two. Invalid native coefficients,
+arguments, zero leading coefficients or numerical failures return three.
+Input/output overlap is permitted only after all input borrowing ends. Complete
+owned estimates stage every output before committing, retaining root planes
+and diagnostics together on failure. Pointer checks cannot prove allocation,
+initialization, stable input or exclusive writable storage.
+
+Six new host boundary tests consume all original POL1 records, 32 for f32 and
+33 for f64, including complete trailing trigonometric data. Each contains three
+complex evaluations and roots; eligible real-coefficient records also exercise
+real APIs and exact report equality. Original value/root results retain exact
+equality. Additional cases prove constant and imaginary-only polynomials, absent
+complex planes, imaginary roots, supported overlap, invalid/nonfinite inputs,
+all ten pairwise output intersections and atomic retention. A 50-iteration
+nonconvergent example exposes all diagnostics; independently evaluated product
+of (x-k), k=1..8, confirms the reported residual within the unchanged 1e-8 check.
+
+Initial Clippy redundant-field/duplicate-branch diagnostics were corrected with
+field shorthand and one equivalent pointer-check condition. A newly tightened
+case-count assertion initially assumed both fixtures had 32 records; the
+unchanged f64 fixture header establishes 33, now checked explicitly. No native
+algorithm, fixture or numerical criterion changed. Host tests, warning-denied
+all-target Clippy/Rustdoc, formatting, whitespace and generated-header
+verification pass. All five required targets pass 66 boundary integration tests
+across twelve suites and six focused frame/DSP tests with c-api enabled. Each
+log independently contains exact 10,4,4,5,6,3,4,6,6,6,6,6,3,3 passing counts,
+zero failed/ignored tests and no error diagnostic. All runners terminate with
+exit zero. Actual optimized assert-enabled C callers invoke all 216 exports
+on every target; MSVC x86_64, Windows GNU x86_64 and Linux x86_64 also pass Python
+ctypes callers. Expanded optimized C source references every declaration.
+
+The ledger retains 334 rows: 112 implemented C source mappings, 220 pending
+public/configuration C rows, two nonpublic macro formals and 332 public WASM
+rows pending. All six polynomial source functions/aliases now map typed entry
+points, and every implemented mapping was checked against the header. Current
+family Release, Python32 and static-link callers remain unverified. Remaining
+ciglet C interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM
+interfaces remain required. This opt-in boundary adds no native numerical
+changes and does not replace final combined acceptance. Symbol counts do not
+substitute for complete diagnostics, ownership or configuration auditing.

@@ -668,6 +668,48 @@ def main():
         assert cepstrum_functions["new"](3,ctypes.byref(plan)) == 3 and plan.value == retained
         assert cepstrum_functions["release"](ctypes.byref(plan)) == 0 and plan.value is None
         assert cepstrum_functions["release"](ctypes.byref(plan)) == 0
+        polynomial_signatures = {
+            "evaluate": [pointer,pointer,size,scalar,scalar,pointer,pointer],
+            "evaluate_real": [pointer,size,scalar,scalar,pointer,pointer],
+            "roots": [pointer,pointer,size,pointer,pointer,size,ctypes.POINTER(size),ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_double)],
+            "roots_real": [pointer,size,pointer,pointer,size,ctypes.POINTER(size),ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_double)],
+        }
+        polynomial_functions = {}
+        for operation,arguments in polynomial_signatures.items():
+            function = getattr(library,f"ciglet_rs_polynomial_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            polynomial_functions[operation] = function
+        coefficients = (scalar*3)(1,0,1)
+        imaginary_coefficients = (scalar*3)(0,0,0)
+        a,b = scalar(71),scalar(71)
+        assert polynomial_functions["evaluate"](coefficients,imaginary_coefficients,3,2,1,ctypes.byref(a),ctypes.byref(b)) == 0
+        assert (a.value,b.value) == (4,4)
+        assert polynomial_functions["evaluate_real"](coefficients,3,2,1,ctypes.byref(a),ctypes.byref(b)) == 0
+        assert (a.value,b.value) == (4,4)
+        real,imaginary = (scalar*2)(),(scalar*2)()
+        iterations,converged,residual = size(71),ctypes.c_uint32(71),ctypes.c_double(71)
+        assert polynomial_functions["roots"](coefficients,None,3,real,imaginary,2,ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
+        assert 0 < iterations.value <= 50 and converged.value == 1 and residual.value < 1e-6
+        assert all(abs(r) < 1e-6 and abs(abs(i)-1) < 1e-6 for r,i in zip(real,imaginary))
+        expected = (list(real),list(imaginary),iterations.value,converged.value,residual.value)
+        assert polynomial_functions["roots_real"](coefficients,3,real,imaginary,2,ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
+        assert (list(real),list(imaginary),iterations.value,converged.value,residual.value) == expected
+        constant = (scalar*1)(1)
+        assert polynomial_functions["roots"](None,constant,1,None,None,0,ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
+        assert (iterations.value,converged.value,residual.value) == (0,1,0)
+        invalid = (scalar*2)(0,1)
+        real[0] = imaginary[0] = 71
+        iterations.value = converged.value = 71
+        residual.value = 71
+        assert polynomial_functions["roots_real"](invalid,2,real,imaginary,1,ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 3
+        assert (real[0],imaginary[0],iterations.value,converged.value,residual.value) == (71,71,71,71,71)
+        assert polynomial_functions["evaluate_real"](coefficients,3,2,1,ctypes.byref(a),ctypes.byref(a)) == 2
+        if suffix == "f64":
+            nonconvergent = (scalar*9)(1,-36,546,-4536,22449,-67284,118124,-109584,40320)
+            real,imaginary = (scalar*8)(),(scalar*8)()
+            assert polynomial_functions["roots_real"](nonconvergent,9,real,imaginary,8,ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
+            assert iterations.value == 50 and converged.value == 0 and residual.value > 1e-6
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

@@ -3403,4 +3403,160 @@ uint32_t ciglet_rs_real_cepstrum_minimum_phase_default_f64(const double *input,
                                                            double *output,
                                                            uintptr_t output_count);
 
+/**
+ * Evaluate descending-order coefficients, preserving native power accumulation.
+ * Missing complex coefficient planes mean zero components.
+ * Both scalar component outputs are required.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_evaluate_f32(const float *real,
+                                           const float *imaginary,
+                                           uintptr_t coefficient_count,
+                                           float argument_real,
+                                           float argument_imaginary,
+                                           float *output_real,
+                                           float *output_imaginary);
+
+/**
+ * Return root_count=coefficient_count-1 roots and all convergence diagnostics.
+ * Missing complex coefficient planes mean zero components.
+ * Converged is zero/one; nonconvergence is successful with its iteration/residual report.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_roots_f32(const float *real,
+                                        const float *imaginary,
+                                        uintptr_t coefficient_count,
+                                        float *output_real,
+                                        float *output_imaginary,
+                                        uintptr_t root_count,
+                                        uintptr_t *iterations,
+                                        uint32_t *converged,
+                                        double *maximum_residual);
+
+/**
+ * Evaluate descending-order coefficients, preserving native power accumulation.
+ * Nonempty real coefficients require a valid readable pointer.
+ * Both scalar component outputs are required.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_evaluate_real_f32(const float *real,
+                                                uintptr_t coefficient_count,
+                                                float argument_real,
+                                                float argument_imaginary,
+                                                float *output_real,
+                                                float *output_imaginary);
+
+/**
+ * Return root_count=coefficient_count-1 roots and all convergence diagnostics.
+ * Nonempty real coefficients require a valid readable pointer.
+ * Converged is zero/one; nonconvergence is successful with its iteration/residual report.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_roots_real_f32(const float *real,
+                                             uintptr_t coefficient_count,
+                                             float *output_real,
+                                             float *output_imaginary,
+                                             uintptr_t root_count,
+                                             uintptr_t *iterations,
+                                             uint32_t *converged,
+                                             double *maximum_residual);
+
+/**
+ * Evaluate descending-order coefficients, preserving native power accumulation.
+ * Missing complex coefficient planes mean zero components.
+ * Both scalar component outputs are required.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_evaluate_f64(const double *real,
+                                           const double *imaginary,
+                                           uintptr_t coefficient_count,
+                                           double argument_real,
+                                           double argument_imaginary,
+                                           double *output_real,
+                                           double *output_imaginary);
+
+/**
+ * Return root_count=coefficient_count-1 roots and all convergence diagnostics.
+ * Missing complex coefficient planes mean zero components.
+ * Converged is zero/one; nonconvergence is successful with its iteration/residual report.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_roots_f64(const double *real,
+                                        const double *imaginary,
+                                        uintptr_t coefficient_count,
+                                        double *output_real,
+                                        double *output_imaginary,
+                                        uintptr_t root_count,
+                                        uintptr_t *iterations,
+                                        uint32_t *converged,
+                                        double *maximum_residual);
+
+/**
+ * Evaluate descending-order coefficients, preserving native power accumulation.
+ * Nonempty real coefficients require a valid readable pointer.
+ * Both scalar component outputs are required.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_evaluate_real_f64(const double *real,
+                                                uintptr_t coefficient_count,
+                                                double argument_real,
+                                                double argument_imaginary,
+                                                double *output_real,
+                                                double *output_imaginary);
+
+/**
+ * Return root_count=coefficient_count-1 roots and all convergence diagnostics.
+ * Nonempty real coefficients require a valid readable pointer.
+ * Converged is zero/one; nonconvergence is successful with its iteration/residual report.
+ * Errors retain every output. Root planes may be null only for zero roots.
+ *
+ * # Safety
+ * Present nonempty coefficient planes must be initialized, stable readable ranges.
+ * Outputs must be aligned, exclusively writable and pairwise disjoint, including
+ * diagnostics. Input/output may overlap after all input borrowing ends.
+ */
+uint32_t ciglet_rs_polynomial_roots_real_f64(const double *real,
+                                             uintptr_t coefficient_count,
+                                             double *output_real,
+                                             double *output_imaginary,
+                                             uintptr_t root_count,
+                                             uintptr_t *iterations,
+                                             uint32_t *converged,
+                                             double *maximum_residual);
+
 #endif  /* CIGLET_RS_H */

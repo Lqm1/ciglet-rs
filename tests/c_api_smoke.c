@@ -485,6 +485,34 @@ int main(void) {
     CHECK_REAL_CEPSTRUM(float, f32, CigletRsRealCepstrumF32);
     CHECK_REAL_CEPSTRUM(double, f64, CigletRsRealCepstrumF64);
     #undef CHECK_REAL_CEPSTRUM
+    #define CHECK_POLYNOMIAL(type, suffix) do { \
+        type coefficients[] = {1,0,1}, imaginary_coefficients[] = {0,0,0}, a = 71, b = 71; \
+        assert(ciglet_rs_polynomial_evaluate_##suffix(coefficients,imaginary_coefficients,3,2,1,&a,&b) == 0 && a == 4 && b == 4); \
+        assert(ciglet_rs_polynomial_evaluate_real_##suffix(coefficients,3,2,1,&a,&b) == 0 && a == 4 && b == 4); \
+        type real[2], imaginary[2]; size_t iterations = 71; uint32_t converged = 71; double residual = 71; \
+        assert(ciglet_rs_polynomial_roots_##suffix(coefficients,NULL,3,real,imaginary,2,&iterations,&converged,&residual) == 0); \
+        assert(iterations > 0 && iterations <= 50 && converged == 1 && residual < 1e-6); \
+        for(size_t i=0;i<2;++i) assert(fabs((double)real[i]) < 1e-6 && fabs(fabs((double)imaginary[i])-1) < 1e-6); \
+        type expected_real[2] = {real[0],real[1]}, expected_imaginary[2] = {imaginary[0],imaginary[1]}; \
+        size_t expected_iterations = iterations; double expected_residual = residual; \
+        assert(ciglet_rs_polynomial_roots_real_##suffix(coefficients,3,real,imaginary,2,&iterations,&converged,&residual) == 0); \
+        assert(iterations == expected_iterations && converged == 1 && residual == expected_residual); \
+        for(size_t i=0;i<2;++i) assert(real[i] == expected_real[i] && imaginary[i] == expected_imaginary[i]); \
+        type constant[] = {1}; \
+        assert(ciglet_rs_polynomial_roots_##suffix(NULL,constant,1,NULL,NULL,0,&iterations,&converged,&residual) == 0); \
+        assert(iterations == 0 && converged == 1 && residual == 0); \
+        type invalid[] = {0,1}; real[0] = imaginary[0] = 71; iterations = converged = 71; residual = 71; \
+        assert(ciglet_rs_polynomial_roots_real_##suffix(invalid,2,real,imaginary,1,&iterations,&converged,&residual) == 3); \
+        assert(real[0] == 71 && imaginary[0] == 71 && iterations == 71 && converged == 71 && residual == 71); \
+        assert(ciglet_rs_polynomial_evaluate_real_##suffix(coefficients,3,2,1,&a,&a) == 2); \
+    } while (0)
+    CHECK_POLYNOMIAL(float, f32);
+    CHECK_POLYNOMIAL(double, f64);
+    #undef CHECK_POLYNOMIAL
+    double nonconvergent[] = {1,-36,546,-4536,22449,-67284,118124,-109584,40320}, roots_real[8], roots_imaginary[8], roots_residual = 71;
+    size_t roots_iterations = 71; uint32_t roots_converged = 71;
+    assert(ciglet_rs_polynomial_roots_real_f64(nonconvergent,9,roots_real,roots_imaginary,8,&roots_iterations,&roots_converged,&roots_residual) == 0);
+    assert(roots_iterations == 50 && roots_converged == 0 && roots_residual > 1e-6);
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
