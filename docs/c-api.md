@@ -462,3 +462,71 @@ Callback primary references:
 - https://doc.rust-lang.org/reference/items/functions.html#unwinding
 - https://doc.rust-lang.org/std/primitive.fn.html
 - https://docs.python.org/3/library/ctypes.html#callback-functions
+
+## Chirp-Z checkpoint
+
+Ten binary32/binary64 functions add one-shot chirp-Z transforms and reusable
+plan construction/length/transform/release. The header now declares 126 functions
+and six opaque types. Positive non-power-of-two lengths are supported within
+the native padded-buffer bounds. Angular step is finite and has the selected
+scalar precision. Direction zero is Forward; one negates the angular step and
+divides the result by length. Other codes return status three. This inverse
+direction inverts Forward on orthogonal DFT grids. On other grids it retains
+the native normalized inverse-direction transform, rather than promising a
+general matrix inverse. Grid and direction remain fixed for a reusable plan.
+
+The shared Fourier planar adapter validates buffer ranges and mutually disjoint
+outputs, represents omitted input planes by zeros, permits discarded output
+planes and computes a complete owned result before committing output. Either
+output may overlap input. No new input finite-value guard or numerical kernel
+is introduced. Plans cache native chirps, convolution kernels, FFT plans and
+work storage. A mutex serializes that mutable storage; calls still allocate
+the owned result used for atomic output staging. The native transform_into
+remains available to Rust callers without that output allocation.
+
+Correctly typed live handles and library provenance are caller requirements.
+All caller storage must be independent of private plan memory. Constructors
+transfer ownership only on success and must not overwrite an unreleased owner.
+Length is immutable. Concurrent calls require stable inputs and independent
+writable outputs; release excludes all outstanding calls, clears the pointer
+slot and invalidates every alias. A cleared-slot release succeeds. Observed
+mutex poison returns status three without writing output; the poisoned object
+can still be released. Poisoning is not a raw-pointer safety assumption. The
+existing clearing Box release adapter now accepts any RefUnwindSafe plan type,
+with its body and previous FFT behavior unchanged. Shared planar validation
+and direction conversion gain private sibling-module visibility only.
+
+Five new integration tests compare all 1,200 original-C cases per precision
+through one-shot and twice-reused plans, retaining the existing normalized
+5e-7 binary32 and 2e-15 binary64 bounds. The corpus includes ten lengths,
+three signal patterns, five angular steps, all four component masks and both
+directions. Additional checks cover non-power-of-two round trips on orthogonal
+grids, overlapping input/output, output-plane intersection rejection, invalid
+directions/nonfinite steps/phase overflow, retained constructor ownership,
+failed-length output retention, immutable length, clearing release and four
+scoped concurrent calls. An induced-poison unit test passes on Windows MSVC
+x86_64 Debug; other-target poison-unit execution is not claimed.
+
+Windows MSVC x86_64/i686 and Windows GNU x86_64 Debug pass all 34 boundary
+integration tests across six suites and independently compiled optimized C
+callers invoking all 126 exports. Both Windows x86_64 toolchains also pass
+Python ctypes calls. Warning-denied Clippy/Rustdoc, formatting, whitespace
+and generated-header verification pass. One test-only redundant binding
+reported by Clippy was removed; no fixture, tolerance or assertion changed.
+Native numerical implementations and dependencies are unchanged.
+
+Linux GNU x86_64/i686 Debug also pass all 34 tests and independently compiled
+GCC C callers; Linux x86_64 additionally passes Python ctypes calls. The Linux
+runner completed with exit zero. Both target logs independently contain the
+exact ten, four, five, three, six and six passing summaries with zero failed
+and zero ignored tests. These results verify the current C boundaries on all
+five required native targets.
+
+The ledger maps 73 upstream rows including cig_czt/czt/iczt. Every mapped
+export was checked against the generated declarations. There are 259 pending
+public/configuration C rows, two nonpublic macro formal parameters and 332
+pending WASM rows. Current chirp-Z Release, Python32 and static-link callers
+remain unverified. Remaining ciglet interfaces, all liblrhsmm/SHIRO C interfaces
+and all three browser/Node WASM interfaces remain required. Symbol counts do
+not replace structure/configuration/ownership audits. This is current boundary
+execution, not a refreshed complete native regression matrix or finished bindings.

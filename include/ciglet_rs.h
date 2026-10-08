@@ -19,6 +19,16 @@ typedef struct CigletRsArrayF32 CigletRsArrayF32;
 typedef struct CigletRsArrayF64 CigletRsArrayF64;
 
 /**
+ * Opaque binary32 chirp-Z plan with a fixed grid and direction.
+ */
+typedef struct CigletRsCztF32 CigletRsCztF32;
+
+/**
+ * Opaque binary64 chirp-Z plan with a fixed grid and direction.
+ */
+typedef struct CigletRsCztF64 CigletRsCztF64;
+
+/**
  * Opaque reusable binary32 FFT plan, with serialized scratch access.
  */
 typedef struct CigletRsFftF32 CigletRsFftF32;
@@ -1844,5 +1854,187 @@ uint32_t ciglet_rs_window_custom_f64_f64(uint32_t window,
                                          void *context,
                                          double *output,
                                          uintptr_t length);
+
+/**
+ * Transform on the grid k * angular_step, for any supported positive length.
+ * Direction zero is forward; one negates the step and divides by length.
+ * Inverse inverts forward only on orthogonal DFT grids; other grids retain
+ * the native normalized inverse-direction transform.
+ * Null input components mean zeros; null output components are discarded.
+ * Present components contain length elements; outputs must be disjoint.
+ * Either output may overlap input. Errors leave output unchanged.
+ *
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_f32(uintptr_t length,
+                           float angular_step,
+                           uint32_t direction,
+                           const float *real,
+                           const float *imaginary,
+                           float *output_real,
+                           float *output_imaginary);
+
+/**
+ * Create a plan with fixed angular step and direction: zero forward, one inverse.
+ * Output must be an independent initialized pointer slot; successful construction
+ * transfers ownership and must not overwrite an unreleased handle. Failure retains
+ * its previous value. Nonfinite step and unknown direction return status three.
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_new_f32(uintptr_t length,
+                                    float angular_step,
+                                    uint32_t direction,
+                                    struct CigletRsCztF32 **output);
+
+/**
+ * Write the immutable plan length to one independent writable usize.
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_length_f32(const struct CigletRsCztF32 *handle, uintptr_t *output);
+
+/**
+ * Transform with the plan's fixed grid/direction; scratch access is serialized.
+ * Observed mutex poison returns status three, leaving output unchanged.
+ * Null input components mean zeros; null output components are discarded.
+ * Present components contain length elements; outputs must be disjoint.
+ * Either output may overlap input. Errors leave output unchanged.
+ *
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_transform_f32(const struct CigletRsCztF32 *handle,
+                                          const float *real,
+                                          const float *imaginary,
+                                          uintptr_t length,
+                                          float *output_real,
+                                          float *output_imaginary);
+
+/**
+ * Release a live plan and clear its initialized pointer slot.
+ * Releasing an already cleared slot succeeds. Ownership is consumed even if
+ * destruction produces a caught unwind; no outstanding plan call is permitted.
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_release_f32(struct CigletRsCztF32 **slot);
+
+/**
+ * Transform on the grid k * angular_step, for any supported positive length.
+ * Direction zero is forward; one negates the step and divides by length.
+ * Inverse inverts forward only on orthogonal DFT grids; other grids retain
+ * the native normalized inverse-direction transform.
+ * Null input components mean zeros; null output components are discarded.
+ * Present components contain length elements; outputs must be disjoint.
+ * Either output may overlap input. Errors leave output unchanged.
+ *
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_f64(uintptr_t length,
+                           double angular_step,
+                           uint32_t direction,
+                           const double *real,
+                           const double *imaginary,
+                           double *output_real,
+                           double *output_imaginary);
+
+/**
+ * Create a plan with fixed angular step and direction: zero forward, one inverse.
+ * Output must be an independent initialized pointer slot; successful construction
+ * transfers ownership and must not overwrite an unreleased handle. Failure retains
+ * its previous value. Nonfinite step and unknown direction return status three.
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_new_f64(uintptr_t length,
+                                    double angular_step,
+                                    uint32_t direction,
+                                    struct CigletRsCztF64 **output);
+
+/**
+ * Write the immutable plan length to one independent writable usize.
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_length_f64(const struct CigletRsCztF64 *handle, uintptr_t *output);
+
+/**
+ * Transform with the plan's fixed grid/direction; scratch access is serialized.
+ * Observed mutex poison returns status three, leaving output unchanged.
+ * Null input components mean zeros; null output components are discarded.
+ * Present components contain length elements; outputs must be disjoint.
+ * Either output may overlap input. Errors leave output unchanged.
+ *
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_transform_f64(const struct CigletRsCztF64 *handle,
+                                          const double *real,
+                                          const double *imaginary,
+                                          uintptr_t length,
+                                          double *output_real,
+                                          double *output_imaginary);
+
+/**
+ * Release a live plan and clear its initialized pointer slot.
+ * Releasing an already cleared slot succeeds. Ownership is consumed even if
+ * destruction produces a caught unwind; no outstanding plan call is permitted.
+ * # Safety
+ * Present inputs must be initialized, stable single-allocation ranges. Present
+ * outputs must be aligned and exclusively writable. Buffers and pointer slots
+ * must be independent of private plan memory. Handles must be live, correctly
+ * typed plans from this library. Concurrent transforms may share a plan but
+ * require stable inputs and independent writable outputs. Release excludes
+ * all outstanding calls, consumes ownership and invalidates every alias.
+ */
+uint32_t ciglet_rs_czt_plan_release_f64(struct CigletRsCztF64 **slot);
 
 #endif  /* CIGLET_RS_H */

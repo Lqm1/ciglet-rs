@@ -291,6 +291,37 @@ int main(void) {
     CHECK_CUSTOM_WINDOW(double, f64, f32);
     CHECK_CUSTOM_WINDOW(double, f64, f64);
     #undef CHECK_CUSTOM_WINDOW
+    #define CHECK_CZT(type, handle_type, suffix, tolerance) do { \
+        type signal[] = {3, 0, 0}, real[3], imaginary[3]; \
+        assert(ciglet_rs_czt_##suffix(3, 0, 0, signal, NULL, real, imaginary) == 0); \
+        for (size_t i = 0; i < 3; ++i) assert(fabs((double)real[i] - 3) < tolerance && fabs((double)imaginary[i]) < tolerance); \
+        assert(ciglet_rs_czt_##suffix(3, 0, 1, signal, NULL, real, NULL) == 0); \
+        for (size_t i = 0; i < 3; ++i) assert(fabs((double)real[i] - 1) < tolerance); \
+        assert(ciglet_rs_czt_##suffix(3, 0, 0, signal, NULL, real, real) == 2); \
+        real[0] = real[1] = real[2] = 71; \
+        assert(ciglet_rs_czt_##suffix(3, NAN, 0, signal, NULL, real, NULL) == 3); \
+        assert(ciglet_rs_czt_##suffix(3, 0, 2, signal, NULL, real, NULL) == 3); \
+        for (size_t i = 0; i < 3; ++i) assert(real[i] == 71); \
+        handle_type *plan = NULL; \
+        assert(ciglet_rs_czt_plan_new_##suffix(3, 0, 0, &plan) == 0); \
+        handle_type *original = plan; \
+        assert(ciglet_rs_czt_plan_new_##suffix(3, NAN, 0, &plan) == 3 && plan == original); \
+        size_t length = 0; \
+        assert(ciglet_rs_czt_plan_length_##suffix(plan, &length) == 0 && length == 3); \
+        assert(ciglet_rs_czt_plan_transform_##suffix(plan, signal, NULL, 2, real, NULL) == 2); \
+        for (size_t i = 0; i < 3; ++i) assert(real[i] == 71); \
+        for (size_t repeat = 0; repeat < 3; ++repeat) { \
+            assert(ciglet_rs_czt_plan_transform_##suffix(plan, signal, NULL, 3, real, imaginary) == 0); \
+            for (size_t i = 0; i < 3; ++i) assert(fabs((double)real[i] - 3) < tolerance && fabs((double)imaginary[i]) < tolerance); \
+        } \
+        assert(ciglet_rs_czt_plan_release_##suffix(&plan) == 0 && plan == NULL); \
+        assert(ciglet_rs_czt_plan_release_##suffix(&plan) == 0); \
+        assert(ciglet_rs_czt_##suffix(3, 0, 0, NULL, NULL, real, NULL) == 0); \
+        for (size_t i = 0; i < 3; ++i) assert(real[i] == 0); \
+    } while (0)
+    CHECK_CZT(float, CigletRsCztF32, f32, 1e-5);
+    CHECK_CZT(double, CigletRsCztF64, f64, 1e-12);
+    #undef CHECK_CZT
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

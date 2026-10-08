@@ -35,6 +35,12 @@ pub use phase_f64::*;
 mod window_functions;
 mod windows;
 pub use window_functions::*;
+mod chirp_z;
+pub use chirp_z::{CigletRsCztF32, CigletRsCztF64};
+mod chirp_z_f32;
+pub use chirp_z_f32::*;
+mod chirp_z_f64;
+pub use chirp_z_f64::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

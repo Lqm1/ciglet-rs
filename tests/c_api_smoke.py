@@ -390,6 +390,53 @@ def main():
             assert weights[0] == weights[1] == 1
             assert custom(1, null_callback, None, None, 0) == 0
             assert custom(1, null_callback, None, weights, 1) == 0 and weights[0] == 1
+        czt = getattr(library, f"ciglet_rs_czt_{suffix}")
+        czt.argtypes = [size, scalar, ctypes.c_uint32, pointer, pointer, pointer, pointer]
+        czt.restype = ctypes.c_uint32
+        signal = (scalar * 3)(3, 0, 0)
+        real = (scalar * 3)(71, 71, 71)
+        imaginary = (scalar * 3)()
+        tolerance = 1e-5 if suffix == "f32" else 1e-12
+        assert czt(3, 0, 0, signal, None, real, imaginary) == 0
+        assert all(abs(value - 3) < tolerance for value in real)
+        assert all(abs(value) < tolerance for value in imaginary)
+        assert czt(3, 0, 1, signal, None, real, None) == 0
+        assert all(abs(value - 1) < tolerance for value in real)
+        assert czt(3, 0, 0, signal, None, real, real) == 2
+        real[0] = real[1] = real[2] = 71
+        assert czt(3, float("nan"), 0, signal, None, real, None) == 3
+        assert czt(3, 0, 2, signal, None, real, None) == 3
+        assert list(real) == [71, 71, 71]
+        czt_functions = {}
+        for operation, arguments in {
+            "new": [size, scalar, ctypes.c_uint32, slot],
+            "length": [plan_type, ctypes.POINTER(size)],
+            "transform": [plan_type, pointer, pointer, size, pointer, pointer],
+            "release": [slot],
+        }.items():
+            function = getattr(library, f"ciglet_rs_czt_plan_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            czt_functions[operation] = function
+        plan = plan_type()
+        try:
+            assert czt_functions["new"](3, 0, 0, ctypes.byref(plan)) == 0
+            original = plan.value
+            assert czt_functions["new"](3, float("nan"), 0, ctypes.byref(plan)) == 3
+            assert plan.value == original
+            count = size()
+            assert czt_functions["length"](plan, ctypes.byref(count)) == 0 and count.value == 3
+            assert czt_functions["transform"](plan, signal, None, 2, real, None) == 2
+            assert list(real) == [71, 71, 71]
+            for _ in range(3):
+                assert czt_functions["transform"](plan, signal, None, 3, real, imaginary) == 0
+                assert all(abs(value - 3) < tolerance for value in real)
+                assert all(abs(value) < tolerance for value in imaginary)
+        finally:
+            assert czt_functions["release"](ctypes.byref(plan)) == 0 and plan.value is None
+            assert czt_functions["release"](ctypes.byref(plan)) == 0
+        assert czt(3, 0, 0, None, None, real, None) == 0
+        assert list(real) == [0, 0, 0]
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

@@ -60,7 +60,7 @@ impl Handle for CigletRsFftF64 {
     }
 }
 
-fn direction(value: u32) -> Result<Direction, u32> {
+pub(super) fn direction(value: u32) -> Result<Direction, u32> {
     match value {
         0 => Ok(Direction::Forward),
         1 => Ok(Direction::Inverse),
@@ -68,7 +68,7 @@ fn direction(value: u32) -> Result<Direction, u32> {
     }
 }
 
-unsafe fn transform<T: Scalar + RefUnwindSafe, F>(
+pub(super) unsafe fn transform<T: Scalar + RefUnwindSafe, F>(
     real: *const T,
     imaginary: *const T,
     length: usize,
@@ -262,7 +262,7 @@ pub(super) unsafe fn process<H: Handle>(
     }
 }
 
-pub(super) unsafe fn release<H: Handle>(slot: *mut *mut H) -> u32 {
+pub(super) unsafe fn release<H: RefUnwindSafe>(slot: *mut *mut H) -> u32 {
     if let Err(status) = range(slot.cast_const(), 1) {
         return status;
     }
