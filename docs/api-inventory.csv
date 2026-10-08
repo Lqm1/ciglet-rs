@@ -105,7 +105,7 @@
 "exp_3","ciglet.h","approximation::exponential_with (Precision::Exact)","implemented","f32/f64 source operation order and explicit precision; tests/complex.rs; docs/complex-compatibility.md"
 "eye","ciglet.h","matrix::Matrix::identity","implemented; source arithmetic and rectangular corrections documented","tests/matrix.rs; docs/matrix-compatibility.md"
 "fastatan2","ciglet.h","approximation::atan2_fast","implemented","f32/f64 source operation order and explicit precision; tests/complex.rs; docs/complex-compatibility.md"
-"fetch_frame","ciglet.h","frame::fetch_frame","implemented; validation scope documented","tests/dsp_reference.rs; Windows MSVC x86_64/i686; review edge cases for complete coverage"
+"fetch_frame","ciglet.h","frame::fetch_frame<T: Scalar>","implemented; f32/f64 zero-padding and fallible allocation","tests/frame.rs; tests/dsp_reference.rs; original header frame fixtures at float/double; tests/c_api_frame_extrema.rs; docs/c-api.md"
 "fft","ciglet.h","fourier::FftPlan with Direction::Forward","implemented","tests/fourier.rs; tests/reference/fft_oracle.c"
 "fftshift","ciglet.h","fourier::fft_shift/fft_shift_in_place","implemented","tests/fourier.rs; original inline fftshift definition in ciglet.h"
 "filter","ciglet.h","filtering::filter/filter_with","implemented; original monic convention","tests/recursive_filter.rs"

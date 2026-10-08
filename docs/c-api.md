@@ -590,3 +590,72 @@ Python ctypes calls. All runners completed with exit zero. Each Linux log
 independently contains exact ten, four, five, three, six, six and six passing
 summaries with zero failed/ignored tests. Current C boundaries therefore pass
 on all five required native targets.
+
+## Frames and extrema checkpoint
+
+Six f32/f64 functions add centered zero-padded frames, first global extrema
+and strict local peaks/valleys. The generated header now declares 150 functions.
+Frame centers use signed pointer-sized integers; output length determines the
+frame size independently of input length. Empty inputs produce zeros, while
+empty outputs accept null. Complete owned results are staged before output
+commit, so input/output overlap is supported. Checked center arithmetic and
+buffer-range errors retain output. No finite-value filter changes copied samples.
+
+The frame audit found the native Rust function was still f32-only although the
+original FP_TYPE header supports both precisions. fetch_frame is now generic
+over the sealed Scalar trait, retaining its original f32 arithmetic and adding
+f64 copies. Existing ordinary f32 calls infer their type; an untyped empty slice
+needs an explicit scalar type as with other generic functions. It uses the existing
+fallible vector reservation helper and rejects lengths beyond the legacy range
+instead of using infallible Vec::with_capacity. Samples retain exact bits;
+padding is positive zero. No resampling, STFT or other numerical kernel changes.
+
+Search ranges are inclusive; direction code zero Maximum and one Minimum.
+Unknown codes, invalid ranges and nonfinite inspected samples return status three.
+Global searches preserve the first tie. Peak searches retain strict two-neighbor
+comparisons and the start-index fallback when no candidate beats its value.
+Endpoints are skipped as already corrected in the native API. Neighbor samples
+outside the requested range can still be inspected; unrelated nonfinite samples
+outside the inspected region remain permitted. Outputs are pointer-sized indices
+and remain unchanged on error. Input borrowing ends before the index is written.
+
+Four new boundary tests compare all 180 existing original C extremum records
+per precision and 25 new original-header frame records per precision. The new
+oracle only calls unchanged fetch_frame and covers odd/even/empty frames with
+negative, internal and out-of-signal centers. Windows Zig generates both fixtures;
+Linux GCC independently regenerates and verifies identical bytes. Three native
+frame tests additionally cover f64 NaN payloads, signed zero/infinity, checked
+arithmetic and rejected oversized allocation. The original three DSP regressions
+remain unchanged except for an explicit f32 empty-slice type annotation. Extra
+boundary cases prove supported overlap, atomic errors, fallback/ties and precise
+nonfinite inspection behavior. No old fixture or acceptance threshold changed.
+
+Windows MSVC x86_64 Debug passes 44 boundary tests across eight suites, six focused
+native frame/DSP tests under default features, and actual optimized C/Python
+callers invoking all 150 exports. Windows MSVC i686 and Windows GNU x86_64 Debug
+pass the same 44 boundary tests plus six focused native tests with c-api enabled
+and actual optimized C callers; GNU x86_64 also passes Python. Warning-denied
+Clippy/Rustdoc, formatting, whitespace and cbindgen verification pass. The
+reservation pattern follows stable Vec::try_reserve_exact documentation.
+
+Linux GNU x86_64 and i686 Debug each pass the same 44 boundary tests and six
+focused native tests with c-api enabled, followed by a library build and an
+independently compiled optimized C caller invoking all 150 exports. Linux
+x86_64 also passes the Python ctypes caller. The Linux runner completed with
+exit zero; both logs independently contain exact 10,4,5,3,4,6,6,6,3,3 passing
+counts, zero failed/ignored tests and no error diagnostic. The independent GCC
+fixture regeneration also verifies both original-header frame fixtures.
+
+The ledger maps 87 upstream rows including fetch_frame and all six search aliases.
+There are 245 pending public/configuration C rows, two nonpublic macro formals and
+332 pending WASM rows. Every mapped export was checked against the generated header.
+Current family Release, Python32 and static-link callers remain unverified.
+Remaining ciglet interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM
+interfaces remain required. The older complete native matrix predates this frame
+precision/allocation correction; this focused checkpoint does not replace a final
+complete native regression matrix. Native and binding inventories now record both
+frame precisions. Symbol counts do not replace configuration/ownership auditing.
+
+Reservation reference:
+
+- https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.try_reserve_exact

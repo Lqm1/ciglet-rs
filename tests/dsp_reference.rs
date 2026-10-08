@@ -62,5 +62,5 @@ fn invalid_and_degenerate_inputs_have_defined_behavior() {
     assert!(select_nth(&mut [1.0], 1).is_err());
     assert_eq!(Window::Hann.generate(1), [1.0]);
     assert!(Window::Hann.generate(0).is_empty());
-    assert!(fetch_frame(&[], isize::MIN, 4).is_err());
+    assert!(fetch_frame::<f32>(&[], isize::MIN, 4).is_err());
 }

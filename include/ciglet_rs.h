@@ -2269,4 +2269,106 @@ uint32_t ciglet_rs_log_itakura_saito_with_f64(const double *source,
                                               uint32_t policy,
                                               double *output);
 
+/**
+ * Fetch a centered, zero-padded frame of output_length samples.
+ * Supports odd/even lengths and out-of-signal centers. Input/output may overlap.
+ * Empty buffers accept null. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length samples.
+ */
+uint32_t ciglet_rs_fetch_frame_f32(const float *input,
+                                   uintptr_t input_length,
+                                   intptr_t center,
+                                   float *output,
+                                   uintptr_t output_length);
+
+/**
+ * Search the first global extremum with strict tie comparisons.
+ * Range start/end is inclusive. Direction zero Maximum, one Minimum.
+ * Invalid directions/ranges or nonfinite inspected samples return status three.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Output must be aligned and exclusively writable for one usize. It may overlap
+ * input only after input borrowing ends; no conflicting concurrent access is permitted.
+ */
+uint32_t ciglet_rs_extremum_f32(const float *input,
+                                uintptr_t length,
+                                uintptr_t start,
+                                uintptr_t end,
+                                uint32_t direction,
+                                uintptr_t *output);
+
+/**
+ * Search strict two-sided local peaks, retaining the start-index fallback.
+ * Range start/end is inclusive. Direction zero Maximum, one Minimum.
+ * Invalid directions/ranges or nonfinite inspected samples return status three.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Output must be aligned and exclusively writable for one usize. It may overlap
+ * input only after input borrowing ends; no conflicting concurrent access is permitted.
+ */
+uint32_t ciglet_rs_peak_f32(const float *input,
+                            uintptr_t length,
+                            uintptr_t start,
+                            uintptr_t end,
+                            uint32_t direction,
+                            uintptr_t *output);
+
+/**
+ * Fetch a centered, zero-padded frame of output_length samples.
+ * Supports odd/even lengths and out-of-signal centers. Input/output may overlap.
+ * Empty buffers accept null. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length samples.
+ */
+uint32_t ciglet_rs_fetch_frame_f64(const double *input,
+                                   uintptr_t input_length,
+                                   intptr_t center,
+                                   double *output,
+                                   uintptr_t output_length);
+
+/**
+ * Search the first global extremum with strict tie comparisons.
+ * Range start/end is inclusive. Direction zero Maximum, one Minimum.
+ * Invalid directions/ranges or nonfinite inspected samples return status three.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Output must be aligned and exclusively writable for one usize. It may overlap
+ * input only after input borrowing ends; no conflicting concurrent access is permitted.
+ */
+uint32_t ciglet_rs_extremum_f64(const double *input,
+                                uintptr_t length,
+                                uintptr_t start,
+                                uintptr_t end,
+                                uint32_t direction,
+                                uintptr_t *output);
+
+/**
+ * Search strict two-sided local peaks, retaining the start-index fallback.
+ * Range start/end is inclusive. Direction zero Maximum, one Minimum.
+ * Invalid directions/ranges or nonfinite inspected samples return status three.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Output must be aligned and exclusively writable for one usize. It may overlap
+ * input only after input borrowing ends; no conflicting concurrent access is permitted.
+ */
+uint32_t ciglet_rs_peak_f64(const double *input,
+                            uintptr_t length,
+                            uintptr_t start,
+                            uintptr_t end,
+                            uint32_t direction,
+                            uintptr_t *output);
+
 #endif  /* CIGLET_RS_H */

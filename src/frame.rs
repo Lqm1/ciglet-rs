@@ -1,12 +1,12 @@
 //! Centered, zero-padded frames compatible with upstream `fetch_frame`.
-use crate::Error;
+use crate::{Error, statistics::Scalar, vector};
 
-pub fn fetch_frame(input: &[f32], center: isize, length: usize) -> Result<Vec<f32>, Error> {
+pub fn fetch_frame<T: Scalar>(input: &[T], center: isize, length: usize) -> Result<Vec<T>, Error> {
     let half = isize::try_from(length / 2).map_err(|_| Error("frame length is too large"))?;
     let start = center
         .checked_sub(half)
         .ok_or(Error("frame start overflows"))?;
-    let mut output = Vec::with_capacity(length);
+    let mut output = vector::buffer(length)?;
     for offset in 0..length {
         let offset = isize::try_from(offset).map_err(|_| Error("frame length is too large"))?;
         let index = start
@@ -17,7 +17,7 @@ pub fn fetch_frame(input: &[f32], center: isize, length: usize) -> Result<Vec<f3
                 .ok()
                 .and_then(|index| input.get(index))
                 .copied()
-                .unwrap_or(0.0),
+                .unwrap_or_else(T::zero),
         );
     }
     Ok(output)

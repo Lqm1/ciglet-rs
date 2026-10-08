@@ -492,6 +492,34 @@ def main():
         assert distance_functions["itakura_saito"](zero, 1, zero, 1, ctypes.byref(output)) == 3 and output.value == 71
         assert distance_functions["log_itakura_saito_with"](source, 3, reference, 3, 2, ctypes.byref(output)) == 3 and output.value == 71
         assert distance_functions["itakura_saito"](source, 3, reference, 2, ctypes.byref(output)) == 2 and output.value == 71
+        fetch_frame = getattr(library, f"ciglet_rs_fetch_frame_{suffix}")
+        fetch_frame.argtypes = [pointer, size, ctypes.c_ssize_t, pointer, size]
+        fetch_frame.restype = ctypes.c_uint32
+        frame = (scalar * 6)(1, 2, 3, 4, 5, 6)
+        assert fetch_frame(frame, 6, 0, frame, 4) == 0
+        assert list(frame) == [0, 0, 1, 2, 5, 6]
+        frame[0] = frame[1] = frame[2] = 71
+        minimum_center = -(1 << (ctypes.sizeof(ctypes.c_ssize_t) * 8 - 1))
+        assert fetch_frame(None, 0, minimum_center, frame, 3) == 3
+        assert list(frame)[:3] == [71, 71, 71]
+        assert fetch_frame(None, 0, 0, frame, 3) == 0 and list(frame)[:3] == [0, 0, 0]
+        search = {}
+        for operation in ["extremum", "peak"]:
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [pointer, size, size, size, ctypes.c_uint32, ctypes.POINTER(size)]
+            function.restype = ctypes.c_uint32
+            search[operation] = function
+        signal = (scalar * 7)(8, 1, 5, 0, 5, 1, 9)
+        index = size(71)
+        assert search["peak"](signal, 7, 0, 6, 0, ctypes.byref(index)) == 0 and index.value == 0
+        assert search["peak"](signal, 7, 1, 5, 0, ctypes.byref(index)) == 0 and index.value == 2
+        assert search["peak"](signal, 7, 1, 5, 1, ctypes.byref(index)) == 0 and index.value == 3
+        assert search["extremum"](signal, 7, 0, 6, 0, ctypes.byref(index)) == 0 and index.value == 6
+        assert search["extremum"](signal, 7, 0, 6, 1, ctypes.byref(index)) == 0 and index.value == 3
+        index.value = 71
+        assert search["peak"](signal, 7, 5, 3, 0, ctypes.byref(index)) == 3 and index.value == 71
+        assert search["extremum"](signal, 7, 0, 7, 0, ctypes.byref(index)) == 3 and index.value == 71
+        assert search["peak"](signal, 7, 0, 6, 2, ctypes.byref(index)) == 3 and index.value == 71
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

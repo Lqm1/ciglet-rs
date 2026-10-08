@@ -351,6 +351,29 @@ int main(void) {
     CHECK_FREQUENCY_DISTANCE(float, f32, 1e-6);
     CHECK_FREQUENCY_DISTANCE(double, f64, 1e-14);
     #undef CHECK_FREQUENCY_DISTANCE
+    #define CHECK_FRAME_EXTREMA(type, suffix) do { \
+        type input[] = {1, 2, 3, 4, 5, 6}; \
+        assert(ciglet_rs_fetch_frame_##suffix(input, 6, 0, input, 4) == 0); \
+        assert(input[0] == 0 && input[1] == 0 && input[2] == 1 && input[3] == 2 && input[4] == 5); \
+        type frame[3] = {71, 71, 71}; \
+        assert(ciglet_rs_fetch_frame_##suffix(NULL, 0, INTPTR_MIN, frame, 3) == 3); \
+        assert(frame[0] == 71 && frame[1] == 71 && frame[2] == 71); \
+        assert(ciglet_rs_fetch_frame_##suffix(NULL, 0, 0, frame, 3) == 0); \
+        assert(frame[0] == 0 && frame[1] == 0 && frame[2] == 0); \
+        type signal[] = {8, 1, 5, 0, 5, 1, 9}; size_t index = 71; \
+        assert(ciglet_rs_peak_##suffix(signal, 7, 0, 6, 0, &index) == 0 && index == 0); \
+        assert(ciglet_rs_peak_##suffix(signal, 7, 1, 5, 0, &index) == 0 && index == 2); \
+        assert(ciglet_rs_peak_##suffix(signal, 7, 1, 5, 1, &index) == 0 && index == 3); \
+        assert(ciglet_rs_extremum_##suffix(signal, 7, 0, 6, 0, &index) == 0 && index == 6); \
+        assert(ciglet_rs_extremum_##suffix(signal, 7, 0, 6, 1, &index) == 0 && index == 3); \
+        index = 71; \
+        assert(ciglet_rs_peak_##suffix(signal, 7, 5, 3, 0, &index) == 3 && index == 71); \
+        assert(ciglet_rs_extremum_##suffix(signal, 7, 0, 7, 0, &index) == 3 && index == 71); \
+        assert(ciglet_rs_peak_##suffix(signal, 7, 0, 6, 2, &index) == 3 && index == 71); \
+    } while (0)
+    CHECK_FRAME_EXTREMA(float, f32);
+    CHECK_FRAME_EXTREMA(double, f64);
+    #undef CHECK_FRAME_EXTREMA
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

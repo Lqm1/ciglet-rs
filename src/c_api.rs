@@ -43,6 +43,9 @@ mod chirp_z_f64;
 pub use chirp_z_f64::*;
 mod frequency_distance;
 pub use frequency_distance::*;
+mod frame_extrema;
+mod frame_extrema_functions;
+pub use frame_extrema_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,
