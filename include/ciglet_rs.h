@@ -1704,4 +1704,145 @@ uint32_t ciglet_rs_complete_spectrum_f64(const double *input,
                                          double *output,
                                          uintptr_t output_length);
 
+/**
+ * Generate built-in windows. Precision: zero accurate, one approximate.
+ * Blackman retains accurate cosine in both modes for legacy compatibility.
+ * Window kinds: 0 Boxcar, 1 Hann, 2 Hamming, 3 Blackman,
+ * 4 Blackman-Harris, 5 Nuttall98, 6 MLT sine.
+ * Empty output accepts null; singleton output is unity. Unknown codes return
+ * status three. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be aligned and exclusively writable for length values.
+ */
+uint32_t ciglet_rs_window_f32(uint32_t window, uint32_t precision, float *output, uintptr_t length);
+
+/**
+ * Generate custom f32 weights using a f32 callback result.
+ * MLT sine requests sine; other tapered kinds request cosine.
+ * Callback returns zero after writing its result; any other code gives status
+ * three. Nonfinite results are rejected. Calls are synchronous and serial on
+ * the invoking thread. Callback/context are never retained. Null callback is
+ * accepted for Boxcar, empty and singleton windows, which make no calls.
+ * Window kinds: 0 Boxcar, 1 Hann, 2 Hamming, 3 Blackman,
+ * 4 Blackman-Harris, 5 Nuttall98, 6 MLT sine.
+ * Empty output accepts null; singleton output is unity. Unknown codes return
+ * status three. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be aligned and exclusively writable for length values.
+ * Callback must use the exact C signature, return normally without unwinding
+ * or nonlocal jumps, and write the provided result on success. It must not
+ * retain that result pointer or access the final output during generation.
+ * Context is opaque and may be null if the callback permits it; any referenced
+ * context must remain valid with exclusive access required by the callback.
+ * Output/context must have no conflicting concurrent accesses. Context changes
+ * made by callbacks are not rolled back after a later failure.
+ */
+uint32_t ciglet_rs_window_custom_f32_f32(uint32_t window,
+                                         uint32_t (*callback)(double, void*, float*),
+                                         void *context,
+                                         float *output,
+                                         uintptr_t length);
+
+/**
+ * Generate custom f32 weights using a f64 callback result.
+ * MLT sine requests sine; other tapered kinds request cosine.
+ * Callback returns zero after writing its result; any other code gives status
+ * three. Nonfinite results are rejected. Calls are synchronous and serial on
+ * the invoking thread. Callback/context are never retained. Null callback is
+ * accepted for Boxcar, empty and singleton windows, which make no calls.
+ * Window kinds: 0 Boxcar, 1 Hann, 2 Hamming, 3 Blackman,
+ * 4 Blackman-Harris, 5 Nuttall98, 6 MLT sine.
+ * Empty output accepts null; singleton output is unity. Unknown codes return
+ * status three. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be aligned and exclusively writable for length values.
+ * Callback must use the exact C signature, return normally without unwinding
+ * or nonlocal jumps, and write the provided result on success. It must not
+ * retain that result pointer or access the final output during generation.
+ * Context is opaque and may be null if the callback permits it; any referenced
+ * context must remain valid with exclusive access required by the callback.
+ * Output/context must have no conflicting concurrent accesses. Context changes
+ * made by callbacks are not rolled back after a later failure.
+ */
+uint32_t ciglet_rs_window_custom_f32_f64(uint32_t window,
+                                         uint32_t (*callback)(double, void*, double*),
+                                         void *context,
+                                         float *output,
+                                         uintptr_t length);
+
+/**
+ * Generate built-in windows. Precision: zero accurate, one approximate.
+ * Blackman retains accurate cosine in both modes for legacy compatibility.
+ * Window kinds: 0 Boxcar, 1 Hann, 2 Hamming, 3 Blackman,
+ * 4 Blackman-Harris, 5 Nuttall98, 6 MLT sine.
+ * Empty output accepts null; singleton output is unity. Unknown codes return
+ * status three. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be aligned and exclusively writable for length values.
+ */
+uint32_t ciglet_rs_window_f64(uint32_t window,
+                              uint32_t precision,
+                              double *output,
+                              uintptr_t length);
+
+/**
+ * Generate custom f64 weights using a f32 callback result.
+ * MLT sine requests sine; other tapered kinds request cosine.
+ * Callback returns zero after writing its result; any other code gives status
+ * three. Nonfinite results are rejected. Calls are synchronous and serial on
+ * the invoking thread. Callback/context are never retained. Null callback is
+ * accepted for Boxcar, empty and singleton windows, which make no calls.
+ * Window kinds: 0 Boxcar, 1 Hann, 2 Hamming, 3 Blackman,
+ * 4 Blackman-Harris, 5 Nuttall98, 6 MLT sine.
+ * Empty output accepts null; singleton output is unity. Unknown codes return
+ * status three. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be aligned and exclusively writable for length values.
+ * Callback must use the exact C signature, return normally without unwinding
+ * or nonlocal jumps, and write the provided result on success. It must not
+ * retain that result pointer or access the final output during generation.
+ * Context is opaque and may be null if the callback permits it; any referenced
+ * context must remain valid with exclusive access required by the callback.
+ * Output/context must have no conflicting concurrent accesses. Context changes
+ * made by callbacks are not rolled back after a later failure.
+ */
+uint32_t ciglet_rs_window_custom_f64_f32(uint32_t window,
+                                         uint32_t (*callback)(double, void*, float*),
+                                         void *context,
+                                         double *output,
+                                         uintptr_t length);
+
+/**
+ * Generate custom f64 weights using a f64 callback result.
+ * MLT sine requests sine; other tapered kinds request cosine.
+ * Callback returns zero after writing its result; any other code gives status
+ * three. Nonfinite results are rejected. Calls are synchronous and serial on
+ * the invoking thread. Callback/context are never retained. Null callback is
+ * accepted for Boxcar, empty and singleton windows, which make no calls.
+ * Window kinds: 0 Boxcar, 1 Hann, 2 Hamming, 3 Blackman,
+ * 4 Blackman-Harris, 5 Nuttall98, 6 MLT sine.
+ * Empty output accepts null; singleton output is unity. Unknown codes return
+ * status three. Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty output must be aligned and exclusively writable for length values.
+ * Callback must use the exact C signature, return normally without unwinding
+ * or nonlocal jumps, and write the provided result on success. It must not
+ * retain that result pointer or access the final output during generation.
+ * Context is opaque and may be null if the callback permits it; any referenced
+ * context must remain valid with exclusive access required by the callback.
+ * Output/context must have no conflicting concurrent accesses. Context changes
+ * made by callbacks are not rolled back after a later failure.
+ */
+uint32_t ciglet_rs_window_custom_f64_f64(uint32_t window,
+                                         uint32_t (*callback)(double, void*, double*),
+                                         void *context,
+                                         double *output,
+                                         uintptr_t length);
+
 #endif  /* CIGLET_RS_H */

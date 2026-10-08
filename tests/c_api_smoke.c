@@ -4,6 +4,24 @@
 #include <math.h>
 #include <string.h>
 
+struct WindowContext { size_t calls; size_t fail_on; int nonfinite; double angles[16]; };
+static uint32_t trig_f32(double angle, void *opaque, float *output) {
+    struct WindowContext *context = opaque;
+    if (context->calls < 16) context->angles[context->calls] = angle;
+    ++context->calls;
+    if (context->calls == context->fail_on) return 9;
+    *output = context->nonfinite ? NAN : 0;
+    return 0;
+}
+static uint32_t trig_f64(double angle, void *opaque, double *output) {
+    struct WindowContext *context = opaque;
+    if (context->calls < 16) context->angles[context->calls] = angle;
+    ++context->calls;
+    if (context->calls == context->fail_on) return 9;
+    *output = context->nonfinite ? NAN : 0;
+    return 0;
+}
+
 #define CHECK_STATISTICS(type, suffix) do { \
     type data[] = {1, 3, 5}; \
     type result = -71; \
@@ -230,6 +248,49 @@ int main(void) {
     CHECK_PHASE(float, f32);
     CHECK_PHASE(double, f64);
     #undef CHECK_PHASE
+    #define CHECK_WINDOW(type, suffix) do { \
+        type output[8], accurate[8]; \
+        for (uint32_t kind = 0; kind < 7; ++kind) { \
+            for (uint32_t mode = 0; mode < 2; ++mode) { \
+                assert(ciglet_rs_window_##suffix(kind, mode, output, 8) == 0); \
+                for (size_t i = 0; i < 8; ++i) assert(isfinite(output[i])); \
+                assert(ciglet_rs_window_##suffix(kind, mode, NULL, 0) == 0); \
+                assert(ciglet_rs_window_##suffix(kind, mode, output, 1) == 0 && output[0] == 1); \
+            } \
+        } \
+        assert(ciglet_rs_window_##suffix(3, 0, accurate, 8) == 0); \
+        assert(ciglet_rs_window_##suffix(3, 1, output, 8) == 0); \
+        assert(memcmp(accurate, output, sizeof(output)) == 0); \
+        for (size_t i = 0; i < 8; ++i) output[i] = 71; \
+        assert(ciglet_rs_window_##suffix(7, 0, output, 8) == 3 && output[0] == 71); \
+        assert(ciglet_rs_window_##suffix(0, 2, output, 8) == 3 && output[0] == 71); \
+    } while (0)
+    CHECK_WINDOW(float, f32);
+    CHECK_WINDOW(double, f64);
+    #undef CHECK_WINDOW
+    #define CHECK_CUSTOM_WINDOW(type, suffix, callback_suffix) do { \
+        struct WindowContext context = {0}; \
+        type output[2] = {71, 71}; \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(3, trig_##callback_suffix, &context, output, 2) == 0); \
+        assert(context.calls == 4 && context.angles[0] == 0 && context.angles[1] == 0); \
+        assert(fabs(context.angles[2] - 3.141592653589793) < 1e-14 && fabs(context.angles[3] - 6.283185307179586) < 1e-14); \
+        assert(fabs((double)output[0] - 0.42) < 1e-7 && output[0] == output[1]); \
+        context.calls = 0; context.fail_on = 2; output[0] = output[1] = 71; \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(4, trig_##callback_suffix, &context, output, 2) == 3); \
+        assert(context.calls == 2 && output[0] == 71 && output[1] == 71); \
+        context.calls = 0; context.fail_on = 0; context.nonfinite = 1; \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(1, trig_##callback_suffix, &context, output, 2) == 3); \
+        assert(context.calls == 1 && output[0] == 71 && output[1] == 71); \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(1, NULL, NULL, output, 2) == 3 && output[0] == 71); \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(0, NULL, NULL, output, 2) == 0 && output[0] == 1 && output[1] == 1); \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(1, NULL, NULL, NULL, 0) == 0); \
+        assert(ciglet_rs_window_custom_##suffix##_##callback_suffix(1, NULL, NULL, output, 1) == 0 && output[0] == 1); \
+    } while (0)
+    CHECK_CUSTOM_WINDOW(float, f32, f32);
+    CHECK_CUSTOM_WINDOW(float, f32, f64);
+    CHECK_CUSTOM_WINDOW(double, f64, f32);
+    CHECK_CUSTOM_WINDOW(double, f64, f64);
+    #undef CHECK_CUSTOM_WINDOW
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

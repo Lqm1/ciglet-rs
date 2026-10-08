@@ -1,6 +1,7 @@
 """Exercise the real shared library through Python's standard-library ctypes."""
 
 import ctypes
+import math
 import pathlib
 import struct
 import sys
@@ -333,6 +334,62 @@ def main():
         assert phase_functions["magnitude"](real, 2, imaginary, 2, out, 2) == 3
         assert list(out) == [71, 71]
         assert phase_functions["magnitude"](real, 2, imaginary, 1, out, 2) == 2
+        window = getattr(library, f"ciglet_rs_window_{suffix}")
+        window.argtypes = [ctypes.c_uint32, ctypes.c_uint32, pointer, size]
+        window.restype = ctypes.c_uint32
+        weights = (scalar * 8)()
+        for kind in range(7):
+            for mode in range(2):
+                assert window(kind, mode, weights, 8) == 0
+                assert all(math.isfinite(value) for value in weights)
+                assert window(kind, mode, None, 0) == 0
+                assert window(kind, mode, weights, 1) == 0 and weights[0] == 1
+        assert window(3, 0, weights, 8) == 0
+        accurate = list(weights)
+        assert window(3, 1, weights, 8) == 0 and list(weights) == accurate
+        weights[0] = 71
+        assert window(7, 0, weights, 8) == 3 and weights[0] == 71
+        assert window(0, 2, weights, 8) == 3 and weights[0] == 71
+        for callback_suffix, callback_scalar in [("f32", ctypes.c_float), ("f64", ctypes.c_double)]:
+            callback_type = ctypes.CFUNCTYPE(
+                ctypes.c_uint32, ctypes.c_double, ctypes.c_void_p, ctypes.POINTER(callback_scalar)
+            )
+            state = (ctypes.c_size_t * 3)(0, 0, 0)
+            calls = []
+
+            def trig(angle, context, result):
+                try:
+                    current = ctypes.cast(context, ctypes.POINTER(ctypes.c_size_t))
+                    current[0] += 1
+                    calls.append(angle)
+                    if current[0] == current[1]:
+                        return 9
+                    result[0] = float("nan") if current[2] else 0
+                    return 0
+                except Exception:
+                    return 9
+
+            callback = callback_type(trig)
+            null_callback = callback_type()
+            custom = getattr(library, f"ciglet_rs_window_custom_{suffix}_{callback_suffix}")
+            custom.argtypes = [ctypes.c_uint32, callback_type, ctypes.c_void_p, pointer, size]
+            custom.restype = ctypes.c_uint32
+            weights[0] = weights[1] = 71
+            assert custom(3, callback, state, weights, 2) == 0
+            assert state[0] == 4 and calls == [0, 0, math.pi, 2 * math.pi]
+            assert abs(weights[0] - 0.42) < 1e-7 and weights[0] == weights[1]
+            state[0], state[1] = 0, 2
+            weights[0] = weights[1] = 71
+            assert custom(4, callback, state, weights, 2) == 3
+            assert state[0] == 2 and weights[0] == weights[1] == 71
+            state[0], state[1], state[2] = 0, 0, 1
+            assert custom(1, callback, state, weights, 2) == 3
+            assert state[0] == 1 and weights[0] == weights[1] == 71
+            assert custom(1, null_callback, None, weights, 2) == 3 and weights[0] == 71
+            assert custom(0, null_callback, None, weights, 2) == 0
+            assert weights[0] == weights[1] == 1
+            assert custom(1, null_callback, None, None, 0) == 0
+            assert custom(1, null_callback, None, weights, 1) == 0 and weights[0] == 1
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

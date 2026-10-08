@@ -390,3 +390,75 @@ audits, ciglet interfaces, both other packages' C interfaces and all three
 WASM interfaces remain required. Current DCT/phase Release and Python32 caller
 execution has not been verified. This checkpoint does not refresh the complete
 native regression matrix or complete any package's bindings.
+
+## Window and custom-callback checkpoint
+
+Six functions expose all seven built-in windows and custom trigonometric
+generation. There are 116 C exports. Built-in window codes are zero Boxcar,
+one Hann, two Hamming, three Blackman, four Blackman-Harris, five Nuttall98
+and six MLT sine; precision codes zero Accurate and one Approximate retain
+native staging. Unknown codes return status three. Blackman retains accurate
+cosine in both built-in modes, matching the source alias. Empty windows are
+empty and singleton windows are unity, retaining documented native corrections.
+
+Four custom functions cover every f32/f64 output and callback-result pairing.
+The callback accepts a double angle, opaque void context and a pointer to its
+f32/f64 result, returning a u32 status. Returning zero requires writing a finite
+result; nonzero returns calculation status three. Pointer results avoid i686
+floating-point return conventions. Option of an extern C function pointer
+uses Rust's guaranteed nullable representation; the generated header directly
+declares the matching C function pointer without a Rust struct or transmute.
+No callback/context is stored beyond generation. Calls run serially on the
+invoking thread. Null callbacks are accepted for empty, singleton and Boxcar
+windows, which make no calls; other tapered windows require a callback.
+
+Callbacks must return normally and must not unwind, make nonlocal jumps, retain
+the temporary result pointer or access final output while generation is running.
+Context may be null if the callback supports it. Any context mutation must meet
+the callback's lifetime/exclusivity requirements. Context effects are not rolled
+back on subsequent failure, while the adapter commits final output only after
+complete success. Callback errors, nonfinite results, invalid options or rejected
+lengths leave final output unchanged under these contracts. The outer Rust unwind
+boundary does not catch a foreign exception or a panic crossing the callback's
+non-unwinding C boundary. It remains the callback's responsibility to convert
+errors to status codes. Python examples retain their CFUNCTYPE instances and
+convert callback exceptions to nonzero status.
+
+Custom Blackman honors the supplied callback, retaining the native correction
+of the source macro's ignored argument. Custom C fixtures document their explicit
+Blackman macro instantiation adapter; the upstream header remains unchanged.
+Six integration tests compare all 112 original built-in records per precision
+with the existing 1e-7/1e-15 absolute bounds, and all 60 custom records per output
+precision with exact bits and callback counts. They cover all four mixed-precision
+signatures, callback order, state retained after failure, nonfinite result rejection,
+Blackman correction, empty/singleton cases and checked options/lengths. Native
+algorithms, reference data and acceptance thresholds are unchanged.
+
+Windows MSVC x86_64 Debug passes all 29 boundary tests across five suites and
+actual optimized C/Python callers invoking all 116 exports. Python's initial
+caller run failed on a missing math import; adding the standard-library import
+fixes the caller without a Rust change or weakened test. Warning-denied Clippy
+and Rustdoc, formatting, whitespace and generated-header verification pass.
+
+Windows MSVC i686, Windows GNU x86_64 and Linux GNU x86_64/i686 Debug also
+pass all 29 integration tests and independently compiled C callers invoking
+every export, including all four callback/output precision pairings. Windows
+GNU x86_64 and Linux x86_64 additionally pass Python callbacks. Every runner
+completed with exit zero. Each Linux log independently contains the exact
+ten, four, three, six and six passing summaries with zero failures/ignored
+tests. This proves current boundary execution on all five required targets.
+
+The ledger maps 70 upstream symbol rows, including all thirteen built-in aliases
+and six custom macros. There are 262 pending public/configuration C rows, two
+nonpublic macro formals and 332 pending WASM rows. Current window Release,
+Python32 and static-link callers remain unverified. Remaining ciglet interfaces,
+both other packages' C interfaces and all three WASM interfaces remain required;
+symbol counts do not replace configuration/structure/ownership auditing. This
+checkpoint does not refresh the entire native regression matrix.
+
+Callback primary references:
+
+- https://doc.rust-lang.org/nomicon/ffi.html#the-nullable-pointer-optimization
+- https://doc.rust-lang.org/reference/items/functions.html#unwinding
+- https://doc.rust-lang.org/std/primitive.fn.html
+- https://docs.python.org/3/library/ctypes.html#callback-functions

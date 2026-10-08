@@ -32,6 +32,9 @@ mod phase_f32;
 pub use phase_f32::*;
 mod phase_f64;
 pub use phase_f64::*;
+mod window_functions;
+mod windows;
+pub use window_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,
