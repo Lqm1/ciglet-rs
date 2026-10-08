@@ -460,6 +460,34 @@ typedef struct CigletRsComplexF64 {
 } CigletRsComplexF64;
 
 /**
+ * 4 ordered f32 lanes with natural C array layout.
+ */
+typedef struct CigletRsFloats4 {
+  float values[4];
+} CigletRsFloats4;
+
+/**
+ * 4 ordered i32 lanes with natural C array layout.
+ */
+typedef struct CigletRsIntegers4 {
+  int32_t values[4];
+} CigletRsIntegers4;
+
+/**
+ * 4 ordered u32 lanes with natural C array layout.
+ */
+typedef struct CigletRsBits4 {
+  uint32_t values[4];
+} CigletRsBits4;
+
+/**
+ * 2 ordered i64 lanes with natural C array layout.
+ */
+typedef struct CigletRsIntegers64x2 {
+  int64_t values[2];
+} CigletRsIntegers64x2;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -7766,6 +7794,1078 @@ uint32_t ciglet_rs_approximation_logarithm_f64(double value, uint32_t mode, doub
  * Existing caught-panic and allocation limits apply.
  */
 uint32_t ciglet_rs_approximation_exponential_f64(double value, uint32_t mode, double *output);
+
+/**
+ * Source `fastpow2` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential2_f32(float value, float *output);
+
+/**
+ * Source `fastexp` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential_f32(float value, float *output);
+
+/**
+ * Source `fasterpow2` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential2_fast_f32(float value, float *output);
+
+/**
+ * Source `fasterexp` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastpow2` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential2_lanes_f32(struct CigletRsFloats4 value,
+                                                     struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastexp` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential_lanes_f32(struct CigletRsFloats4 value,
+                                                    struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterpow2` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential2_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                          struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterexp` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_exponential_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                         struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastlog2` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm2_f32(float value, float *output);
+
+/**
+ * Source `fastlog` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm_f32(float value, float *output);
+
+/**
+ * Source `fasterlog2` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm2_fast_f32(float value, float *output);
+
+/**
+ * Source `fasterlog` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastlog2` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm2_lanes_f32(struct CigletRsFloats4 value,
+                                                   struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastlog` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm_lanes_f32(struct CigletRsFloats4 value,
+                                                  struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterlog2` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm2_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                        struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterlog` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_logarithm_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                       struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastpow` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_power_f32(float value, float exponent, float *output);
+
+/**
+ * Source `fasterpow` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_power_fast_f32(float value, float exponent, float *output);
+
+/**
+ * Source `vfastpow` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_power_lanes_f32(struct CigletRsFloats4 value,
+                                              struct CigletRsFloats4 exponent,
+                                              struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterpow` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_power_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                   struct CigletRsFloats4 exponent,
+                                                   struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastsinfull` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_sine_f32(float value, float *output);
+
+/**
+ * Source `fastersinfull` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_sine_fast_f32(float value, float *output);
+
+/**
+ * Source `fastcosfull` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_cosine_f32(float value, float *output);
+
+/**
+ * Source `fastercosfull` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_cosine_fast_f32(float value, float *output);
+
+/**
+ * Source `fastsin` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_sine_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastersin` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_sine_fast_f32(float value, float *output);
+
+/**
+ * Source `fastcos` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastercos` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_cosine_fast_f32(float value, float *output);
+
+/**
+ * Source `fasttan` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastertan` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_fast_f32(float value, float *output);
+
+/**
+ * Source `fasttanfull` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32(float value,
+                                                                         float *output);
+
+/**
+ * Source `fastertanfull` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastsin` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                       struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastersin` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastsinfull` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                            struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastersinfull` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                     struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastcos` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                         struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastercos` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                  struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastcosfull` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                              struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastercosfull` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                       struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasttan` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                          struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastertan` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                   struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasttanfull` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                               struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastertanfull` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                        struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastsinh` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastersinh` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sine_fast_f32(float value, float *output);
+
+/**
+ * Source `fastcosh` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastercosh` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32(float value, float *output);
+
+/**
+ * Source `fasttanh` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastertanh` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastsinh` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                    struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastersinh` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                             struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastcosh` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                      struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastercosh` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                               struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasttanh` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                       struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastertanh` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastsigmoid` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32(float value, float *output);
+
+/**
+ * Source `fastersigmoid` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastsigmoid` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32(struct CigletRsFloats4 value,
+                                                                       struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastersigmoid` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                struct CigletRsFloats4 *output);
+
+/**
+ * Source `fasterfc` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_complementary_error_f32(float value, float *output);
+
+/**
+ * Source `fastererfc` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_complementary_error_fast_f32(float value, float *output);
+
+/**
+ * Source `fasterf` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_error_f32(float value, float *output);
+
+/**
+ * Source `fastererf` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_error_fast_f32(float value, float *output);
+
+/**
+ * Source `fastinverseerf` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_inverse_error_f32(float value, float *output);
+
+/**
+ * Source `fasterinverseerf` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_inverse_error_fast_f32(float value, float *output);
+
+/**
+ * Source `vfasterfc` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_complementary_error_lanes_f32(struct CigletRsFloats4 value,
+                                                                    struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastererfc` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                         struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterf` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_error_lanes_f32(struct CigletRsFloats4 value,
+                                                      struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastererf` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_error_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                           struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastinverseerf` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_inverse_error_lanes_f32(struct CigletRsFloats4 value,
+                                                              struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterinverseerf` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                   struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastlgamma` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_log_gamma_f32(float value, float *output);
+
+/**
+ * Source `fasterlgamma` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_log_gamma_fast_f32(float value, float *output);
+
+/**
+ * Source `fastdigamma` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_digamma_f32(float value, float *output);
+
+/**
+ * Source `fasterdigamma` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_digamma_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastlgamma` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_log_gamma_lanes_f32(struct CigletRsFloats4 value,
+                                                          struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterlgamma` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                               struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastdigamma` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_digamma_lanes_f32(struct CigletRsFloats4 value,
+                                                        struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterdigamma` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_digamma_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                             struct CigletRsFloats4 *output);
+
+/**
+ * Source `fastlambertw` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_f32(float value, float *output);
+
+/**
+ * Source `fasterlambertw` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_fast_f32(float value, float *output);
+
+/**
+ * Source `fastlambertwexpx` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_exp_f32(float value, float *output);
+
+/**
+ * Source `fasterlambertwexpx` using the audited native binary32 kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for f32.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32(float value, float *output);
+
+/**
+ * Source `vfastlambertw` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_lanes_f32(struct CigletRsFloats4 value,
+                                                          struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterlambertw` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                               struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfastlambertwexpx` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32(struct CigletRsFloats4 value,
+                                                              struct CigletRsFloats4 *output);
+
+/**
+ * Source `vfasterlambertwexpx` using the audited native four-lane kernel.
+ * Native domain checks and approved corrections apply; errors retain all output.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for CigletRsFloats4.
+ * Inputs are copied by value; output may reuse the original source storage.
+ * Existing caught-unwind/allocation limits apply. No native SIMD ABI is exposed.
+ */
+uint32_t ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32(struct CigletRsFloats4 value,
+                                                                   struct CigletRsFloats4 *output);
+
+/**
+ * Native `to_integers` retaining lane order and documented IEEE conversion rules.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable CigletRsIntegers4 storage.
+ * By-value inputs permit source-storage reuse. Native panic limits apply.
+ */
+uint32_t ciglet_rs_lanes_to_integers(struct CigletRsFloats4 value,
+                                     struct CigletRsIntegers4 *output);
+
+/**
+ * Native `from_integers` retaining lane order and documented IEEE conversion rules.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable CigletRsFloats4 storage.
+ * By-value inputs permit source-storage reuse. Native panic limits apply.
+ */
+uint32_t ciglet_rs_lanes_from_integers(struct CigletRsIntegers4 value,
+                                       struct CigletRsFloats4 *output);
+
+/**
+ * Native `to_bits` retaining lane order and documented IEEE conversion rules.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable CigletRsBits4 storage.
+ * By-value inputs permit source-storage reuse. Native panic limits apply.
+ */
+uint32_t ciglet_rs_lanes_to_bits(struct CigletRsFloats4 value, struct CigletRsBits4 *output);
+
+/**
+ * Native `from_bits` retaining lane order and documented IEEE conversion rules.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable CigletRsFloats4 storage.
+ * By-value inputs permit source-storage reuse. Native panic limits apply.
+ */
+uint32_t ciglet_rs_lanes_from_bits(struct CigletRsBits4 value, struct CigletRsFloats4 *output);
+
+/**
+ * Native `absolute` retaining lane order and documented IEEE conversion rules.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable CigletRsFloats4 storage.
+ * By-value inputs permit source-storage reuse. Native panic limits apply.
+ */
+uint32_t ciglet_rs_lanes_absolute(struct CigletRsFloats4 value, struct CigletRsFloats4 *output);
+
+/**
+ * Native `from_integer64_lanes` retaining lane order and documented IEEE conversion rules.
+ *
+ * # Safety
+ * Output is aligned, exclusively writable CigletRsIntegers4 storage.
+ * By-value inputs permit source-storage reuse. Native panic limits apply.
+ */
+uint32_t ciglet_rs_lanes_from_integer64_lanes(struct CigletRsIntegers64x2 value,
+                                              struct CigletRsIntegers4 *output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

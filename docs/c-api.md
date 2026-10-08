@@ -6,10 +6,10 @@ calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
 modules under `src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
-exports 471 status-returning functions, 26 opaque types, 20 concrete descriptors
+exports 565 status-returning functions, 26 opaque types, 24 concrete descriptors
 and seventeen constants. The checkpoints below record implementation and verification
-evidence. Of 332 public upstream mappings, 223 have verified C bindings and 109
-remain pending, including the bundled approximation functions. Liblrhsmm and SHIRO
+evidence. Of 332 public upstream mappings, 311 have verified C bindings and 21
+remain pending. All bundled approximation functions have verified C bindings. Liblrhsmm and SHIRO
 bindings and all browser/Node WebAssembly bindings remain required work.
 
 Build with `cargo build --locked --features c-api --lib`. Cargo emits the Rust
@@ -2067,3 +2067,77 @@ all 88 bundled fastapprox rows remain pending. Native source and Cargo manifests
 lock are unchanged from the full native gate. Current-family Release, Python32
 and static-link callers remain unverified. Final combined acceptance and all
 remaining ciglet/liblrhsmm/SHIRO bindings remain required.
+
+## Bundled scalar and four-lane approximation bindings
+
+All 88 bundled fastapprox APIs now have explicit modern C entry points: 44 scalar
+and 44 portable four-lane functions. Six additional functions expose every native
+lane conversion/bit helper: to_integers, from_integers, to_bits, from_bits, absolute
+and from_integer64_lanes. Each bundled function delegates to its audited native
+kernel, including independent power exponents, source full/restricted trig
+variants, hyperbolic functions, special functions and approved Lambert exponential
+corrections. The explicit source-to-Rust mapping distinguishes fasterfc (fast+erfc)
+from fastererfc and correctly distinguishes both full-range vector precision
+variants. No approximate algorithm is replaced by libm and no native arithmetic,
+fixture, dependency or existing tolerance changed.
+
+Four unpacked repr(C) descriptors expose four float, four signed integer, four
+unsigned bit or two 64bit signed integer values. Arrays retain contiguous source
+index order and their element's natural alignment. There is no __m128/SIMD ABI or
+extra alignment requirement. Layout follows the [Rust array rules](https://doc.rust-lang.org/reference/type-layout.html#array-layout)
+and [C representation rules](https://doc.rust-lang.org/reference/type-layout.html#the-c-representation).
+Python uses [fixed ctypes arrays](https://docs.python.org/3/library/ctypes.html#arrays)
+in natural-layout Structures. Context7/Mintlify and these primary references were
+checked before introducing descriptors. Cbindgen emits fixed C arrays; actual
+foreign callers verify all four sizes, field offsets and natural alignments.
+
+Inputs/descriptors pass by value. Existing checked owned-result staging commits
+one scalar or complete lane descriptor only on success; errors retain every lane.
+Outputs must be aligned, exclusively writable storage for their declared type.
+By-value inputs permit source-storage reuse. Null/misaligned outputs return one;
+native domain/range failure returns three; existing caught-unwind/allocation
+limits apply. Conversion/bit helpers retain documented IEEE behavior, including
+NaN payloads, signed zeros, SSE2 indefinite integer values and nearest-even integer
+to-float rounding, rather than imposing approximation domain checks on raw bits.
+They do not emulate hardware floating-point exception flags.
+
+Six host tests and warning-denied all-target Clippy pass. Coverage sets prove
+that every one of the 44 scalar and 44 vector source functions is invoked by the
+original corpora. Scalar trig456/special232/hyperbolic128 records retain original
+bit comparisons and approved scalar Lambert-exp correction criteria. Original
+basic SSE2 records independently verify corresponding scalar base kernels.
+All vector basic80/trig144/special67/hyperbolic48 records retain exact finite bits,
+expected nonfinite rejections and independent corrected Lambert roots within one
+ULP. Original conversion/absolute records in the basic corpus are also verified
+through the six new helpers. Every kernel checks null/misaligned rejection and
+retained outputs on invalid scalar input or invalid lanes at each of four positions.
+Independent descriptor layout, NaN payload/sign bits, signed zero, lane ordering,
+integer conversion, 64bit low/high words, source-storage reuse and separate lane
+power exponents are exercised. Approximate power is compared with the audited
+scalar operation rather than being incorrectly required to equal mathematical
+integer powers.
+
+Optimized assert-enabled C and Python callers contain source-derived input/output
+bits for all 88 original functions and exercise all six helpers. Every kernel
+checks its original reference result, source-storage reuse, retained output on
+invalid input and null rejection. Descriptor tests check size16/offset0 and
+platform natural alignment; raw conversion helpers retain NaN payloads and source
+lane order. No new result accuracy tolerance is introduced.
+
+
+All three five-target runners terminate with exit zero. Named-suite verification
+checks all 58 names and individual counts: 222 boundary plus 64 focused native
+tests per target, zero failed/ignored tests and no error diagnostics. Optimized
+assert-enabled C callers pass on MSVC64/MSVC32/GNU64/Linux64/Linux32; Python passes
+on MSVC64/GNU64/Linux64. All 565 exports are called from expanded optimized C main.
+Header verification proves 565 unique exports, 26 opaque types, 24 concrete
+descriptors and seventeen constants, including exact fixed-array field definitions.
+Rustdoc, formatting and whitespace checks pass. Native source and Cargo manifests/
+lock remain unchanged from the full native gate. The 334-row inventory now records
+311 implemented C mappings, 21 pending public C rows, two nonpublic formals and
+332 pending public WASM rows. All 88 bundled rows are implemented and every mapped
+function/constant exists in the generated header. Six added helper functions are
+also verified despite not being separate upstream inventory rows. Current-family
+Release, Python32 and static-link callers remain unverified. Remaining ciglet
+random/wave/plotting/macros/constants, all liblrhsmm/SHIRO C bindings, all three
+WASM bindings and final combined acceptance remain required.

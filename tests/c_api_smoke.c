@@ -1207,6 +1207,780 @@ int main(void) {
     CHECK_APPROXIMATION(float, f32, FLT_MAX, 2e-7);
     CHECK_APPROXIMATION(double, f64, DBL_MAX, 1e-15);
     #undef CHECK_APPROXIMATION
+    /* Every bundled entry uses unchanged original C fixture bits. */
+    assert(sizeof(CigletRsFloats4) == 16 && offsetof(CigletRsFloats4,values) == 0);
+    assert(sizeof(CigletRsIntegers4) == 16 && offsetof(CigletRsIntegers4,values) == 0);
+    assert(sizeof(CigletRsBits4) == 16 && offsetof(CigletRsBits4,values) == 0);
+    assert(sizeof(CigletRsIntegers64x2) == 16 && offsetof(CigletRsIntegers64x2,values) == 0);
+    assert(_Alignof(CigletRsFloats4) == _Alignof(float) && _Alignof(CigletRsIntegers64x2) == _Alignof(int64_t));
+    { /* fastpow2 */
+        float result = 71; assert(ciglet_rs_fastapprox_exponential2_f32(-0x1.9000000000000p+7f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x8000a7u);
+        result = -0x1.9000000000000p+7f;
+        assert(ciglet_rs_fastapprox_exponential2_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x8000a7u);
+        assert(ciglet_rs_fastapprox_exponential2_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x8000a7u);
+        assert(ciglet_rs_fastapprox_exponential2_f32(-0x1.9000000000000p+7f,NULL) == 1);
+    }
+    { /* fastexp */
+        float result = 71; assert(ciglet_rs_fastapprox_exponential_f32(-0x1.9000000000000p+7f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x8000a7u);
+        result = -0x1.9000000000000p+7f;
+        assert(ciglet_rs_fastapprox_exponential_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x8000a7u);
+        assert(ciglet_rs_fastapprox_exponential_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x8000a7u);
+        assert(ciglet_rs_fastapprox_exponential_f32(-0x1.9000000000000p+7f,NULL) == 1);
+    }
+    { /* fasterpow2 */
+        float result = 71; assert(ciglet_rs_fastapprox_exponential2_fast_f32(-0x1.9000000000000p+7f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x78aa40u);
+        result = -0x1.9000000000000p+7f;
+        assert(ciglet_rs_fastapprox_exponential2_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x78aa40u);
+        assert(ciglet_rs_fastapprox_exponential2_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x78aa40u);
+        assert(ciglet_rs_fastapprox_exponential2_fast_f32(-0x1.9000000000000p+7f,NULL) == 1);
+    }
+    { /* fasterexp */
+        float result = 71; assert(ciglet_rs_fastapprox_exponential_fast_f32(-0x1.9000000000000p+7f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x78aa40u);
+        result = -0x1.9000000000000p+7f;
+        assert(ciglet_rs_fastapprox_exponential_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x78aa40u);
+        assert(ciglet_rs_fastapprox_exponential_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x78aa40u);
+        assert(ciglet_rs_fastapprox_exponential_fast_f32(-0x1.9000000000000p+7f,NULL) == 1);
+    }
+    { /* vfastpow2 */
+        CigletRsFloats4 input = {{-0x1.9000000000000p+7f,-0x1.f800000000000p+6f,-0x1.f700000000000p+6f,-0x1.0000000000000p+0f}}, result;
+        assert(ciglet_rs_fastapprox_exponential2_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x8000a7u,0x8000a7u,0x98368du,0x3f0000c0u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential2_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_exponential2_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential2_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastexp */
+        CigletRsFloats4 input = {{-0x1.9000000000000p+7f,-0x1.f800000000000p+6f,-0x1.f700000000000p+6f,-0x1.0000000000000p+0f}}, result;
+        assert(ciglet_rs_fastapprox_exponential_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x8000a7u,0x8000a7u,0x8000a7u,0x3ebc5ac0u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_exponential_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterpow2 */
+        CigletRsFloats4 input = {{-0x1.9000000000000p+7f,-0x1.f800000000000p+6f,-0x1.f700000000000p+6f,-0x1.0000000000000p+0f}}, result;
+        assert(ciglet_rs_fastapprox_exponential2_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x78aa40u,0x78aa40u,0x98aa40u,0x3ef8aa40u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential2_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_exponential2_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential2_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterexp */
+        CigletRsFloats4 input = {{-0x1.9000000000000p+7f,-0x1.f800000000000p+6f,-0x1.f700000000000p+6f,-0x1.0000000000000p+0f}}, result;
+        assert(ciglet_rs_fastapprox_exponential_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x78aa40u,0x78aa40u,0x78aa40u,0x3ec00000u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_exponential_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_exponential_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fastlog2 */
+        float result = 71; assert(ciglet_rs_fastapprox_logarithm2_f32(0x1.0000000000000p-149f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc2fe0000u);
+        result = 0x1.0000000000000p-149f;
+        assert(ciglet_rs_fastapprox_logarithm2_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc2fe0000u);
+        assert(ciglet_rs_fastapprox_logarithm2_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc2fe0000u);
+        assert(ciglet_rs_fastapprox_logarithm2_f32(0x1.0000000000000p-149f,NULL) == 1);
+    }
+    { /* fastlog */
+        float result = 71; assert(ciglet_rs_fastapprox_logarithm_f32(0x1.0000000000000p-149f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc2b00f34u);
+        result = 0x1.0000000000000p-149f;
+        assert(ciglet_rs_fastapprox_logarithm_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc2b00f34u);
+        assert(ciglet_rs_fastapprox_logarithm_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc2b00f34u);
+        assert(ciglet_rs_fastapprox_logarithm_f32(0x1.0000000000000p-149f,NULL) == 1);
+    }
+    { /* fasterlog2 */
+        float result = 71; assert(ciglet_rs_fastapprox_logarithm2_fast_f32(0x1.0000000000000p-149f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc2fde2a9u);
+        result = 0x1.0000000000000p-149f;
+        assert(ciglet_rs_fastapprox_logarithm2_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc2fde2a9u);
+        assert(ciglet_rs_fastapprox_logarithm2_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc2fde2a9u);
+        assert(ciglet_rs_fastapprox_logarithm2_fast_f32(0x1.0000000000000p-149f,NULL) == 1);
+    }
+    { /* fasterlog */
+        float result = 71; assert(ciglet_rs_fastapprox_logarithm_fast_f32(0x1.0000000000000p-149f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc2affaddu);
+        result = 0x1.0000000000000p-149f;
+        assert(ciglet_rs_fastapprox_logarithm_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc2affaddu);
+        assert(ciglet_rs_fastapprox_logarithm_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc2affaddu);
+        assert(ciglet_rs_fastapprox_logarithm_fast_f32(0x1.0000000000000p-149f,NULL) == 1);
+    }
+    { /* vfastlog2 */
+        CigletRsFloats4 input = {{0x1.0000000000000p-149f,0x1.fffffc0000000p-127f,0x1.0000000000000p-126f,0x1.0000020000000p-126f}}, result;
+        assert(ciglet_rs_fastapprox_logarithm2_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc2fe0000u,0xc2fc0000u,0xc2fc0000u,0xc2fc0000u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm2_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_logarithm2_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm2_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastlog */
+        CigletRsFloats4 input = {{0x1.0000000000000p-149f,0x1.fffffc0000000p-127f,0x1.0000000000000p-126f,0x1.0000020000000p-126f}}, result;
+        assert(ciglet_rs_fastapprox_logarithm_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc2b00f34u,0xc2aeac50u,0xc2aeac50u,0xc2aeac50u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_logarithm_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterlog2 */
+        CigletRsFloats4 input = {{0x1.0000000000000p-149f,0x1.fffffc0000000p-127f,0x1.0000000000000p-126f,0x1.0000020000000p-126f}}, result;
+        assert(ciglet_rs_fastapprox_logarithm2_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc2fde2a9u,0xc2fbe2a9u,0xc2fbe2a9u,0xc2fbe2a9u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm2_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_logarithm2_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm2_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterlog */
+        CigletRsFloats4 input = {{0x1.0000000000000p-149f,0x1.fffffc0000000p-127f,0x1.0000000000000p-126f,0x1.0000020000000p-126f}}, result;
+        assert(ciglet_rs_fastapprox_logarithm_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc2affaddu,0xc2ae97f9u,0xc2ae97f9u,0xc2ae97f9u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_logarithm_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_logarithm_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fasterfc */
+        float result = 71; assert(ciglet_rs_fastapprox_special_complementary_error_f32(-0x1.e000000000000p+4f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x40000000u);
+        result = -0x1.e000000000000p+4f;
+        assert(ciglet_rs_fastapprox_special_complementary_error_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x40000000u);
+        assert(ciglet_rs_fastapprox_special_complementary_error_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x40000000u);
+        assert(ciglet_rs_fastapprox_special_complementary_error_f32(-0x1.e000000000000p+4f,NULL) == 1);
+    }
+    { /* fastererfc */
+        float result = 71; assert(ciglet_rs_fastapprox_special_complementary_error_fast_f32(-0x1.e000000000000p+4f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x40000000u);
+        result = -0x1.e000000000000p+4f;
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x40000000u);
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x40000000u);
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_f32(-0x1.e000000000000p+4f,NULL) == 1);
+    }
+    { /* fasterf */
+        float result = 71; assert(ciglet_rs_fastapprox_special_error_f32(-0x1.e000000000000p+4f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        result = -0x1.e000000000000p+4f;
+        assert(ciglet_rs_fastapprox_special_error_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_special_error_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_special_error_f32(-0x1.e000000000000p+4f,NULL) == 1);
+    }
+    { /* fastererf */
+        float result = 71; assert(ciglet_rs_fastapprox_special_error_fast_f32(-0x1.e000000000000p+4f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        result = -0x1.e000000000000p+4f;
+        assert(ciglet_rs_fastapprox_special_error_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_special_error_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_special_error_fast_f32(-0x1.e000000000000p+4f,NULL) == 1);
+    }
+    { /* fastinverseerf */
+        float result = 71; assert(ciglet_rs_fastapprox_special_inverse_error_f32(-0x1.fffffe0000000p-1f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc0e70b3bu);
+        result = -0x1.fffffe0000000p-1f;
+        assert(ciglet_rs_fastapprox_special_inverse_error_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc0e70b3bu);
+        assert(ciglet_rs_fastapprox_special_inverse_error_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc0e70b3bu);
+        assert(ciglet_rs_fastapprox_special_inverse_error_f32(-0x1.fffffe0000000p-1f,NULL) == 1);
+    }
+    { /* fasterinverseerf */
+        float result = 71; assert(ciglet_rs_fastapprox_special_inverse_error_fast_f32(-0x1.fffffe0000000p-1f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc0ef7c86u);
+        result = -0x1.fffffe0000000p-1f;
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc0ef7c86u);
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc0ef7c86u);
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_f32(-0x1.fffffe0000000p-1f,NULL) == 1);
+    }
+    { /* vfasterfc */
+        CigletRsFloats4 input = {{-0x1.e000000000000p+4f,-0x1.0000000000000p+3f,-0x1.0000000000000p+2f,-0x1.0000000000000p+1f}}, result;
+        assert(ciglet_rs_fastapprox_special_complementary_error_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x40000000u,0x40000000u,0x40000052u,0x3fff7978u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_complementary_error_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_complementary_error_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_complementary_error_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastererfc */
+        CigletRsFloats4 input = {{-0x1.e000000000000p+4f,-0x1.0000000000000p+3f,-0x1.0000000000000p+2f,-0x1.0000000000000p+1f}}, result;
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x40000000u,0x40000000u,0x3ffff9d8u,0x3ffd8ad3u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterf */
+        CigletRsFloats4 input = {{-0x1.e000000000000p+4f,-0x1.0000000000000p+3f,-0x1.0000000000000p+2f,-0x1.0000000000000p+1f}}, result;
+        assert(ciglet_rs_fastapprox_special_error_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xbf800000u,0xbf800000u,0xbf8000a4u,0xbf7ef2f0u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_error_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_error_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_error_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastererf */
+        CigletRsFloats4 input = {{-0x1.e000000000000p+4f,-0x1.0000000000000p+3f,-0x1.0000000000000p+2f,-0x1.0000000000000p+1f}}, result;
+        assert(ciglet_rs_fastapprox_special_error_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xbf800000u,0xbf800000u,0xbf7ff3b0u,0xbf7b15a6u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_error_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_error_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_error_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastinverseerf */
+        CigletRsFloats4 input = {{-0x1.fffffe0000000p-1f,-0x1.ff7cee0000000p-1f,-0x1.cccccc0000000p-1f,-0x1.0000000000000p-1f}}, result;
+        assert(ciglet_rs_fastapprox_special_inverse_error_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc0e70b3bu,0xc040ccbau,0xbf961a51u,0xbef43370u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_inverse_error_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_inverse_error_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_inverse_error_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterinverseerf */
+        CigletRsFloats4 input = {{-0x1.fffffe0000000p-1f,-0x1.ff7cee0000000p-1f,-0x1.cccccc0000000p-1f,-0x1.0000000000000p-1f}}, result;
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc0ef7c86u,0xc051a951u,0xbfa38cfdu,0xbef73c42u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fastlgamma */
+        float result = 71; assert(ciglet_rs_fastapprox_special_log_gamma_f32(0x1.a36e2e0000000p-14f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x41135dd6u);
+        result = 0x1.a36e2e0000000p-14f;
+        assert(ciglet_rs_fastapprox_special_log_gamma_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x41135dd6u);
+        assert(ciglet_rs_fastapprox_special_log_gamma_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x41135dd6u);
+        assert(ciglet_rs_fastapprox_special_log_gamma_f32(0x1.a36e2e0000000p-14f,NULL) == 1);
+    }
+    { /* fasterlgamma */
+        float result = 71; assert(ciglet_rs_fastapprox_special_log_gamma_fast_f32(0x1.a36e2e0000000p-14f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x411291b4u);
+        result = 0x1.a36e2e0000000p-14f;
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x411291b4u);
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x411291b4u);
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_f32(0x1.a36e2e0000000p-14f,NULL) == 1);
+    }
+    { /* fastdigamma */
+        float result = 71; assert(ciglet_rs_fastapprox_special_digamma_f32(0x1.a36e2e0000000p-14f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc61c4250u);
+        result = 0x1.a36e2e0000000p-14f;
+        assert(ciglet_rs_fastapprox_special_digamma_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc61c4250u);
+        assert(ciglet_rs_fastapprox_special_digamma_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc61c4250u);
+        assert(ciglet_rs_fastapprox_special_digamma_f32(0x1.a36e2e0000000p-14f,NULL) == 1);
+    }
+    { /* fasterdigamma */
+        float result = 71; assert(ciglet_rs_fastapprox_special_digamma_fast_f32(0x1.a36e2e0000000p-14f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xc61c41d7u);
+        result = 0x1.a36e2e0000000p-14f;
+        assert(ciglet_rs_fastapprox_special_digamma_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xc61c41d7u);
+        assert(ciglet_rs_fastapprox_special_digamma_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xc61c41d7u);
+        assert(ciglet_rs_fastapprox_special_digamma_fast_f32(0x1.a36e2e0000000p-14f,NULL) == 1);
+    }
+    { /* vfastlgamma */
+        CigletRsFloats4 input = {{0x1.a36e2e0000000p-14f,0x1.47ae140000000p-7f,0x1.99999a0000000p-4f,0x1.0000000000000p-1f}}, result;
+        assert(ciglet_rs_fastapprox_special_log_gamma_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x41135dd6u,0x40932fd4u,0x40102eaau,0x3f127e8cu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_log_gamma_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_log_gamma_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_log_gamma_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterlgamma */
+        CigletRsFloats4 input = {{0x1.a36e2e0000000p-14f,0x1.47ae140000000p-7f,0x1.99999a0000000p-4f,0x1.0000000000000p-1f}}, result;
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x411291b4u,0x4091a179u,0x400ce2c3u,0x3eead51cu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastdigamma */
+        CigletRsFloats4 input = {{0x1.a36e2e0000000p-14f,0x1.47ae140000000p-7f,0x1.99999a0000000p-4f,0x1.0000000000000p-1f}}, result;
+        assert(ciglet_rs_fastapprox_special_digamma_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc61c4250u,0xc2c91f6au,0xc126c99au,0xbffb5c46u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_digamma_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_digamma_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_digamma_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterdigamma */
+        CigletRsFloats4 input = {{0x1.a36e2e0000000p-14f,0x1.47ae140000000p-7f,0x1.99999a0000000p-4f,0x1.0000000000000p-1f}}, result;
+        assert(ciglet_rs_fastapprox_special_digamma_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xc61c41d7u,0xc2c8e593u,0xc1258731u,0xbff9386au}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_digamma_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_digamma_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_digamma_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fastsinh */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xdbd10f00u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xdbd10f00u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xdbd10f00u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* fastersinh */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xdbd34380u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xdbd34380u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xdbd34380u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* fastcosh */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x5bd10f00u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x5bd10f00u);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x5bd10f00u);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* fastercosh */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x5bd34380u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x5bd34380u);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x5bd34380u);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* fasttanh */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* fastertanh */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xbf800000u);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* vfastsinh */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xdbd10f00u,0xc1da503fu,0xbe8155c0u,0x0u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastersinh */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xdbd34380u,0xc1db4040u,0xbe8329c0u,0x0u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastcosh */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x5bd10f00u,0x41da75c1u,0x3f840510u,0x3f800000u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastercosh */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x5bd34380u,0x41db65c0u,0x3f860a50u,0x3f78aa40u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasttanh */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xbf800000u,0xbf7fd40cu,0xbe7ac86cu,0x0u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastertanh */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xbf800000u,0xbf7fd4e5u,0xbe7f3e20u,0x3c6e2180u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fastlambertw */
+        float result = 71; assert(ciglet_rs_fastapprox_special_lambert_w_f32(-0x1.70a3d80000000p-2f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xbf4e4b3fu);
+        result = -0x1.70a3d80000000p-2f;
+        assert(ciglet_rs_fastapprox_special_lambert_w_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xbf4e4b3fu);
+        assert(ciglet_rs_fastapprox_special_lambert_w_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xbf4e4b3fu);
+        assert(ciglet_rs_fastapprox_special_lambert_w_f32(-0x1.70a3d80000000p-2f,NULL) == 1);
+    }
+    { /* fasterlambertw */
+        float result = 71; assert(ciglet_rs_fastapprox_special_lambert_w_fast_f32(-0x1.70a3d80000000p-2f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xbf3e111cu);
+        result = -0x1.70a3d80000000p-2f;
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xbf3e111cu);
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xbf3e111cu);
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_f32(-0x1.70a3d80000000p-2f,NULL) == 1);
+    }
+    { /* fastlambertwexpx */
+        float result = 71; assert(ciglet_rs_fastapprox_special_lambert_w_exp_f32(-0x1.0000000000000p+2f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x3c8dae58u);
+        result = -0x1.0000000000000p+2f;
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x3c8dae58u);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x3c8dae58u);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_f32(-0x1.0000000000000p+2f,NULL) == 1);
+    }
+    { /* fasterlambertwexpx */
+        float result = 71; assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32(-0x1.0000000000000p+2f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x3c27cf7au);
+        result = -0x1.0000000000000p+2f;
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x3c27cf7au);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x3c27cf7au);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32(-0x1.0000000000000p+2f,NULL) == 1);
+    }
+    { /* vfastlambertw */
+        CigletRsFloats4 input = {{-0x1.70a3d80000000p-2f,-0x1.0000000000000p-2f,-0x1.99999a0000000p-4f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_special_lambert_w_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xbf4e4b3fu,0xbeb70a01u,0xbde50556u,0x36eda0b4u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_lambert_w_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterlambertw */
+        CigletRsFloats4 input = {{-0x1.70a3d80000000p-2f,-0x1.0000000000000p-2f,-0x1.99999a0000000p-4f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xbf3e111cu,0xbebcbd69u,0xbdd80643u,0x3aa05b32u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastlambertwexpx */
+        CigletRsFloats4 input = {{-0x1.0000000000000p+0f,-0x1.99999a0000000p-4f,-0x1.4484c00000000p-100f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x3e8e95bdu,0x3f081de5u,0x3f1133dcu,0x3f1133dcu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasterlambertwexpx */
+        CigletRsFloats4 input = {{-0x1.0000000000000p+0f,-0x1.99999a0000000p-4f,-0x1.4484c00000000p-100f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x3e8cb290u,0x3f048f87u,0x3f0ec9dfu,0x3f0ec9dfu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fastpow */
+        float result = 71; assert(ciglet_rs_fastapprox_power_f32(0x1.0000000000000p-3f,-0x1.8000000000000p+1f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x44000000u);
+        result = 0x1.0000000000000p-3f;
+        assert(ciglet_rs_fastapprox_power_f32(result,-0x1.8000000000000p+1f,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x44000000u);
+        assert(ciglet_rs_fastapprox_power_f32(NAN,-0x1.8000000000000p+1f,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x44000000u);
+        assert(ciglet_rs_fastapprox_power_f32(0x1.0000000000000p-3f,-0x1.8000000000000p+1f,NULL) == 1);
+    }
+    { /* fasterpow */
+        float result = 71; assert(ciglet_rs_fastapprox_power_fast_f32(0x1.0000000000000p-3f,-0x1.8000000000000p+1f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x43e2a900u);
+        result = 0x1.0000000000000p-3f;
+        assert(ciglet_rs_fastapprox_power_fast_f32(result,-0x1.8000000000000p+1f,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x43e2a900u);
+        assert(ciglet_rs_fastapprox_power_fast_f32(NAN,-0x1.8000000000000p+1f,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x43e2a900u);
+        assert(ciglet_rs_fastapprox_power_fast_f32(0x1.0000000000000p-3f,-0x1.8000000000000p+1f,NULL) == 1);
+    }
+    { /* vfastpow */
+        CigletRsFloats4 input = {{0x1.0000000000000p-3f,0x1.0000000000000p-1f,0x1.0000000000000p+1f,0x1.4000000000000p+3f}}, result;
+        CigletRsFloats4 exponent = {{-0x1.8000000000000p+1f,-0x1.0000000000000p-1f,0x0.0p+0f,0x1.8000000000000p+1f}};
+        assert(ciglet_rs_fastapprox_power_lanes_f32(input,exponent,&result) == 0);
+        const uint32_t expected[4] = {0x44000000u,0x3fb50540u,0x3f800000u,0x4479f700u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_power_lanes_f32(input,exponent,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_power_lanes_f32(input,exponent,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_power_lanes_f32(input,exponent,NULL) == 1);
+    }
+    { /* vfasterpow */
+        CigletRsFloats4 input = {{0x1.0000000000000p-3f,0x1.0000000000000p-1f,0x1.0000000000000p+1f,0x1.4000000000000p+3f}}, result;
+        CigletRsFloats4 exponent = {{-0x1.8000000000000p+1f,-0x1.0000000000000p-1f,0x0.0p+0f,0x1.8000000000000p+1f}};
+        assert(ciglet_rs_fastapprox_power_fast_lanes_f32(input,exponent,&result) == 0);
+        const uint32_t expected[4] = {0x43e2a900u,0x3fb4ff80u,0x3f78aa40u,0x446eab80u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_power_fast_lanes_f32(input,exponent,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_power_fast_lanes_f32(input,exponent,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_power_fast_lanes_f32(input,exponent,NULL) == 1);
+    }
+    { /* fastsigmoid */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x229cbda2u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x229cbda2u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x229cbda2u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* fastersigmoid */
+        float result = 71; assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32(-0x1.4000000000000p+5f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x229b1ad1u);
+        result = -0x1.4000000000000p+5f;
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x229b1ad1u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x229b1ad1u);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32(-0x1.4000000000000p+5f,NULL) == 1);
+    }
+    { /* vfastsigmoid */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x229cbda2u,0x3c9358d0u,0x3ee02abeu,0x3f000000u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastersigmoid */
+        CigletRsFloats4 input = {{-0x1.4000000000000p+5f,-0x1.0000000000000p+2f,-0x1.0000000000000p-2f,-0x0.0p+0f}}, result;
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x229b1ad1u,0x3c92ba77u,0x3ede4882u,0x3f01dc43u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* fastsin */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x0u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastersin */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_sine_fast_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x0u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastsinfull */
+        float result = 71; assert(ciglet_rs_fastapprox_sine_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xb4c8d15fu);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_sine_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xb4c8d15fu);
+        assert(ciglet_rs_fastapprox_sine_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xb4c8d15fu);
+        assert(ciglet_rs_fastapprox_sine_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastersinfull */
+        float result = 71; assert(ciglet_rs_fastapprox_sine_fast_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xb4c6bd92u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_sine_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xb4c6bd92u);
+        assert(ciglet_rs_fastapprox_sine_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xb4c6bd92u);
+        assert(ciglet_rs_fastapprox_sine_fast_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastcos */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x3f7fff1cu);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x3f7fff1cu);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x3f7fff1cu);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastercos */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x3f800000u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x3f800000u);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x3f800000u);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastcosfull */
+        float result = 71; assert(ciglet_rs_fastapprox_cosine_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x3f7fff1cu);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_cosine_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x3f7fff1cu);
+        assert(ciglet_rs_fastapprox_cosine_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x3f7fff1cu);
+        assert(ciglet_rs_fastapprox_cosine_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastercosfull */
+        float result = 71; assert(ciglet_rs_fastapprox_cosine_fast_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x3f7fd9acu);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_cosine_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x3f7fd9acu);
+        assert(ciglet_rs_fastapprox_cosine_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x3f7fd9acu);
+        assert(ciglet_rs_fastapprox_cosine_fast_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fasttan */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x0u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastertan */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0x0u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0x0u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fasttanfull */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xb4c8d212u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xb4c8d212u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xb4c8d212u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* fastertanfull */
+        float result = 71; assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32(0x0.0p+0f,&result) == 0); uint32_t actual; memcpy(&actual,&result,4); assert(actual == 0xb4c6bd92u);
+        result = 0x0.0p+0f;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32(result,&result) == 0); memcpy(&actual,&result,4); assert(actual == 0xb4c6bd92u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32(NAN,&result) == 3); memcpy(&actual,&result,4); assert(actual == 0xb4c6bd92u);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32(0x0.0p+0f,NULL) == 1);
+    }
+    { /* vfastsin */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x0u,0x0u,0xda20ff5u,0x8da20ff5u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastersin */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x0u,0x0u,0xda062c9u,0x8da062c9u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastsinfull */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xb4c8d15fu,0xb4c8d15fu,0xb4c8d15fu,0x34c8d15fu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastersinfull */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xb4c6bd92u,0xb4c6bd92u,0xb4c6bd92u,0x34c6bd92u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastcos */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x3f7fff1cu,0x3f7fff1cu,0x3f7fff1cu,0x3f7fff1cu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastercos */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x3f800000u,0x3f800000u,0x3f800000u,0x3f800000u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastcosfull */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x3f7fff1cu,0x3f7fff1cu,0x3f7fff1cu,0x3f7fff1cu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastercosfull */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x3f7fd9acu,0x3f7fd9acu,0x3f7fd9acu,0x3f7fd9acu}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasttan */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x0u,0x0u,0xda21085u,0x8da21085u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastertan */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0x0u,0x0u,0xda062c9u,0x8da062c9u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfasttanfull */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xb4c8d212u,0xb4c8d212u,0xb4c8d212u,0x34c8d210u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32(input,NULL) == 1);
+    }
+    { /* vfastertanfull */
+        CigletRsFloats4 input = {{0x0.0p+0f,-0x0.0p+0f,0x1.4484c00000000p-100f,-0x1.4484c00000000p-100f}}, result;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32(input,&result) == 0);
+        const uint32_t expected[4] = {0xb4c6bd92u,0xb4c6bd92u,0xb4c6bd92u,0x34c6bd92u}; uint32_t actual[4];
+        memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32(input,&input) == 0); memcpy(actual,input.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        input.values[3] = NAN;
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32(input,&result) == 3); memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
+        assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32(input,NULL) == 1);
+    }
+    {
+        CigletRsBits4 bits = {{0x7fc00042u,0xffc00099u,0x80000000u,0x7f800000u}}, copied;
+        CigletRsFloats4 floats; CigletRsIntegers4 integers;
+        assert(ciglet_rs_lanes_from_bits(bits,&floats) == 0);
+        assert(ciglet_rs_lanes_to_bits(floats,&copied) == 0 && memcmp(bits.values,copied.values,16) == 0);
+        assert(ciglet_rs_lanes_absolute(floats,&floats) == 0);
+        assert(ciglet_rs_lanes_to_bits(floats,&copied) == 0);
+        for(size_t i=0;i<4;++i) assert(copied.values[i] == (bits.values[i]&0x7fffffffu));
+        assert(ciglet_rs_lanes_to_integers(floats,&integers) == 0);
+        assert(integers.values[0] == INT32_MIN && integers.values[1] == INT32_MIN && integers.values[2] == 0 && integers.values[3] == INT32_MIN);
+        integers = (CigletRsIntegers4){{1,-2,INT32_MAX,INT32_MIN}};
+        assert(ciglet_rs_lanes_from_integers(integers,&floats) == 0);
+        assert(floats.values[0] == 1 && floats.values[1] == -2 && floats.values[2] == 2147483648.0f && floats.values[3] == -2147483648.0f);
+        CigletRsIntegers64x2 wide = {{INT64_C(0x123456789abcdef0),-1}};
+        assert(ciglet_rs_lanes_from_integer64_lanes(wide,&integers) == 0);
+        assert((uint32_t)integers.values[0] == 0x9abcdef0u && integers.values[1] == 0x12345678 && integers.values[2] == -1 && integers.values[3] == -1);
+        assert(ciglet_rs_lanes_to_bits(floats,NULL) == 1);
+    }
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

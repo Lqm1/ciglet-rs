@@ -1,0 +1,387 @@
+use ciglet_rs::c_api::*;
+#[derive(Clone, Copy)]
+pub enum Scalar {
+    Unary(unsafe extern "C" fn(f32, *mut f32) -> u32),
+    Binary(unsafe extern "C" fn(f32, f32, *mut f32) -> u32),
+}
+#[derive(Clone, Copy)]
+pub enum Vector {
+    Unary(unsafe extern "C" fn(CigletRsFloats4, *mut CigletRsFloats4) -> u32),
+    Binary(unsafe extern "C" fn(CigletRsFloats4, CigletRsFloats4, *mut CigletRsFloats4) -> u32),
+}
+impl Scalar {
+    pub unsafe fn call(self, value: f32, exponent: f32, output: *mut f32) -> u32 {
+        // SAFETY: Caller retains the output contract for the matching operation.
+        unsafe {
+            match self {
+                Self::Unary(f) => f(value, output),
+                Self::Binary(f) => f(value, exponent, output),
+            }
+        }
+    }
+}
+impl Vector {
+    pub unsafe fn call(
+        self,
+        value: [f32; 4],
+        exponent: [f32; 4],
+        output: *mut CigletRsFloats4,
+    ) -> u32 {
+        let value = CigletRsFloats4 { values: value };
+        let exponent = CigletRsFloats4 { values: exponent };
+        // SAFETY: Caller retains the output contract for the matching operation.
+        unsafe {
+            match self {
+                Self::Unary(f) => f(value, output),
+                Self::Binary(f) => f(value, exponent, output),
+            }
+        }
+    }
+}
+pub const SCALARS: [(&str, Scalar); 44] = [
+    (
+        "fastpow2",
+        Scalar::Unary(ciglet_rs_fastapprox_exponential2_f32),
+    ),
+    (
+        "fastexp",
+        Scalar::Unary(ciglet_rs_fastapprox_exponential_f32),
+    ),
+    (
+        "fasterpow2",
+        Scalar::Unary(ciglet_rs_fastapprox_exponential2_fast_f32),
+    ),
+    (
+        "fasterexp",
+        Scalar::Unary(ciglet_rs_fastapprox_exponential_fast_f32),
+    ),
+    (
+        "fastlog2",
+        Scalar::Unary(ciglet_rs_fastapprox_logarithm2_f32),
+    ),
+    ("fastlog", Scalar::Unary(ciglet_rs_fastapprox_logarithm_f32)),
+    (
+        "fasterlog2",
+        Scalar::Unary(ciglet_rs_fastapprox_logarithm2_fast_f32),
+    ),
+    (
+        "fasterlog",
+        Scalar::Unary(ciglet_rs_fastapprox_logarithm_fast_f32),
+    ),
+    (
+        "fasterfc",
+        Scalar::Unary(ciglet_rs_fastapprox_special_complementary_error_f32),
+    ),
+    (
+        "fastererfc",
+        Scalar::Unary(ciglet_rs_fastapprox_special_complementary_error_fast_f32),
+    ),
+    (
+        "fasterf",
+        Scalar::Unary(ciglet_rs_fastapprox_special_error_f32),
+    ),
+    (
+        "fastererf",
+        Scalar::Unary(ciglet_rs_fastapprox_special_error_fast_f32),
+    ),
+    (
+        "fastinverseerf",
+        Scalar::Unary(ciglet_rs_fastapprox_special_inverse_error_f32),
+    ),
+    (
+        "fasterinverseerf",
+        Scalar::Unary(ciglet_rs_fastapprox_special_inverse_error_fast_f32),
+    ),
+    (
+        "fastlgamma",
+        Scalar::Unary(ciglet_rs_fastapprox_special_log_gamma_f32),
+    ),
+    (
+        "fasterlgamma",
+        Scalar::Unary(ciglet_rs_fastapprox_special_log_gamma_fast_f32),
+    ),
+    (
+        "fastdigamma",
+        Scalar::Unary(ciglet_rs_fastapprox_special_digamma_f32),
+    ),
+    (
+        "fasterdigamma",
+        Scalar::Unary(ciglet_rs_fastapprox_special_digamma_fast_f32),
+    ),
+    (
+        "fastsinh",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32),
+    ),
+    (
+        "fastersinh",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_sine_fast_f32),
+    ),
+    (
+        "fastcosh",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32),
+    ),
+    (
+        "fastercosh",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32),
+    ),
+    (
+        "fasttanh",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32),
+    ),
+    (
+        "fastertanh",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32),
+    ),
+    (
+        "fastlambertw",
+        Scalar::Unary(ciglet_rs_fastapprox_special_lambert_w_f32),
+    ),
+    (
+        "fasterlambertw",
+        Scalar::Unary(ciglet_rs_fastapprox_special_lambert_w_fast_f32),
+    ),
+    (
+        "fastlambertwexpx",
+        Scalar::Unary(ciglet_rs_fastapprox_special_lambert_w_exp_f32),
+    ),
+    (
+        "fasterlambertwexpx",
+        Scalar::Unary(ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32),
+    ),
+    ("fastpow", Scalar::Binary(ciglet_rs_fastapprox_power_f32)),
+    (
+        "fasterpow",
+        Scalar::Binary(ciglet_rs_fastapprox_power_fast_f32),
+    ),
+    (
+        "fastsigmoid",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32),
+    ),
+    (
+        "fastersigmoid",
+        Scalar::Unary(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32),
+    ),
+    (
+        "fastsin",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_sine_approximate_f32),
+    ),
+    (
+        "fastersin",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_sine_fast_f32),
+    ),
+    ("fastsinfull", Scalar::Unary(ciglet_rs_fastapprox_sine_f32)),
+    (
+        "fastersinfull",
+        Scalar::Unary(ciglet_rs_fastapprox_sine_fast_f32),
+    ),
+    (
+        "fastcos",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32),
+    ),
+    (
+        "fastercos",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_cosine_fast_f32),
+    ),
+    (
+        "fastcosfull",
+        Scalar::Unary(ciglet_rs_fastapprox_cosine_f32),
+    ),
+    (
+        "fastercosfull",
+        Scalar::Unary(ciglet_rs_fastapprox_cosine_fast_f32),
+    ),
+    (
+        "fasttan",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32),
+    ),
+    (
+        "fastertan",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_tangent_fast_f32),
+    ),
+    (
+        "fasttanfull",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32),
+    ),
+    (
+        "fastertanfull",
+        Scalar::Unary(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32),
+    ),
+];
+pub const VECTORS: [(&str, Vector); 44] = [
+    (
+        "vfastpow2",
+        Vector::Unary(ciglet_rs_fastapprox_exponential2_lanes_f32),
+    ),
+    (
+        "vfastexp",
+        Vector::Unary(ciglet_rs_fastapprox_exponential_lanes_f32),
+    ),
+    (
+        "vfasterpow2",
+        Vector::Unary(ciglet_rs_fastapprox_exponential2_fast_lanes_f32),
+    ),
+    (
+        "vfasterexp",
+        Vector::Unary(ciglet_rs_fastapprox_exponential_fast_lanes_f32),
+    ),
+    (
+        "vfastlog2",
+        Vector::Unary(ciglet_rs_fastapprox_logarithm2_lanes_f32),
+    ),
+    (
+        "vfastlog",
+        Vector::Unary(ciglet_rs_fastapprox_logarithm_lanes_f32),
+    ),
+    (
+        "vfasterlog2",
+        Vector::Unary(ciglet_rs_fastapprox_logarithm2_fast_lanes_f32),
+    ),
+    (
+        "vfasterlog",
+        Vector::Unary(ciglet_rs_fastapprox_logarithm_fast_lanes_f32),
+    ),
+    (
+        "vfasterfc",
+        Vector::Unary(ciglet_rs_fastapprox_special_complementary_error_lanes_f32),
+    ),
+    (
+        "vfastererfc",
+        Vector::Unary(ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32),
+    ),
+    (
+        "vfasterf",
+        Vector::Unary(ciglet_rs_fastapprox_special_error_lanes_f32),
+    ),
+    (
+        "vfastererf",
+        Vector::Unary(ciglet_rs_fastapprox_special_error_fast_lanes_f32),
+    ),
+    (
+        "vfastinverseerf",
+        Vector::Unary(ciglet_rs_fastapprox_special_inverse_error_lanes_f32),
+    ),
+    (
+        "vfasterinverseerf",
+        Vector::Unary(ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32),
+    ),
+    (
+        "vfastlgamma",
+        Vector::Unary(ciglet_rs_fastapprox_special_log_gamma_lanes_f32),
+    ),
+    (
+        "vfasterlgamma",
+        Vector::Unary(ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32),
+    ),
+    (
+        "vfastdigamma",
+        Vector::Unary(ciglet_rs_fastapprox_special_digamma_lanes_f32),
+    ),
+    (
+        "vfasterdigamma",
+        Vector::Unary(ciglet_rs_fastapprox_special_digamma_fast_lanes_f32),
+    ),
+    (
+        "vfastsinh",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32),
+    ),
+    (
+        "vfastersinh",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32),
+    ),
+    (
+        "vfastcosh",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32),
+    ),
+    (
+        "vfastercosh",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32),
+    ),
+    (
+        "vfasttanh",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32),
+    ),
+    (
+        "vfastertanh",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32),
+    ),
+    (
+        "vfastlambertw",
+        Vector::Unary(ciglet_rs_fastapprox_special_lambert_w_lanes_f32),
+    ),
+    (
+        "vfasterlambertw",
+        Vector::Unary(ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32),
+    ),
+    (
+        "vfastlambertwexpx",
+        Vector::Unary(ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32),
+    ),
+    (
+        "vfasterlambertwexpx",
+        Vector::Unary(ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32),
+    ),
+    (
+        "vfastpow",
+        Vector::Binary(ciglet_rs_fastapprox_power_lanes_f32),
+    ),
+    (
+        "vfasterpow",
+        Vector::Binary(ciglet_rs_fastapprox_power_fast_lanes_f32),
+    ),
+    (
+        "vfastsigmoid",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32),
+    ),
+    (
+        "vfastersigmoid",
+        Vector::Unary(ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32),
+    ),
+    (
+        "vfastsin",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32),
+    ),
+    (
+        "vfastersin",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32),
+    ),
+    (
+        "vfastsinfull",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32),
+    ),
+    (
+        "vfastersinfull",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32),
+    ),
+    (
+        "vfastcos",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32),
+    ),
+    (
+        "vfastercos",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32),
+    ),
+    (
+        "vfastcosfull",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32),
+    ),
+    (
+        "vfastercosfull",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32),
+    ),
+    (
+        "vfasttan",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32),
+    ),
+    (
+        "vfastertan",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32),
+    ),
+    (
+        "vfasttanfull",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32),
+    ),
+    (
+        "vfastertanfull",
+        Vector::Unary(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32),
+    ),
+];

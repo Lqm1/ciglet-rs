@@ -1581,6 +1581,172 @@ def main():
         assert abs(result.value - math.sin(0.25)) < tolerance
         assert functions["atan2"](1, -1, 1, ctypes.byref(result)) == 0
         assert functions["atan2"](1, -1, 2, ctypes.byref(retained)) == 0 and result.value == retained.value
+    class FloatLanes(ctypes.Structure):
+        _fields_ = [("values", ctypes.c_float * 4)]
+
+    class IntLanes(ctypes.Structure):
+        _fields_ = [("values", ctypes.c_int32 * 4)]
+
+    class BitLanes(ctypes.Structure):
+        _fields_ = [("values", ctypes.c_uint32 * 4)]
+
+    class WideLanes(ctypes.Structure):
+        _fields_ = [("values", ctypes.c_int64 * 2)]
+
+    for descriptor in (FloatLanes, IntLanes, BitLanes, WideLanes):
+        assert ctypes.sizeof(descriptor) == 16 and descriptor.values.offset == 0
+    assert ctypes.alignment(FloatLanes) == ctypes.alignment(ctypes.c_float)
+    assert ctypes.alignment(WideLanes) == ctypes.alignment(ctypes.c_int64)
+    def float_from_word(value):
+        return struct.unpack("<f", struct.pack("<I", value))[0]
+
+    def float_word(value):
+        return struct.unpack("<I", struct.pack("<f", value))[0]
+
+    # Original C fixture inputs/outputs, one valid reference for every source API.
+    bundled_cases = [
+        ('ciglet_rs_fastapprox_exponential2_f32', False, False, [3276275712], [8388775]),
+        ('ciglet_rs_fastapprox_exponential_f32', False, False, [3276275712], [8388775]),
+        ('ciglet_rs_fastapprox_exponential2_fast_f32', False, False, [3276275712], [7907904]),
+        ('ciglet_rs_fastapprox_exponential_fast_f32', False, False, [3276275712], [7907904]),
+        ('ciglet_rs_fastapprox_exponential2_lanes_f32', True, False, [3276275712, 3271294976, 3271262208, 3212836864], [8388775, 8388775, 9975437, 1056964800]),
+        ('ciglet_rs_fastapprox_exponential_lanes_f32', True, False, [3276275712, 3271294976, 3271262208, 3212836864], [8388775, 8388775, 8388775, 1052531392]),
+        ('ciglet_rs_fastapprox_exponential2_fast_lanes_f32', True, False, [3276275712, 3271294976, 3271262208, 3212836864], [7907904, 7907904, 10005056, 1056483904]),
+        ('ciglet_rs_fastapprox_exponential_fast_lanes_f32', True, False, [3276275712, 3271294976, 3271262208, 3212836864], [7907904, 7907904, 7907904, 1052770304]),
+        ('ciglet_rs_fastapprox_logarithm2_f32', False, False, [1], [3271426048]),
+        ('ciglet_rs_fastapprox_logarithm_f32', False, False, [1], [3266318132]),
+        ('ciglet_rs_fastapprox_logarithm2_fast_f32', False, False, [1], [3271418537]),
+        ('ciglet_rs_fastapprox_logarithm_fast_f32', False, False, [1], [3266312925]),
+        ('ciglet_rs_fastapprox_logarithm2_lanes_f32', True, False, [1, 8388607, 8388608, 8388609], [3271426048, 3271294976, 3271294976, 3271294976]),
+        ('ciglet_rs_fastapprox_logarithm_lanes_f32', True, False, [1, 8388607, 8388608, 8388609], [3266318132, 3266227280, 3266227280, 3266227280]),
+        ('ciglet_rs_fastapprox_logarithm2_fast_lanes_f32', True, False, [1, 8388607, 8388608, 8388609], [3271418537, 3271287465, 3271287465, 3271287465]),
+        ('ciglet_rs_fastapprox_logarithm_fast_lanes_f32', True, False, [1, 8388607, 8388608, 8388609], [3266312925, 3266222073, 3266222073, 3266222073]),
+        ('ciglet_rs_fastapprox_special_complementary_error_f32', False, False, [3253731328], [1073741824]),
+        ('ciglet_rs_fastapprox_special_complementary_error_fast_f32', False, False, [3253731328], [1073741824]),
+        ('ciglet_rs_fastapprox_special_error_f32', False, False, [3253731328], [3212836864]),
+        ('ciglet_rs_fastapprox_special_error_fast_f32', False, False, [3253731328], [3212836864]),
+        ('ciglet_rs_fastapprox_special_inverse_error_f32', False, False, [3212836863], [3236367163]),
+        ('ciglet_rs_fastapprox_special_inverse_error_fast_f32', False, False, [3212836863], [3236920454]),
+        ('ciglet_rs_fastapprox_special_complementary_error_lanes_f32', True, False, [3253731328, 3238002688, 3229614080, 3221225472], [1073741824, 1073741824, 1073741906, 1073707384]),
+        ('ciglet_rs_fastapprox_special_complementary_error_fast_lanes_f32', True, False, [3253731328, 3238002688, 3229614080, 3221225472], [1073741824, 1073741824, 1073740248, 1073580755]),
+        ('ciglet_rs_fastapprox_special_error_lanes_f32', True, False, [3253731328, 3238002688, 3229614080, 3221225472], [3212836864, 3212836864, 3212837028, 3212767984]),
+        ('ciglet_rs_fastapprox_special_error_fast_lanes_f32', True, False, [3253731328, 3238002688, 3229614080, 3221225472], [3212836864, 3212836864, 3212833712, 3212514726]),
+        ('ciglet_rs_fastapprox_special_inverse_error_lanes_f32', True, False, [3212836863, 3212820087, 3211159142, 3204448256], [3236367163, 3225472186, 3214285393, 3203674992]),
+        ('ciglet_rs_fastapprox_special_inverse_error_fast_lanes_f32', True, False, [3212836863, 3212820087, 3211159142, 3204448256], [3236920454, 3226577233, 3215166717, 3203873858]),
+        ('ciglet_rs_fastapprox_special_log_gamma_f32', False, False, [953267991], [1091788246]),
+        ('ciglet_rs_fastapprox_special_log_gamma_fast_f32', False, False, [953267991], [1091735988]),
+        ('ciglet_rs_fastapprox_special_digamma_f32', False, False, [953267991], [3323740752]),
+        ('ciglet_rs_fastapprox_special_digamma_fast_f32', False, False, [953267991], [3323740631]),
+        ('ciglet_rs_fastapprox_special_log_gamma_lanes_f32', True, False, [953267991, 1008981770, 1036831949, 1056964608], [1091788246, 1083387860, 1074802346, 1058176652]),
+        ('ciglet_rs_fastapprox_special_log_gamma_fast_lanes_f32', True, False, [953267991, 1008981770, 1036831949, 1056964608], [1091735988, 1083285881, 1074586307, 1055577372]),
+        ('ciglet_rs_fastapprox_special_digamma_lanes_f32', True, False, [953267991, 1008981770, 1036831949, 1056964608], [3323740752, 3267960682, 3240544666, 3220921414]),
+        ('ciglet_rs_fastapprox_special_digamma_fast_lanes_f32', True, False, [953267991, 1008981770, 1036831949, 1056964608], [3323740631, 3267945875, 3240462129, 3220781162]),
+        ('ciglet_rs_fastapprox_hyperbolic_sine_approximate_f32', False, False, [3256877056], [3687911168]),
+        ('ciglet_rs_fastapprox_hyperbolic_sine_fast_f32', False, False, [3256877056], [3688055680]),
+        ('ciglet_rs_fastapprox_hyperbolic_cosine_approximate_f32', False, False, [3256877056], [1540427520]),
+        ('ciglet_rs_fastapprox_hyperbolic_cosine_fast_f32', False, False, [3256877056], [1540572032]),
+        ('ciglet_rs_fastapprox_hyperbolic_tangent_approximate_f32', False, False, [3256877056], [3212836864]),
+        ('ciglet_rs_fastapprox_hyperbolic_tangent_fast_f32', False, False, [3256877056], [3212836864]),
+        ('ciglet_rs_fastapprox_hyperbolic_sine_approximate_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [3687911168, 3252310079, 3196147136, 0]),
+        ('ciglet_rs_fastapprox_hyperbolic_sine_fast_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [3688055680, 3252371520, 3196266944, 0]),
+        ('ciglet_rs_fastapprox_hyperbolic_cosine_approximate_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [1540427520, 1104836033, 1065616656, 1065353216]),
+        ('ciglet_rs_fastapprox_hyperbolic_cosine_fast_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [1540572032, 1104897472, 1065749072, 1064872512]),
+        ('ciglet_rs_fastapprox_hyperbolic_tangent_approximate_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [3212836864, 3212825612, 3195717740, 0]),
+        ('ciglet_rs_fastapprox_hyperbolic_tangent_fast_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [3212836864, 3212825829, 3196010016, 1013850496]),
+        ('ciglet_rs_fastapprox_special_lambert_w_f32', False, False, [3199750636], [3209579327]),
+        ('ciglet_rs_fastapprox_special_lambert_w_fast_f32', False, False, [3199750636], [3208515868]),
+        ('ciglet_rs_fastapprox_special_lambert_w_exp_f32', False, False, [3229614080], [1015918168]),
+        ('ciglet_rs_fastapprox_special_lambert_w_exp_fast_f32', False, False, [3229614080], [1009241978]),
+        ('ciglet_rs_fastapprox_special_lambert_w_lanes_f32', True, False, [3199750636, 3196059648, 3184315597, 2147483648], [3209579327, 3199666689, 3185902934, 921542836]),
+        ('ciglet_rs_fastapprox_special_lambert_w_fast_lanes_f32', True, False, [3199750636, 3196059648, 3184315597, 2147483648], [3208515868, 3200040297, 3185051203, 983587634]),
+        ('ciglet_rs_fastapprox_special_lambert_w_exp_lanes_f32', True, False, [3212836864, 3184315597, 2376221280, 2147483648], [1049531837, 1057496549, 1058091996, 1058091996]),
+        ('ciglet_rs_fastapprox_special_lambert_w_exp_fast_lanes_f32', True, False, [3212836864, 3184315597, 2376221280, 2147483648], [1049408144, 1057263495, 1057933791, 1057933791]),
+        ('ciglet_rs_fastapprox_power_f32', False, True, [1040187392, 3225419776], [1140850688]),
+        ('ciglet_rs_fastapprox_power_fast_f32', False, True, [1040187392, 3225419776], [1138927872]),
+        ('ciglet_rs_fastapprox_power_lanes_f32', True, True, [1040187392, 1056964608, 1073741824, 1092616192, 3225419776, 3204448256, 0, 1077936128], [1140850688, 1068827968, 1065353216, 1148843776]),
+        ('ciglet_rs_fastapprox_power_fast_lanes_f32', True, True, [1040187392, 1056964608, 1073741824, 1092616192, 3225419776, 3204448256, 0, 1077936128], [1138927872, 1068826496, 1064872512, 1148103552]),
+        ('ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_f32', False, False, [3256877056], [580697506]),
+        ('ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_f32', False, False, [3256877056], [580590289]),
+        ('ciglet_rs_fastapprox_hyperbolic_sigmoid_approximate_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [580697506, 1016289488, 1054878398, 1056964608]),
+        ('ciglet_rs_fastapprox_hyperbolic_sigmoid_fast_lanes_f32', True, False, [3256877056, 3229614080, 3196059648, 2147483648], [580590289, 1016248951, 1054754946, 1057086531]),
+        ('ciglet_rs_fastapprox_trigonometric_sine_approximate_f32', False, False, [0], [0]),
+        ('ciglet_rs_fastapprox_trigonometric_sine_fast_f32', False, False, [0], [0]),
+        ('ciglet_rs_fastapprox_sine_f32', False, False, [0], [3033059679]),
+        ('ciglet_rs_fastapprox_sine_fast_f32', False, False, [0], [3032923538]),
+        ('ciglet_rs_fastapprox_trigonometric_cosine_approximate_f32', False, False, [0], [1065352988]),
+        ('ciglet_rs_fastapprox_trigonometric_cosine_fast_f32', False, False, [0], [1065353216]),
+        ('ciglet_rs_fastapprox_cosine_f32', False, False, [0], [1065352988]),
+        ('ciglet_rs_fastapprox_cosine_fast_f32', False, False, [0], [1065343404]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_approximate_f32', False, False, [0], [0]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_fast_f32', False, False, [0], [0]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_f32', False, False, [0], [3033059858]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_full_fast_f32', False, False, [0], [3032923538]),
+        ('ciglet_rs_fastapprox_trigonometric_sine_approximate_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [0, 0, 228724725, 2376208373]),
+        ('ciglet_rs_fastapprox_trigonometric_sine_fast_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [0, 0, 228614857, 2376098505]),
+        ('ciglet_rs_fastapprox_trigonometric_sine_full_approximate_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [3033059679, 3033059679, 3033059679, 885576031]),
+        ('ciglet_rs_fastapprox_trigonometric_sine_full_fast_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [3032923538, 3032923538, 3032923538, 885439890]),
+        ('ciglet_rs_fastapprox_trigonometric_cosine_approximate_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [1065352988, 1065352988, 1065352988, 1065352988]),
+        ('ciglet_rs_fastapprox_trigonometric_cosine_fast_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [1065353216, 1065353216, 1065353216, 1065353216]),
+        ('ciglet_rs_fastapprox_trigonometric_cosine_full_approximate_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [1065352988, 1065352988, 1065352988, 1065352988]),
+        ('ciglet_rs_fastapprox_trigonometric_cosine_full_fast_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [1065343404, 1065343404, 1065343404, 1065343404]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_approximate_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [0, 0, 228724869, 2376208517]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_fast_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [0, 0, 228614857, 2376098505]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_full_approximate_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [3033059858, 3033059858, 3033059858, 885576208]),
+        ('ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32', True, False, [0, 2147483648, 228737632, 2376221280], [3032923538, 3032923538, 3032923538, 885439890]),
+    ]
+    assert len(bundled_cases) == 88
+    for name, vector, binary, input_words, expected in bundled_cases:
+        operation = getattr(library, name)
+        value_type = FloatLanes if vector else ctypes.c_float
+        operation.argtypes = [value_type] * (2 if binary else 1) + [ctypes.POINTER(value_type)]
+        operation.restype = ctypes.c_uint32
+        if vector:
+            source = FloatLanes((ctypes.c_float * 4)(*(float_from_word(x) for x in input_words[:4])))
+            exponent = FloatLanes((ctypes.c_float * 4)(*(float_from_word(x) for x in input_words[4:]))) if binary else None
+            args = [source] + ([exponent] if binary else [])
+            result = FloatLanes()
+            assert operation(*args, ctypes.byref(result)) == 0
+            assert [float_word(x) for x in result.values] == expected
+            assert operation(*args, ctypes.byref(source)) == 0
+            assert [float_word(x) for x in source.values] == expected
+            source.values[3] = float("nan")
+            assert operation(*args, ctypes.byref(result)) == 3
+            assert [float_word(x) for x in result.values] == expected
+        else:
+            args = [float_from_word(x) for x in input_words]
+            result = ctypes.c_float(71)
+            assert operation(*args, ctypes.byref(result)) == 0 and float_word(result.value) == expected[0]
+            result.value = args[0]
+            assert operation(result, *args[1:], ctypes.byref(result)) == 0 and float_word(result.value) == expected[0]
+            assert operation(float("nan"), *args[1:], ctypes.byref(result)) == 3
+            assert float_word(result.value) == expected[0]
+        assert operation(*args, None) == 1
+    helper_signatures = {
+        "from_bits": (BitLanes, FloatLanes), "to_bits": (FloatLanes, BitLanes),
+        "absolute": (FloatLanes, FloatLanes), "to_integers": (FloatLanes, IntLanes),
+        "from_integers": (IntLanes, FloatLanes), "from_integer64_lanes": (WideLanes, IntLanes),
+    }
+    helpers = {}
+    for name, (input_type, output_type) in helper_signatures.items():
+        operation = getattr(library, f"ciglet_rs_lanes_{name}")
+        operation.argtypes = [input_type, ctypes.POINTER(output_type)]
+        operation.restype = ctypes.c_uint32
+        helpers[name] = operation
+    raw = [0x7fc00042, 0xffc00099, 0x80000000, 0x7f800000]
+    bits = BitLanes((ctypes.c_uint32 * 4)(*raw))
+    copied, floats, integers = BitLanes(), FloatLanes(), IntLanes()
+    assert helpers["from_bits"](bits, ctypes.byref(floats)) == 0
+    assert helpers["to_bits"](floats, ctypes.byref(copied)) == 0 and list(copied.values) == raw
+    assert helpers["absolute"](floats, ctypes.byref(floats)) == 0
+    assert helpers["to_bits"](floats, ctypes.byref(copied)) == 0 and list(copied.values) == [x & 0x7fffffff for x in raw]
+    assert helpers["to_integers"](floats, ctypes.byref(integers)) == 0
+    assert list(integers.values) == [-2147483648, -2147483648, 0, -2147483648]
+    integers = IntLanes((ctypes.c_int32 * 4)(1, -2, 2147483647, -2147483648))
+    assert helpers["from_integers"](integers, ctypes.byref(floats)) == 0
+    assert list(floats.values) == [1, -2, 2147483648, -2147483648]
+    assert helpers["from_integer64_lanes"](WideLanes((ctypes.c_int64 * 2)(0x123456789abcdef0, -1)), ctypes.byref(integers)) == 0
+    assert list(integers.values) == [-1698898192, 305419896, -1, -1]
+    assert helpers["to_bits"](floats, None) == 1
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32
