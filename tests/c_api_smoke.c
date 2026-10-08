@@ -167,6 +167,36 @@ int main(void) {
     CHECK_ARRAYS(float, CigletRsArrayF32, f32);
     CHECK_ARRAYS(double, CigletRsArrayF64, f64);
     #undef CHECK_ARRAYS
+    #define CHECK_FOURIER(type, handle_type, suffix) do { \
+        type real[] = {1, 2, 3, 4}, imaginary[4] = {0}; \
+        assert(ciglet_rs_fft_##suffix(4, real, NULL, 0, real, imaginary) == 0); \
+        assert(real[0] == 10 && real[1] == -2 && imaginary[1] == 2 && imaginary[3] == -2); \
+        assert(ciglet_rs_fft_##suffix(4, real, imaginary, 1, real, imaginary) == 0); \
+        assert(real[0] == 1 && real[1] == 2 && real[2] == 3 && real[3] == 4); \
+        assert(ciglet_rs_fft_##suffix(4, real, NULL, 2, real, imaginary) == 3); \
+        assert(ciglet_rs_fft_##suffix(4, real, NULL, 0, real, real) == 2); \
+        type impulse[] = {3, 0, 0}, inverse[3]; \
+        assert(ciglet_rs_inverse_dft_##suffix(3, impulse, NULL, inverse, NULL) == 0); \
+        assert(inverse[0] == 1 && inverse[1] == 1 && inverse[2] == 1); \
+        type odd[] = {1, 2, 3, 4, 5}; \
+        assert(ciglet_rs_fft_shift_##suffix(odd, 5, odd, 5) == 0); \
+        assert(odd[0] == 4 && odd[1] == 5 && odd[2] == 1 && odd[3] == 2 && odd[4] == 3); \
+        handle_type *plan = NULL; \
+        size_t length = 0; \
+        assert(ciglet_rs_fft_plan_new_##suffix(4, &plan) == 0); \
+        assert(ciglet_rs_fft_plan_length_##suffix(plan, &length) == 0 && length == 4); \
+        type unit[] = {1, 0, 0, 0}; \
+        assert(ciglet_rs_fft_plan_transform_##suffix(plan, unit, NULL, 4, 0, real, imaginary) == 0); \
+        for (size_t index = 0; index < 4; ++index) { assert(real[index] == 1 && imaginary[index] == 0); } \
+        assert(ciglet_rs_fft_plan_transform_##suffix(plan, real, imaginary, 4, 1, real, imaginary) == 0); \
+        assert(real[0] == 1 && real[1] == 0 && real[2] == 0 && real[3] == 0); \
+        assert(ciglet_rs_fft_plan_transform_##suffix(plan, unit, NULL, 3, 0, real, imaginary) == 2); \
+        assert(ciglet_rs_fft_plan_release_##suffix(&plan) == 0 && plan == NULL); \
+        assert(ciglet_rs_fft_plan_release_##suffix(&plan) == 0); \
+    } while (0)
+    CHECK_FOURIER(float, CigletRsFftF32, f32);
+    CHECK_FOURIER(double, CigletRsFftF64, f64);
+    #undef CHECK_FOURIER
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

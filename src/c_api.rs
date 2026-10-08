@@ -21,6 +21,12 @@ mod array_f32;
 pub use array_f32::*;
 mod array_f64;
 pub use array_f64::*;
+mod fourier;
+pub use fourier::{CigletRsFftF32, CigletRsFftF64};
+mod fourier_f32;
+pub use fourier_f32::*;
+mod fourier_f64;
+pub use fourier_f64::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

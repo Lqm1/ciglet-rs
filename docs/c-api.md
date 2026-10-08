@@ -279,3 +279,60 @@ Additional primary references consulted for this checkpoint:
 - https://doc.rust-lang.org/nomicon/ffi.html
 - https://docs.python.org/3/library/ctypes.html
 - https://github.com/mozilla/cbindgen/blob/v0.29.4/docs.md
+
+## Fourier checkpoint
+
+Fourteen more endpoints provide binary32/binary64 one-shot FFT, direct inverse
+DFT, fftshift and reusable FFT plan creation/length/transform/release. There are
+92 functions and four opaque types. Direction is a checked u32 code: zero
+Forward, one normalized Inverse, other values status three. FFT plans require
+positive power-of-two lengths; direct inverse DFT retains any positive supported
+length and its quadratic cost. Real/imaginary null inputs mean all zeros;
+null output components are discarded. Present planes have the stated element
+count, and outputs must be disjoint. Either output can overlap either input:
+the complete owned complex result is computed before any caller output commit.
+Odd fftshift retains the native right rotation by length/2 and supports in-place
+buffers. No finite-value guard or new numerical kernel is introduced.
+
+Plan handles reuse the native forward/inverse plans and scratch allocation.
+Their mutex serializes scratch access; concurrent calls must still have stable
+inputs and independently writable outputs. The mutex guard is acquired within
+the unwind boundary. Observed poison returns status three rather than reusing
+scratch state; poisoning is advisory and not used to justify raw-pointer safety.
+An induced-poison unit test verifies unchanged output and successful release.
+Release requires exclusive ownership and no outstanding plan calls, clears its
+slot, and consumes the object even if destruction produces a caught unwind.
+It must not be reused through other aliases. Metadata remains immutable; length
+queries do not acquire the scratch lock. Computation failures retain caller
+output; plan scratch is private and is not exposed as a caller-controlled buffer.
+
+Windows MSVC x86_64/i686 and Windows GNU x86_64 Debug pass seventeen boundary
+integration tests across three suites and actual C callers invoking all 92
+exports. Windows MSVC x86_64 Release passes the same suites and optimized C/
+Python callers. Windows x86_64 MSVC/GNU Debug also pass Python calls. Rust tests
+cover exact four-point forward/inverse results, normalized non-power-of-two
+inverse DFT, absent components, discarded outputs, odd shift, reused plans,
+invalid directions/lengths, overlapping-output rejection, failed constructor
+slot retention and four scoped concurrent transforms using one live plan.
+The poison unit passes on Windows x86_64 MSVC Debug; other-target poison-unit
+execution has not been claimed. Current i686 Release Fourier bindings are not
+yet verified; the previous Release array checkpoint predates these additions.
+
+Linux GNU x86_64/i686 Debug also pass all seventeen tests and independently
+compiled GCC C callers invoking all 92 exports. Linux x86_64 additionally passes
+the Python caller. The Linux runner completed with exit zero; both target logs
+contain the exact ten, four and three passing test summaries with zero failures
+and zero ignored tests. Linux Release and Python i686 remain unverified.
+
+The ledger now maps 36 upstream rows, including all six Fourier aliases;
+296 public/configuration rows remain pending C and all 332 remain pending WASM.
+Counts do not replace the remaining configuration/structure/ownership audit.
+This does not complete ciglet or either other package's interfaces, and it is
+not a refreshed full native regression matrix. C/Python checked outputs retain
+native normalization and ordering; historical model formats are unchanged.
+
+Additional primary references:
+
+- https://doc.rust-lang.org/std/sync/struct.Mutex.html
+- https://doc.rust-lang.org/std/panic/trait.RefUnwindSafe.html
+- https://doc.rust-lang.org/std/panic/trait.UnwindSafe.html

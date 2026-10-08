@@ -229,6 +229,60 @@ def main():
         assert grid(-1.0, 1.0, values, 3) == 0
         assert list(values) == [-1.0, 0.0, 1.0]
         check_owned_arrays(library, suffix, scalar)
+        pointer = ctypes.POINTER(scalar)
+        size = ctypes.c_size_t
+        real = (scalar * 4)(1, 2, 3, 4)
+        imaginary = (scalar * 4)()
+        fft = getattr(library, f"ciglet_rs_fft_{suffix}")
+        fft.argtypes = [size, pointer, pointer, ctypes.c_uint32, pointer, pointer]
+        fft.restype = ctypes.c_uint32
+        assert fft(4, real, None, 0, real, imaginary) == 0
+        assert list(real) == [10, -2, -2, -2]
+        assert list(imaginary) == [0, 2, 0, -2]
+        assert fft(4, real, imaginary, 1, real, imaginary) == 0
+        assert list(real) == [1, 2, 3, 4]
+        assert fft(4, real, None, 2, real, imaginary) == 3
+        assert fft(4, real, None, 0, real, real) == 2
+        direct = getattr(library, f"ciglet_rs_inverse_dft_{suffix}")
+        direct.argtypes = [size, pointer, pointer, pointer, pointer]
+        direct.restype = ctypes.c_uint32
+        impulse = (scalar * 3)(3, 0, 0)
+        output = (scalar * 3)()
+        assert direct(3, impulse, None, output, None) == 0
+        assert list(output) == [1, 1, 1]
+        shift = getattr(library, f"ciglet_rs_fft_shift_{suffix}")
+        shift.argtypes = [pointer, size, pointer, size]
+        shift.restype = ctypes.c_uint32
+        odd = (scalar * 5)(1, 2, 3, 4, 5)
+        assert shift(odd, 5, odd, 5) == 0
+        assert list(odd) == [4, 5, 1, 2, 3]
+        plan_type = ctypes.c_void_p
+        slot = ctypes.POINTER(plan_type)
+        functions = {}
+        for operation, arguments in {
+            "new": [size, slot], "length": [plan_type, ctypes.POINTER(size)],
+            "transform": [plan_type, pointer, pointer, size, ctypes.c_uint32, pointer, pointer],
+            "release": [slot],
+        }.items():
+            function = getattr(library, f"ciglet_rs_fft_plan_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            functions[operation] = function
+        plan = plan_type()
+        try:
+            assert functions["new"](4, ctypes.byref(plan)) == 0
+            count = size()
+            assert functions["length"](plan, ctypes.byref(count)) == 0 and count.value == 4
+            unit = (scalar * 4)(1, 0, 0, 0)
+            for _ in range(3):
+                assert functions["transform"](plan, unit, None, 4, 0, real, imaginary) == 0
+                assert list(real) == [1, 1, 1, 1] and list(imaginary) == [0, 0, 0, 0]
+            assert functions["transform"](plan, real, imaginary, 4, 1, real, imaginary) == 0
+            assert list(real) == [1, 0, 0, 0]
+            assert functions["transform"](plan, unit, None, 3, 0, real, imaginary) == 2
+        finally:
+            assert functions["release"](ctypes.byref(plan)) == 0 and plan.value is None
+            assert functions["release"](ctypes.byref(plan)) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

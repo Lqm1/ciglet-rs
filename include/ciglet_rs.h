@@ -19,6 +19,16 @@ typedef struct CigletRsArrayF32 CigletRsArrayF32;
 typedef struct CigletRsArrayF64 CigletRsArrayF64;
 
 /**
+ * Opaque reusable binary32 FFT plan, with serialized scratch access.
+ */
+typedef struct CigletRsFftF32 CigletRsFftF32;
+
+/**
+ * Opaque reusable binary64 FFT plan, with serialized scratch access.
+ */
+typedef struct CigletRsFftF64 CigletRsFftF64;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -1177,5 +1187,265 @@ uint32_t ciglet_rs_array_reshape_f64(struct CigletRsArrayF64 *handle,
  * Constructor outputs transfer ownership and must later be released exactly once.
  */
 uint32_t ciglet_rs_array_transpose_f64(struct CigletRsArrayF64 *handle);
+
+/**
+ * One-shot FFT: direction zero is forward; one is normalized inverse.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_f32(uintptr_t length,
+                           const float *real,
+                           const float *imaginary,
+                           uint32_t direction,
+                           float *output_real,
+                           float *output_imaginary);
+
+/**
+ * Normalized inverse DFT for any positive supported length.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_inverse_dft_f32(uintptr_t length,
+                                   const float *real,
+                                   const float *imaginary,
+                                   float *output_real,
+                                   float *output_imaginary);
+
+/**
+ * Create a reusable positive power-of-two FFT plan.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_new_f32(uintptr_t length, struct CigletRsFftF32 **output);
+
+/**
+ * Write the immutable plan length.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_length_f32(const struct CigletRsFftF32 *handle, uintptr_t *output);
+
+/**
+ * Transform with a reusable plan: zero forward, one normalized inverse.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_transform_f32(const struct CigletRsFftF32 *handle,
+                                          const float *real,
+                                          const float *imaginary,
+                                          uintptr_t length,
+                                          uint32_t direction,
+                                          float *output_real,
+                                          float *output_imaginary);
+
+/**
+ * Release the plan and clear its initialized slot; a cleared slot succeeds.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_release_f32(struct CigletRsFftF32 **slot);
+
+/**
+ * Rotate frequency bins right by length/2, including odd lengths.
+ * Empty buffers accept null; input/output overlap is supported.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one stable allocation; nonempty output
+ * must be exclusively writable with a matching length.
+ */
+uint32_t ciglet_rs_fft_shift_f32(const float *input,
+                                 uintptr_t length,
+                                 float *output,
+                                 uintptr_t output_length);
+
+/**
+ * One-shot FFT: direction zero is forward; one is normalized inverse.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_f64(uintptr_t length,
+                           const double *real,
+                           const double *imaginary,
+                           uint32_t direction,
+                           double *output_real,
+                           double *output_imaginary);
+
+/**
+ * Normalized inverse DFT for any positive supported length.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_inverse_dft_f64(uintptr_t length,
+                                   const double *real,
+                                   const double *imaginary,
+                                   double *output_real,
+                                   double *output_imaginary);
+
+/**
+ * Create a reusable positive power-of-two FFT plan.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_new_f64(uintptr_t length, struct CigletRsFftF64 **output);
+
+/**
+ * Write the immutable plan length.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_length_f64(const struct CigletRsFftF64 *handle, uintptr_t *output);
+
+/**
+ * Transform with a reusable plan: zero forward, one normalized inverse.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_transform_f64(const struct CigletRsFftF64 *handle,
+                                          const double *real,
+                                          const double *imaginary,
+                                          uintptr_t length,
+                                          uint32_t direction,
+                                          double *output_real,
+                                          double *output_imaginary);
+
+/**
+ * Release the plan and clear its initialized slot; a cleared slot succeeds.
+ * Null input components mean zeros; null output components are discarded.
+ * Present component buffers have length elements. Output planes must not
+ * overlap one another; either may overlap input. Calculation failure leaves
+ * outputs unchanged. Release always consumes a live plan once ownership transfers.
+ *
+ * # Safety
+ * Nonnull aligned handles must be live, correctly typed objects from this
+ * library. All caller buffers/slots must be independent of private plan memory.
+ * Present inputs must be initialized single-allocation ranges, stable during
+ * computation; present outputs must be exclusively writable. Plan transforms
+ * serialize scratch access; release excludes all outstanding plan calls/aliases.
+ * Pointer-slot constructors transfer ownership; release invalidates every alias.
+ */
+uint32_t ciglet_rs_fft_plan_release_f64(struct CigletRsFftF64 **slot);
+
+/**
+ * Rotate frequency bins right by length/2, including odd lengths.
+ * Empty buffers accept null; input/output overlap is supported.
+ *
+ * # Safety
+ * Nonempty input must be initialized in one stable allocation; nonempty output
+ * must be exclusively writable with a matching length.
+ */
+uint32_t ciglet_rs_fft_shift_f64(const double *input,
+                                 uintptr_t length,
+                                 double *output,
+                                 uintptr_t output_length);
 
 #endif  /* CIGLET_RS_H */
