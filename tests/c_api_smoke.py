@@ -1472,6 +1472,72 @@ def main():
         assert stft["analyze"](owner, odd_source, defaults, odd_output) == 0 and odd_magnitude[0] == 6
         assert (info.frames, info.bins, info.available, info.window_weight, info.normalization) == (1, 5, 7, 3, 0)
         assert stft["release"](ctypes.byref(owner)) == 0 and owner.value is None
+    for suffix, scalar, maximum, minimum, tolerance in [
+        ("f32", ctypes.c_float, float.fromhex("0x1.fffffep+127"), float.fromhex("0x1p-149"), 2e-7),
+        ("f64", ctypes.c_double, sys.float_info.max, float.fromhex("0x1p-1074"), 1e-15),
+    ]:
+        class ComplexValue(ctypes.Structure):
+            _fields_ = [("real", scalar), ("imaginary", scalar)]
+
+        slot = ctypes.POINTER(ComplexValue)
+        assert ctypes.sizeof(ComplexValue) == 2 * ctypes.sizeof(scalar)
+        assert ComplexValue.imaginary.offset == ctypes.sizeof(scalar)
+        signatures = {
+            "new": [scalar, scalar, slot],
+            "conjugate": [ComplexValue, slot],
+            "add": [ComplexValue, ComplexValue, slot],
+            "subtract": [ComplexValue, ComplexValue, slot],
+            "multiply": [ComplexValue, ComplexValue, slot],
+            "divide": [ComplexValue, ComplexValue, slot],
+            "exponential": [ComplexValue, ctypes.c_uint32, slot],
+            "argument": [ComplexValue, ctypes.c_uint32, ctypes.POINTER(scalar)],
+        }
+        operations = {}
+        for name, signature in signatures.items():
+            operation = getattr(library, f"ciglet_rs_complex_{name}_{suffix}")
+            operation.argtypes = signature
+            operation.restype = ctypes.c_uint32
+            operations[name] = operation
+        value = ComplexValue(71, 71)
+        angle = scalar(71)
+        a, b = ComplexValue(2, 3), ComplexValue(4, -5)
+        assert operations["new"](-0.0, 0.0, ctypes.byref(value)) == 0
+        assert math.copysign(1, value.real) == -1 and math.copysign(1, value.imaginary) == 1
+        assert operations["conjugate"](value, ctypes.byref(value)) == 0
+        assert math.copysign(1, value.real) == -1 and math.copysign(1, value.imaginary) == -1
+        for name, expected in [("add", (6, -2)), ("subtract", (-2, 8)), ("multiply", (23, 2))]:
+            assert operations[name](a, b, ctypes.byref(value)) == 0
+            assert (value.real, value.imaginary) == expected
+        assert operations["divide"](a, b, ctypes.byref(value)) == 0
+        assert abs(value.real + 7 / 41) < tolerance and abs(value.imaginary - 22 / 41) < tolerance
+        for scale in [maximum, minimum]:
+            extreme = ComplexValue(scale, scale)
+            assert operations["divide"](extreme, extreme, ctypes.byref(value)) == 0
+            assert (value.real, value.imaginary) == (1, 0)
+        zero, negative = ComplexValue(0, -0.0), ComplexValue(-1, -0.0)
+        for mode in [0, 1, 2]:
+            assert operations["exponential"](zero, mode, ctypes.byref(value)) == 0
+            assert math.isfinite(value.real) and math.isfinite(value.imaginary)
+            assert operations["argument"](negative, mode, ctypes.byref(angle)) == 0
+            assert abs(angle.value - (-math.pi if mode else math.pi)) < tolerance
+        assert value.real == 1 and value.imaginary == 0 and math.copysign(1, value.imaginary) == -1
+        assert operations["new"](float("nan"), -0.0, ctypes.byref(value)) == 0
+        assert math.isnan(value.real) and math.copysign(1, value.imaginary) == -1
+        large = ComplexValue(maximum, 0)
+        assert operations["multiply"](large, large, ctypes.byref(value)) == 0 and math.isinf(value.real)
+        value.real = value.imaginary = angle.value = 71
+        assert operations["divide"](a, zero, ctypes.byref(value)) == 3
+        assert operations["exponential"](a, 3, ctypes.byref(value)) == 3
+        assert operations["argument"](a, 3, ctypes.byref(angle)) == 3
+        assert operations["conjugate"](a, None) == 1
+        assert operations["argument"](a, 0, None) == 1
+        assert (value.real, value.imaginary, angle.value) == (71, 71, 71)
+        value.real, value.imaginary = 2, 3
+        assert operations["add"](value, b, ctypes.byref(value)) == 0
+        assert (value.real, value.imaginary) == (6, -2)
+        alias = ctypes.cast(ctypes.byref(value), ctypes.POINTER(scalar))
+        assert operations["argument"](value, 2, alias) == 0
+        assert abs(value.real - math.atan2(-2, 6)) < tolerance
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

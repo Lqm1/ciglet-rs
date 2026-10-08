@@ -118,6 +118,13 @@ mod stft_types;
 pub use stft_types::*;
 mod stft_functions;
 pub use stft_functions::*;
+mod complex;
+pub use complex::{
+    CIGLET_RS_COMPLEX_APPROXIMATE, CIGLET_RS_COMPLEX_EXACT, CIGLET_RS_COMPLEX_FAST,
+    CigletRsComplexF32, CigletRsComplexF64,
+};
+mod complex_functions;
+pub use complex_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

@@ -44,6 +44,21 @@
 #define CIGLET_RS_STFT_NORMALIZATION 8
 
 /**
+ * Fast approximation selector.
+ */
+#define CIGLET_RS_COMPLEX_FAST 0
+
+/**
+ * Source-compatible approximation selector; the original c_exp default.
+ */
+#define CIGLET_RS_COMPLEX_APPROXIMATE 1
+
+/**
+ * Host libm selector.
+ */
+#define CIGLET_RS_COMPLEX_EXACT 2
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -412,6 +427,22 @@ typedef struct CigletRsStftSamplesF64 {
   double *samples;
   uintptr_t count;
 } CigletRsStftSamplesF64;
+
+/**
+ * Binary32 complex value with natural C field layout.
+ */
+typedef struct CigletRsComplexF32 {
+  float real;
+  float imaginary;
+} CigletRsComplexF32;
+
+/**
+ * Binary64 complex value with natural C field layout.
+ */
+typedef struct CigletRsComplexF64 {
+  double real;
+  double imaginary;
+} CigletRsComplexF64;
 
 /**
  * Compute difference into equally sized caller storage.
@@ -7362,6 +7393,226 @@ uint32_t ciglet_rs_stft_synthesize_regular_f64(struct CigletRsStftSpectrumF64 in
                                                double normalization,
                                                uint32_t nyquist,
                                                struct CigletRsStftSamplesF64 output);
+
+/**
+ * Construct a complex value, preserving IEEE fields and signed zeros.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_new_f32(float real, float imaginary, struct CigletRsComplexF32 *output);
+
+/**
+ * Conjugate a complex value, preserving native IEEE arithmetic.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_conjugate_f32(struct CigletRsComplexF32 value,
+                                         struct CigletRsComplexF32 *output);
+
+/**
+ * Add two complex values with native scalar rounding.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_add_f32(struct CigletRsComplexF32 left,
+                                   struct CigletRsComplexF32 right,
+                                   struct CigletRsComplexF32 *output);
+
+/**
+ * Subtract two complex values with native scalar rounding.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_subtract_f32(struct CigletRsComplexF32 left,
+                                        struct CigletRsComplexF32 right,
+                                        struct CigletRsComplexF32 *output);
+
+/**
+ * Multiply two complex values in the native operation order.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_multiply_f32(struct CigletRsComplexF32 left,
+                                        struct CigletRsComplexF32 right,
+                                        struct CigletRsComplexF32 *output);
+
+/**
+ * Checked division retains the native scaled fallback for range loss.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_divide_f32(struct CigletRsComplexF32 numerator,
+                                      struct CigletRsComplexF32 divisor,
+                                      struct CigletRsComplexF32 *output);
+
+/**
+ * Complex exponential with Fast=0, Approximate=1 or Exact=2. Source c_exp selects 1.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_exponential_f32(struct CigletRsComplexF32 value,
+                                           uint32_t mode,
+                                           struct CigletRsComplexF32 *output);
+
+/**
+ * Complex argument with Fast=0, Approximate=1 or Exact=2.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_argument_f32(struct CigletRsComplexF32 value,
+                                        uint32_t mode,
+                                        float *output);
+
+/**
+ * Construct a complex value, preserving IEEE fields and signed zeros.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_new_f64(double real,
+                                   double imaginary,
+                                   struct CigletRsComplexF64 *output);
+
+/**
+ * Conjugate a complex value, preserving native IEEE arithmetic.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_conjugate_f64(struct CigletRsComplexF64 value,
+                                         struct CigletRsComplexF64 *output);
+
+/**
+ * Add two complex values with native scalar rounding.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_add_f64(struct CigletRsComplexF64 left,
+                                   struct CigletRsComplexF64 right,
+                                   struct CigletRsComplexF64 *output);
+
+/**
+ * Subtract two complex values with native scalar rounding.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_subtract_f64(struct CigletRsComplexF64 left,
+                                        struct CigletRsComplexF64 right,
+                                        struct CigletRsComplexF64 *output);
+
+/**
+ * Multiply two complex values in the native operation order.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_multiply_f64(struct CigletRsComplexF64 left,
+                                        struct CigletRsComplexF64 right,
+                                        struct CigletRsComplexF64 *output);
+
+/**
+ * Checked division retains the native scaled fallback for range loss.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_divide_f64(struct CigletRsComplexF64 numerator,
+                                      struct CigletRsComplexF64 divisor,
+                                      struct CigletRsComplexF64 *output);
+
+/**
+ * Complex exponential with Fast=0, Approximate=1 or Exact=2. Source c_exp selects 1.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_exponential_f64(struct CigletRsComplexF64 value,
+                                           uint32_t mode,
+                                           struct CigletRsComplexF64 *output);
+
+/**
+ * Complex argument with Fast=0, Approximate=1 or Exact=2.
+ * Native validation is retained; errors leave the output unchanged.
+ * Construction and ordinary operators retain successful nonfinite IEEE results.
+ *
+ * # Safety
+ * Output points to aligned, exclusively writable storage for its declared type.
+ * Descriptors are copied by value; output may reuse the source value's storage.
+ * Existing panic/allocation limits apply; selectors and null/alignment are checked.
+ */
+uint32_t ciglet_rs_complex_argument_f64(struct CigletRsComplexF64 value,
+                                        uint32_t mode,
+                                        double *output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

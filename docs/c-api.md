@@ -6,9 +6,9 @@ calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
 modules under `src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
-exports 445 status-returning functions, 26 opaque types, 18 concrete descriptors
-and eleven constants. The checkpoints below record implementation and verification
-evidence. Of 332 public upstream mappings, 196 have verified C bindings and 136
+exports 461 status-returning functions, 26 opaque types, 20 concrete descriptors
+and fourteen constants. The checkpoints below record implementation and verification
+evidence. Of 332 public upstream mappings, 207 have verified C bindings and 125
 remain pending, including the bundled approximation functions. Liblrhsmm and SHIRO
 bindings and all browser/Node WebAssembly bindings remain required work.
 
@@ -1945,3 +1945,58 @@ public C rows, two nonpublic formals and 332 pending public WASM rows. Every map
 function/constant exists in the generated header. Current-family Release,
 Python32 and static-link callers remain unverified. Final combined acceptance
 and all remaining ciglet, liblrhsmm and SHIRO bindings remain required.
+
+## Complex arithmetic bindings
+
+Sixteen status-returning functions expose binary32/binary64 construction,
+conjugation, addition, subtraction, multiplication, division, exponential and
+argument. Two concrete repr(C) value descriptors contain real and imaginary
+fields. The natural layout has two scalar fields with no packing or private
+RustFFT/num-complex representation. Input descriptors pass by value; result
+pointers avoid scalar floating return changes on i686. Construction and ordinary
+operators preserve native IEEE behavior, including successful nonfinite results
+and signed zeros. Division retains native validation and scaled fallback for
+intermediate range loss. Exponential/argument select Fast=0, Approximate=1 or
+Exact=2 using three generated constants. The original c_exp alias selects
+Approximate explicitly. Fast/Approximate retain their binary32 approximation
+stages even for binary64 operands; the two host argument levels remain identical.
+
+All output slots must be aligned and exclusively writable for their declared
+type. Existing owned-result helpers check pointer/alignment before calculation,
+retain outputs on every error and commit a complete descriptor/scalar only on
+success. By-value descriptors permit reusing their original storage for results,
+including writing an argument into the original real field. Null/misaligned
+slots return one; native validation/invalid precision returns three; existing
+caught-unwind/allocation limits apply. There are no opaque complex owners.
+
+Six host tests and warning-denied all-target Clippy pass. Both original CPX1
+fixtures are consumed completely, comparing all 64 complex cases per precision
+with the existing exact bit criteria. Their fifteen scalar approximation tail
+records are verified against native APIs using the unchanged double host-exp
+one-ULP/f64-epsilon bound; scalar bindings remain tracked independently.
+Construction, all operators, all three exponential levels and argument modes are
+exercised. Independent arithmetic examples, signed-zero construction/conjugation/
+exponential/argument, maximum and minimal-subnormal division, ordinary nonfinite
+results, invalid selectors/data/divisors, null/misaligned output retention and
+source-storage reuse are checked. No native arithmetic, fixture, dependency or
+existing tolerance changed. Descriptor declarations follow the already referenced
+Rust repr(C) and ctypes Structure documentation.
+
+
+All three five-target runners terminate with exit zero. Named-suite verification
+confirms all 48 expected suites and their individual counts: 208 boundary plus
+46 focused native tests per target, with zero failed/ignored tests and no error
+diagnostics. Optimized assert-enabled C callers pass on MSVC64/MSVC32/GNU64/
+Linux64/Linux32; Python passes on MSVC64/GNU64/Linux64. Each caller exercises
+all sixteen functions, all precision modes, both descriptor layouts, independent
+arithmetic, signed zeros, extreme division, ordinary nonfinite results, error
+retention and source-storage reuse. Header verification proves 461 unique exports,
+26 opaque types, 20 concrete descriptors and fourteen constants. Every export is
+referenced by expanded optimized C main. Both new descriptor definitions and
+three selectors are checked. Rustdoc, formatting and whitespace checks pass.
+The 334-row inventory records 207 implemented C mappings, 125 pending public C
+rows, two nonpublic formals and 332 pending public WASM rows; all implemented
+function/constant mappings exist in the generated header. Existing native source
+and Cargo manifests/lock remain unchanged from the last full native gate.
+Current-family Release, Python32 and static-link callers remain unverified.
+Final combined acceptance and all remaining bindings remain required.

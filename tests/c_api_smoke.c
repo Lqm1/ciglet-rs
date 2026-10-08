@@ -1111,6 +1111,43 @@ int main(void) {
     CHECK_STFT(float, f32, F32);
     CHECK_STFT(double, f64, F64);
     #undef CHECK_STFT
+    assert(CIGLET_RS_COMPLEX_FAST == 0 && CIGLET_RS_COMPLEX_APPROXIMATE == 1 && CIGLET_RS_COMPLEX_EXACT == 2);
+    #define CHECK_COMPLEX(type, suffix, tag, maximum, minimum, tolerance) do { \
+        CigletRsComplex##tag a = {2,3}, b = {4,-5}, value = {71,71}; type angle = 71; \
+        assert(sizeof(CigletRsComplex##tag) == 2*sizeof(type) && offsetof(CigletRsComplex##tag,imaginary) == sizeof(type)); \
+        assert(ciglet_rs_complex_new_##suffix(-0.0,0.0,&value) == 0 && signbit(value.real) && !signbit(value.imaginary)); \
+        assert(ciglet_rs_complex_conjugate_##suffix(value,&value) == 0 && signbit(value.real) && signbit(value.imaginary)); \
+        assert(ciglet_rs_complex_add_##suffix(a,b,&value) == 0 && value.real == 6 && value.imaginary == -2); \
+        assert(ciglet_rs_complex_subtract_##suffix(a,b,&value) == 0 && value.real == -2 && value.imaginary == 8); \
+        assert(ciglet_rs_complex_multiply_##suffix(a,b,&value) == 0 && value.real == 23 && value.imaginary == 2); \
+        assert(ciglet_rs_complex_divide_##suffix(a,b,&value) == 0 && fabs((double)value.real+7.0/41.0) < tolerance && fabs((double)value.imaginary-22.0/41.0) < tolerance); \
+        for(size_t i=0;i<2;++i) { \
+            type scale = i ? minimum : maximum; CigletRsComplex##tag extreme = {scale,scale}; \
+            assert(ciglet_rs_complex_divide_##suffix(extreme,extreme,&value) == 0 && value.real == 1 && value.imaginary == 0); \
+        } \
+        CigletRsComplex##tag zero = {0,-0.0}, negative = {-1,-0.0}; \
+        for(uint32_t mode=0;mode<3;++mode) { \
+            assert(ciglet_rs_complex_exponential_##suffix(zero,mode,&value) == 0 && isfinite(value.real) && isfinite(value.imaginary)); \
+            assert(ciglet_rs_complex_argument_##suffix(negative,mode,&angle) == 0 && fabs((double)angle-(mode ? -acos(-1.0) : acos(-1.0))) < tolerance); \
+        } \
+        assert(value.real == 1 && value.imaginary == 0 && signbit(value.imaginary)); \
+        assert(ciglet_rs_complex_new_##suffix(NAN,-0.0,&value) == 0 && isnan(value.real) && signbit(value.imaginary)); \
+        CigletRsComplex##tag large = {maximum,0}; \
+        assert(ciglet_rs_complex_multiply_##suffix(large,large,&value) == 0 && isinf(value.real)); \
+        value = (CigletRsComplex##tag){71,71}; angle = 71; \
+        assert(ciglet_rs_complex_divide_##suffix(a,zero,&value) == 3); \
+        assert(ciglet_rs_complex_exponential_##suffix(a,3,&value) == 3); \
+        assert(ciglet_rs_complex_argument_##suffix(a,3,&angle) == 3); \
+        assert(ciglet_rs_complex_conjugate_##suffix(a,NULL) == 1); \
+        assert(ciglet_rs_complex_argument_##suffix(a,0,NULL) == 1); \
+        assert(value.real == 71 && value.imaginary == 71 && angle == 71); \
+        value = a; \
+        assert(ciglet_rs_complex_add_##suffix(value,b,&value) == 0 && value.real == 6 && value.imaginary == -2); \
+        assert(ciglet_rs_complex_argument_##suffix(value,2,&value.real) == 0 && fabs((double)value.real-atan2(-2.0,6.0)) < tolerance); \
+    } while (0)
+    CHECK_COMPLEX(float, f32, F32, FLT_MAX, FLT_TRUE_MIN, 2e-7);
+    CHECK_COMPLEX(double, f64, F64, DBL_MAX, DBL_TRUE_MIN, 1e-15);
+    #undef CHECK_COMPLEX
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
