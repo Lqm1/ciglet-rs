@@ -5074,6 +5074,86 @@ uint32_t ciglet_rs_median_filter_f64(const double *signal,
                                      uintptr_t output_count);
 
 /**
+ * Synthesize one sinusoid with phase centered at floor(length / 2).
+ * Frequencies and amplitudes may be negative. Native amplitude and short-length
+ * corrections apply. Output count must equal length. Native failures preserve
+ * output. Allocation, panic and pointer-validity limitations are unchanged.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for count
+ * scalars; null is allowed for zero count.
+ */
+uint32_t ciglet_rs_sinusoid_f32(float frequency,
+                                float amplitude,
+                                float phase,
+                                uint32_t sample_rate,
+                                uintptr_t length,
+                                float *output,
+                                uintptr_t count);
+
+/**
+ * Sum centered sinusoids in parameter order using native scalar recurrence.
+ * Parameter arrays share tone_count. Empty tone lists produce silence; native
+ * sample-rate and finite-parameter checks still apply for empty output. Output
+ * count equals length. Complete staging permits parameter/output overlap and
+ * preserves output on failure. Native allocation/panic limits remain unchanged.
+ *
+ * # Safety
+ * Each input is aligned initialized stable readable single-allocation storage
+ * for tone_count scalars; output is exclusively writable for count scalars.
+ * Null pointers are accepted only for zero associated counts. Data inputs may
+ * overlap one another or output; caller mutation waits until the call returns.
+ */
+uint32_t ciglet_rs_sinusoids_f32(const float *frequencies,
+                                 const float *amplitudes,
+                                 const float *phases,
+                                 uintptr_t tone_count,
+                                 uint32_t sample_rate,
+                                 uintptr_t length,
+                                 float *output,
+                                 uintptr_t count);
+
+/**
+ * Synthesize one sinusoid with phase centered at floor(length / 2).
+ * Frequencies and amplitudes may be negative. Native amplitude and short-length
+ * corrections apply. Output count must equal length. Native failures preserve
+ * output. Allocation, panic and pointer-validity limitations are unchanged.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for count
+ * scalars; null is allowed for zero count.
+ */
+uint32_t ciglet_rs_sinusoid_f64(double frequency,
+                                double amplitude,
+                                double phase,
+                                uint32_t sample_rate,
+                                uintptr_t length,
+                                double *output,
+                                uintptr_t count);
+
+/**
+ * Sum centered sinusoids in parameter order using native scalar recurrence.
+ * Parameter arrays share tone_count. Empty tone lists produce silence; native
+ * sample-rate and finite-parameter checks still apply for empty output. Output
+ * count equals length. Complete staging permits parameter/output overlap and
+ * preserves output on failure. Native allocation/panic limits remain unchanged.
+ *
+ * # Safety
+ * Each input is aligned initialized stable readable single-allocation storage
+ * for tone_count scalars; output is exclusively writable for count scalars.
+ * Null pointers are accepted only for zero associated counts. Data inputs may
+ * overlap one another or output; caller mutation waits until the call returns.
+ */
+uint32_t ciglet_rs_sinusoids_f64(const double *frequencies,
+                                 const double *amplitudes,
+                                 const double *phases,
+                                 uintptr_t tone_count,
+                                 uint32_t sample_rate,
+                                 uintptr_t length,
+                                 double *output,
+                                 uintptr_t count);
+
+/**
  * Stable aliased sinc or its angular-frequency derivative.
  * Selected scalar precision and native arithmetic are retained. Complete scalar
  * staging preserves output on failure. Nonfinite inputs and unknown policy codes

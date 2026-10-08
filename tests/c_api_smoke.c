@@ -807,6 +807,29 @@ int main(void) {
     CHECK_SINC(float, f32, FLT_MAX, 1e-7);
     CHECK_SINC(double, f64, DBL_MAX, 2e-15);
     #undef CHECK_SINC
+    #define CHECK_SYNTHESIS(type, suffix) do { \
+        type frequencies[] = {0,0}, amplitudes[] = {0.25,-0.5}, phases[] = {0,0}, output[3] = {71,71,71}; \
+        assert(ciglet_rs_sinusoid_##suffix(0,0.25,0,16000,3,output,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(output[i] == 0.25); \
+        assert(ciglet_rs_sinusoids_##suffix(frequencies,amplitudes,phases,2,16000,3,output,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(output[i] == -0.25); \
+        assert(ciglet_rs_sinusoids_##suffix(output,amplitudes,phases,0,16000,3,output,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(output[i] == 0); \
+        output[0] = output[1] = output[2] = 71; \
+        assert(ciglet_rs_sinusoid_##suffix(NAN,1,0,16000,3,output,3) == 3); \
+        assert(ciglet_rs_sinusoid_##suffix(0,1,0,16000,3,output,2) == 2); \
+        assert(ciglet_rs_sinusoids_##suffix(NULL,amplitudes,phases,2,16000,3,output,3) == 1); \
+        assert(ciglet_rs_sinusoids_##suffix(frequencies,amplitudes,phases,2,0,3,output,3) == 3); \
+        for(size_t i=0;i<3;++i) assert(output[i] == 71); \
+        assert(ciglet_rs_sinusoid_##suffix(0,1,0,16000,0,NULL,0) == 0); \
+        assert(ciglet_rs_sinusoids_##suffix(NULL,NULL,NULL,0,16000,0,NULL,0) == 0); \
+        type shared[] = {0,0,0}; \
+        assert(ciglet_rs_sinusoids_##suffix(shared,amplitudes,phases,1,16000,3,shared,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(shared[i] == 0.25); \
+    } while (0)
+    CHECK_SYNTHESIS(float, f32);
+    CHECK_SYNTHESIS(double, f64);
+    #undef CHECK_SYNTHESIS
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

@@ -1464,3 +1464,38 @@ pending public WASM rows; all mapped exports exist in the header. Current family
 Release, Python32 and static-link callers remain unverified. This family evidence
 does not replace final combined native/bindings acceptance. All remaining public
 C interfaces and all three WASM bindings remain required.
+
+
+## Centered sinusoid synthesis
+
+Four f32/f64 entry points expose both native single-tone and ordered multi-tone
+synthesis. Phase is specified at sample floor(length /2). Parameters retain signed
+frequencies and amplitudes and native scalar recurrence. The disclosed native
+amplitude and zero/one-length safety corrections apply. Multi-tone calls accept
+three scalar arrays sharing tone_count; zero tones yield silence. Scalar arguments
+avoid a cross-language struct layout dependency. Output count must equal length.
+
+All parameters and positive legacy-range sample rates are validated even for
+empty output. Inputs are range-checked before borrowing. Complete owned staging
+permits parameter/output overlap and preserves output on errors. Null empty
+buffers are never borrowed or copied. Pointer errors return one, count/range
+errors two and native errors three; panic/allocation limitations remain unchanged.
+
+Host six tests, warning-denied all-target Clippy and Rustdoc pass. Both SYN1 corpora
+consume all48 original C cases perprecision with unchanged amplitude-normalized
+bounds2e-7 f32 and2e-14 f64. Independent amplitude/centered-phase formulas, ordered
+sum equality, empty silence, zero/one lengths, signed parameters, malformed inputs,
+rate/count errors, overlap and atomic output checks pass. Header354/eighteen opaque
+types; expanded optimized assert-enabled MSVC C references all354 declarations.
+No native kernel, source fixture, dependency or tolerance changed. All five target
+runners terminate with exit zero. Exact29 summary counts10,4,4,5,6,6,3,4,6,9,9,6,6,
+3,6,6,6,5,6,8,6,8,6,6,3,3,3,2,4 verify144 boundary plus15 focused native tests
+pertarget, zero failed/ignored and no error diagnostics. Actual optimized
+assert-enabled C callers invoke all354 exports on every target; Python passes
+on MSVC64/GNU64/Linux64. Header verification, formatting and whitespace checks
+pass. The334-row inventory has162 implemented C source mappings,170 pending public
+C rows, two nonpublic macro formals and332 pending public WASM rows; all mapped
+exports exist in the header. Current family Release, Python32 and static-link
+callers remain unverified. This family evidence does not replace final combined
+native/bindings acceptance. All remaining public C interfaces and all three WASM
+bindings remain required.

@@ -1069,6 +1069,26 @@ def main():
             assert sinc_functions[operation](2,0,2,ctypes.byref(selected)) == 3 and selected.value == 71
         assert sinc_functions["aliased"](2,0,None) == 1
         assert sinc_functions["derivative"](2,0,None) == 1
+        synthesize_one = getattr(library, f"ciglet_rs_sinusoid_{suffix}")
+        synthesize_one.argtypes = [scalar,scalar,scalar,ctypes.c_uint32,size,pointer,size]
+        synthesize_one.restype = ctypes.c_uint32
+        synthesize_many = getattr(library, f"ciglet_rs_sinusoids_{suffix}")
+        synthesize_many.argtypes = [pointer,pointer,pointer,size,ctypes.c_uint32,size,pointer,size]
+        synthesize_many.restype = ctypes.c_uint32
+        frequencies,amplitudes,phases,output = (scalar*2)(0,0),(scalar*2)(0.25,-0.5),(scalar*2)(0,0),(scalar*3)(71,71,71)
+        assert synthesize_one(0,0.25,0,16000,3,output,3) == 0 and list(output) == [0.25]*3
+        assert synthesize_many(frequencies,amplitudes,phases,2,16000,3,output,3) == 0 and list(output) == [-0.25]*3
+        assert synthesize_many(None,None,None,0,16000,3,output,3) == 0 and list(output) == [0]*3
+        for index in range(3):
+            output[index] = 71
+        assert synthesize_one(math.nan,1,0,16000,3,output,3) == 3
+        assert synthesize_one(0,1,0,16000,3,output,2) == 2
+        assert synthesize_many(None,amplitudes,phases,2,16000,3,output,3) == 1
+        assert synthesize_many(frequencies,amplitudes,phases,2,0,3,output,3) == 3 and list(output) == [71]*3
+        assert synthesize_one(0,1,0,16000,0,None,0) == 0
+        assert synthesize_many(None,None,None,0,16000,0,None,0) == 0
+        shared = (scalar*3)(0,0,0)
+        assert synthesize_many(shared,amplitudes,phases,1,16000,3,shared,3) == 0 and list(shared) == [0.25]*3
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32
