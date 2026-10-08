@@ -6,9 +6,9 @@ calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
 modules under `src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
-exports 565 status-returning functions, 26 opaque types, 24 concrete descriptors
-and seventeen constants. The checkpoints below record implementation and verification
-evidence. Of 332 public upstream mappings, 311 have verified C bindings and 21
+exports 634 status-returning functions, 30 opaque types, 30 concrete descriptors
+and 28 constants. The checkpoints below record implementation and verification
+evidence. Of 332 public upstream mappings, 327 have verified C bindings and five
 remain pending. All bundled approximation functions have verified C bindings. Liblrhsmm and SHIRO
 bindings and all browser/Node WebAssembly bindings remain required work.
 
@@ -2369,3 +2369,51 @@ assert-enabled callers execute successfully. This checkpoint covers Debug shared
 libraries; Release, 32bit Python and static linkage are not claimed here. All five
 remaining plotting source rows, other-crate C interfaces, all three WASM interfaces
 and final combined acceptance remain required.
+
+
+## Plot command formatting and borrowed writers
+
+Ten additional exports delegate to native `plotting::Commands` without changing
+its numerical or formatting code. Both scalar precisions expose line and matrix
+image commands as immutable `CigletRsBytes` payloads or synchronous borrowed
+`CigletRsWriteStream` output. Arbitrary counted configuration bytes use the same
+two destinations, including empty input, embedded NUL and non-UTF-8 bytes.
+
+Null x with zero x_count selects native sample indices. Present x requires
+x_count >= y count and readable storage for the used prefix; unused coordinates
+are ignored. Line colors retain b/r/g/k/c/y and blue fallback. NaN, signed NaN,
+infinities, signed zero and selected-precision extrema retain the native format.
+Images accept the existing typed array owners; original row-pointer layouts are
+available through their checked row-table constructors. Zero-row and zero-column
+shapes remain supported. Owner publication occurs only on success.
+
+Borrowed plot writers require both write and flush callbacks. Commands flush after
+successful formatting; empty configuration still flushes. Callbacks remain valid
+and synchronous, must not unwind, and may not modify or conflict with borrowed
+samples/arrays. They are never retained or closed. Short writes are retried by
+native Write operations. Zero progress, oversized consumption, callback errors and
+flush errors are reported; external output can contain a prefix after I/O failure.
+Pointer/shape and missing-callback errors cause no external calls.
+
+Five boundary tests compare both full unchanged POSIX C transcript fixtures through
+owned bytes and one-byte-per-call external writers, including every color, optional
+and extra x, nonfinite samples and empty image shapes. Tests also cover arbitrary
+configuration, empty flush, output retention, invalid-input noninvocation and all
+five writer failure modes. Independent optimized assert-enabled C and Python
+callers reproduce both complete original transcripts and invoke all ten exports.
+
+All five native targets passed all 66 selected suites: 250 boundary tests and 79
+focused native tests, with no failures or ignored tests. Six independent C callers
+passed per target; six Python callers passed on each of the three 64bit targets.
+Clippy, Rust documentation, formatting and generated-header verification passed.
+The header contains 634 functions, 30 opaque types, 30 concrete descriptors and 28
+numeric codes. Native kernels, manifests/lock and original fixtures are unchanged.
+This checkpoint covers Debug shared libraries; Release, Python32 and static linkage
+are not claimed here.
+
+Figure process ownership is still required: default/program/custom launch,
+configuration and plotting on the process stream, process id, explicit close,
+captured output/exit status and drop/reaping semantics. Actual Gnuplot rendering
+must be verified with those bindings. All five original plotting source rows
+therefore remain pending in the binding inventory. Other-crate C interfaces, all
+three browser/Node WASM interfaces and final combined acceptance remain required.

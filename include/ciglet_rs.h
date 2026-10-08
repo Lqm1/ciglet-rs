@@ -9694,6 +9694,134 @@ uint32_t ciglet_rs_wave_write_file_f64(struct CigletRsPath path,
                                        struct CigletRsWaveWriteOptions options);
 
 /**
+ * Retain arbitrary counted Gnuplot configuration bytes in an immutable payload.
+ * Empty input may be null. Errors retain caller output.
+ *
+ * # Safety
+ * Nonempty bytes are stable initialized single-allocation storage for count bytes.
+ * Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_plot_configuration_bytes(const uint8_t *bytes,
+                                            uintptr_t count,
+                                            struct CigletRsBytes **output);
+
+/**
+ * Write and flush arbitrary configuration through synchronous caller-owned callbacks.
+ * Empty input permits null bytes and still flushes. Partial I/O failure is reported.
+ *
+ * # Safety
+ * Bytes are stable initialized single-allocation input for count bytes. Both
+ * callbacks/context are valid throughout, must not unwind or modify borrowed input.
+ */
+uint32_t ciglet_rs_plot_configuration_stream(struct CigletRsWriteStream stream,
+                                             const uint8_t *bytes,
+                                             uintptr_t count);
+
+/**
+ * Format native line commands into owned bytes. Null x with zero x_count selects indices; extra x is ignored.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Y is stable initialized aligned storage for count scalars. Present x supplies at least count readable aligned scalars and x_count >= count. Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_plot_line_bytes_f32(const float *x,
+                                       uintptr_t x_count,
+                                       const float *y,
+                                       uintptr_t count,
+                                       uint8_t color,
+                                       struct CigletRsBytes **output);
+
+/**
+ * Write native line commands to a borrowed writer, then flush. Pointer/shape errors cause no callbacks.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Y and present x are stable initialized aligned allocations for the used count; x_count >= count. Null x requires zero x_count. Both callbacks/context remain valid, must not unwind or modify/conflict with borrowed samples.
+ */
+uint32_t ciglet_rs_plot_line_stream_f32(struct CigletRsWriteStream stream,
+                                        const float *x,
+                                        uintptr_t x_count,
+                                        const float *y,
+                                        uintptr_t count,
+                                        uint8_t color);
+
+/**
+ * Format complete native matrix image commands from a typed owned array.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Array is a live immutable owner of the declared precision; output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_plot_image_bytes_f32(const struct CigletRsArrayF32 *array,
+                                        struct CigletRsBytes **output);
+
+/**
+ * Write and flush native matrix image commands through a borrowed writer.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Array remains a live immutable owner of the declared precision. Both callbacks/context remain valid, must not unwind or mutate/conflict with the borrowed array.
+ */
+uint32_t ciglet_rs_plot_image_stream_f32(struct CigletRsWriteStream stream,
+                                         const struct CigletRsArrayF32 *array);
+
+/**
+ * Format native line commands into owned bytes. Null x with zero x_count selects indices; extra x is ignored.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Y is stable initialized aligned storage for count scalars. Present x supplies at least count readable aligned scalars and x_count >= count. Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_plot_line_bytes_f64(const double *x,
+                                       uintptr_t x_count,
+                                       const double *y,
+                                       uintptr_t count,
+                                       uint8_t color,
+                                       struct CigletRsBytes **output);
+
+/**
+ * Write native line commands to a borrowed writer, then flush. Pointer/shape errors cause no callbacks.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Y and present x are stable initialized aligned allocations for the used count; x_count >= count. Null x requires zero x_count. Both callbacks/context remain valid, must not unwind or modify/conflict with borrowed samples.
+ */
+uint32_t ciglet_rs_plot_line_stream_f64(struct CigletRsWriteStream stream,
+                                        const double *x,
+                                        uintptr_t x_count,
+                                        const double *y,
+                                        uintptr_t count,
+                                        uint8_t color);
+
+/**
+ * Format complete native matrix image commands from a typed owned array.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Array is a live immutable owner of the declared precision; output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_plot_image_bytes_f64(const struct CigletRsArrayF64 *array,
+                                        struct CigletRsBytes **output);
+
+/**
+ * Write and flush native matrix image commands through a borrowed writer.
+ * Native color chars b/r/g/k/c/y and blue fallback are retained. NaN/infinity samples are preserved.
+ * Process/Figure lifecycle bindings are separate and remain required.
+ *
+ * # Safety
+ * Array remains a live immutable owner of the declared precision. Both callbacks/context remain valid, must not unwind or mutate/conflict with the borrowed array.
+ */
+uint32_t ciglet_rs_plot_image_stream_f64(struct CigletRsWriteStream stream,
+                                         const struct CigletRsArrayF64 *array);
+
+/**
  * Find a root using native tolerance, interpolation and midpoint fallback.
  * Callback and context are used synchronously and never retained. Null callback
  * returns one; native invalid bounds/nonfinite callback values return three.
