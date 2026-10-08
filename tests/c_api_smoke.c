@@ -5,6 +5,7 @@
 #endif
 #include "ciglet_rs.h"
 #include <assert.h>
+#include <float.h>
 #include <math.h>
 #include <string.h>
 
@@ -535,6 +536,38 @@ int main(void) {
     CHECK_PREDICTION(float, f32);
     CHECK_PREDICTION(double, f64);
     #undef CHECK_PREDICTION
+    #define CHECK_SCALED_PREDICTION(type, suffix, handle_type, maximum) do { \
+        type samples[] = {1,0}, coefficients[2], correlations[2], gain = 71; \
+        double fractions[2], gain_fraction; int32_t exponents[2], gain_exponent; size_t count = 71; \
+        handle_type *model = NULL, *copy = NULL; \
+        assert(ciglet_rs_scaled_prediction_from_samples_##suffix(samples,2,1,&model) == 0); \
+        assert(ciglet_rs_scaled_prediction_length_##suffix(model,&count) == 0 && count == 2); \
+        assert(ciglet_rs_scaled_prediction_ordinary_##suffix(model,coefficients,correlations,2) == 0); \
+        assert(coefficients[0] == 1 && coefficients[1] == 0 && correlations[0] == 1 && correlations[1] == 0); \
+        assert(ciglet_rs_scaled_prediction_clone_##suffix(model,&copy) == 0 && copy != model); \
+        assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0 && model == NULL); \
+        assert(ciglet_rs_scaled_prediction_coefficients_##suffix(copy,coefficients,2) == 0 && coefficients[0] == 1); \
+        assert(ciglet_rs_scaled_prediction_correlation_parts_##suffix(copy,fractions,exponents,2) == 0); \
+        assert(fractions[0] == 1 && exponents[0] == 0 && fractions[1] == 0 && exponents[1] == 0); \
+        assert(ciglet_rs_scaled_prediction_gain_parts_##suffix(copy,&gain_fraction,&gain_exponent) == 0); \
+        assert(gain_fraction == 1 && gain_exponent == 0); \
+        assert(ciglet_rs_scaled_prediction_gain_##suffix(copy,&gain) == 0 && gain == 1); \
+        assert(ciglet_rs_scaled_prediction_release_##suffix(&copy) == 0 && copy == NULL); \
+        samples[0] = maximum; coefficients[0] = coefficients[1] = correlations[0] = correlations[1] = 71; \
+        assert(ciglet_rs_scaled_prediction_from_samples_##suffix(samples,2,1,&model) == 0); \
+        assert(ciglet_rs_scaled_prediction_ordinary_##suffix(model,coefficients,correlations,2) == 3); \
+        assert(coefficients[0] == 71 && coefficients[1] == 71 && correlations[0] == 71 && correlations[1] == 71); \
+        assert(ciglet_rs_scaled_prediction_gain_##suffix(model,&gain) == 0 && gain == maximum); \
+        assert(ciglet_rs_scaled_prediction_correlation_parts_##suffix(model,fractions,exponents,2) == 0); \
+        assert(fractions[0] >= 1 && fractions[0] < 2 && exponents[0] > 128); \
+        handle_type *retained = model; \
+        assert(ciglet_rs_scaled_prediction_from_samples_##suffix(NULL,0,0,&model) == 3 && model == retained); \
+        assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0 && model == NULL); \
+        assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0); \
+    } while (0)
+    CHECK_SCALED_PREDICTION(float, f32, CigletRsScaledPredictionF32, FLT_MAX);
+    CHECK_SCALED_PREDICTION(double, f64, CigletRsScaledPredictionF64, DBL_MAX);
+    #undef CHECK_SCALED_PREDICTION
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

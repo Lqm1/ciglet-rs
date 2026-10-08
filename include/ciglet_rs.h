@@ -59,6 +59,16 @@ typedef struct CigletRsRealCepstrumF32 CigletRsRealCepstrumF32;
 typedef struct CigletRsRealCepstrumF64 CigletRsRealCepstrumF64;
 
 /**
+ * Opaque immutable binary32 prediction with individually scaled correlations.
+ */
+typedef struct CigletRsScaledPredictionF32 CigletRsScaledPredictionF32;
+
+/**
+ * Opaque immutable binary64 prediction with individually scaled correlations.
+ */
+typedef struct CigletRsScaledPredictionF64 CigletRsScaledPredictionF64;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -3622,5 +3632,249 @@ uint32_t ciglet_rs_prediction_gain_f64(const double *coefficients,
                                        uintptr_t correlation_count,
                                        uint32_t arithmetic,
                                        double *output);
+
+/**
+ * Compute an owned scaled prediction without converting correlations or gain.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_from_samples_f32(const float *input,
+                                                      uintptr_t input_count,
+                                                      uintptr_t order,
+                                                      struct CigletRsScaledPredictionF32 **output);
+
+/**
+ * Clone a scaled estimate into an independent owner; failure retains the output slot.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_clone_f32(const struct CigletRsScaledPredictionF32 *input,
+                                               struct CigletRsScaledPredictionF32 **output);
+
+/**
+ * Release an owner and clear its slot; an initialized null slot succeeds.
+ *
+ * # Safety
+ * Slot must be aligned, initialized and exclusively writable. Its nonnull owner must
+ * originate from this typed API exactly once. Exclude all outstanding calls, aliases
+ * and concurrent release. A released owner must never be reused.
+ */
+uint32_t ciglet_rs_scaled_prediction_release_f32(struct CigletRsScaledPredictionF32 **slot);
+
+/**
+ * Read the coefficient and correlation-lag count.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_length_f32(const struct CigletRsScaledPredictionF32 *input,
+                                                uintptr_t *output);
+
+/**
+ * Copy all coefficients into a caller array of exactly the reported length.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_coefficients_f32(const struct CigletRsScaledPredictionF32 *input,
+                                                      float *output,
+                                                      uintptr_t count);
+
+/**
+ * Copy all lag significands and exponents; nonzero values are fraction * 2^exponent.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_correlation_parts_f32(const struct CigletRsScaledPredictionF32 *input,
+                                                           double *fractions,
+                                                           int32_t *exponents,
+                                                           uintptr_t count);
+
+/**
+ * Return gain significand and exponent without imposing the selected scalar range.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_gain_parts_f32(const struct CigletRsScaledPredictionF32 *input,
+                                                    double *fraction,
+                                                    int32_t *exponent);
+
+/**
+ * Return scalar gain, retaining output when nonzero gain cannot be represented.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_gain_f32(const struct CigletRsScaledPredictionF32 *input,
+                                              float *output);
+
+/**
+ * Copy ordinary coefficients and correlations only when all nonzero lags survive conversion.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_ordinary_f32(const struct CigletRsScaledPredictionF32 *input,
+                                                  float *coefficients,
+                                                  float *correlations,
+                                                  uintptr_t count);
+
+/**
+ * Compute an owned scaled prediction without converting correlations or gain.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_from_samples_f64(const double *input,
+                                                      uintptr_t input_count,
+                                                      uintptr_t order,
+                                                      struct CigletRsScaledPredictionF64 **output);
+
+/**
+ * Clone a scaled estimate into an independent owner; failure retains the output slot.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_clone_f64(const struct CigletRsScaledPredictionF64 *input,
+                                               struct CigletRsScaledPredictionF64 **output);
+
+/**
+ * Release an owner and clear its slot; an initialized null slot succeeds.
+ *
+ * # Safety
+ * Slot must be aligned, initialized and exclusively writable. Its nonnull owner must
+ * originate from this typed API exactly once. Exclude all outstanding calls, aliases
+ * and concurrent release. A released owner must never be reused.
+ */
+uint32_t ciglet_rs_scaled_prediction_release_f64(struct CigletRsScaledPredictionF64 **slot);
+
+/**
+ * Read the coefficient and correlation-lag count.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_length_f64(const struct CigletRsScaledPredictionF64 *input,
+                                                uintptr_t *output);
+
+/**
+ * Copy all coefficients into a caller array of exactly the reported length.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_coefficients_f64(const struct CigletRsScaledPredictionF64 *input,
+                                                      double *output,
+                                                      uintptr_t count);
+
+/**
+ * Copy all lag significands and exponents; nonzero values are fraction * 2^exponent.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_correlation_parts_f64(const struct CigletRsScaledPredictionF64 *input,
+                                                           double *fractions,
+                                                           int32_t *exponents,
+                                                           uintptr_t count);
+
+/**
+ * Return gain significand and exponent without imposing the selected scalar range.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_gain_parts_f64(const struct CigletRsScaledPredictionF64 *input,
+                                                    double *fraction,
+                                                    int32_t *exponent);
+
+/**
+ * Return scalar gain, retaining output when nonzero gain cannot be represented.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_gain_f64(const struct CigletRsScaledPredictionF64 *input,
+                                              double *output);
+
+/**
+ * Copy ordinary coefficients and correlations only when all nonzero lags survive conversion.
+ *
+ * # Safety
+ * Retain typed live immutable owners through every call, excluding concurrent release.
+ * Nonempty inputs must be initialized, stable, readable single-allocation ranges.
+ * Outputs must be aligned, exclusively writable, pairwise disjoint and independent
+ * of every owner allocation. Keep ownership of any previous slot value on success;
+ * replacement does not release that value. All outputs are retained on failure.
+ */
+uint32_t ciglet_rs_scaled_prediction_ordinary_f64(const struct CigletRsScaledPredictionF64 *input,
+                                                  double *coefficients,
+                                                  double *correlations,
+                                                  uintptr_t count);
 
 #endif  /* CIGLET_RS_H */

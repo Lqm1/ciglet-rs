@@ -969,8 +969,67 @@ public/configuration C rows, two nonpublic macro formals and 332 pending public
 WASM rows. The cig_levinson/levinson aliases and lpgain now map explicit typed
 policy entry points. Every implemented mapping was checked against the header.
 
-This section covers standalone recursion/gain only. Sample and magnitude
-estimation, scaled correlation/gain access, reusable spectrum plans, spectra and
-resonance reports remain required C interfaces. The corresponding native APIs
-already exist; no function is excluded from the accepted port scope. All three
-WASM interfaces and the remaining liblrhsmm/SHIRO C interfaces remain required.
+This section covers standalone recursion/gain only. Scaled waveform estimation
+and complete scaled correlation/gain access are described below. Ordinary sample
+and magnitude estimation, reusable spectrum plans, spectra and resonance reports
+remain required C interfaces. The corresponding native APIs already exist; no
+function is excluded from the accepted port scope. All three WASM interfaces and
+the remaining liblrhsmm/SHIRO C interfaces remain required.
+
+## Scaled prediction owners
+
+Eighteen f32/f64 functions expose immutable owned waveform predictions with
+individually scaled powers. Construction publishes an owner without requiring
+ordinary correlations or scalar gain to be representable. Each precision has
+construction, clone, clearing release, length, copied coefficients, copied lag
+parts, gain parts, scalar gain and checked ordinary conversion. The header now
+declares 238 functions and twelve opaque types. These are additions within the
+existing single crate; they do not change the native numerical implementation.
+
+Lag and gain parts use f64 significands and i32 binary exponents, with nonzero
+absolute significands in [1,2) and zero represented as (0,0). Ordinary conversion
+clones the estimate before consuming that clone. Underflow or overflow therefore
+retains the successfully computed original scaled estimate and both output
+arrays. A failed scalar-gain call likewise retains its output while gain parts
+and coefficients remain available. Cloning follows native allocation behavior;
+the existing abort/OOM limitations still apply.
+
+Opaque owners support concurrent immutable reads while release is excluded.
+Slots must be initialized and exclusively writable. Successful replacement does
+not release an older slot value; callers must retain and release that ownership.
+Release clears its slot before dropping the owner and accepts initialized null
+slots. Distinct copied output ranges must be pairwise disjoint and independent
+of every owner allocation. Failures retain outputs and existing ownership.
+
+Six new host boundary tests pass. Each precision consumes all 64 independent
+SWV1 waveform records, comparing all 176 scaled lags with the unchanged 2e-15
+bound and coefficients with the unchanged 2e-15/5e-15 bounds. Additional cases
+prove maximum/subnormal inputs, checked ordinary-conversion failures with later
+successful reads, independent clone lifetime, failed-constructor owner retention,
+silence, invalid shapes/pointers, output overlap and a nonrepresentable scalar
+gain whose scaled gain remains available. Warning-denied all-target Clippy
+passes. Original fixtures, thresholds and native kernels remain unchanged.
+The initial Linux x86_64 extreme-value test exposed a test-reconstruction issue:
+the runtime computes 2.0.powi(-1074) as zero while split exponent multiplication
+produces the correct smallest subnormal, bits one. A separate probe confirms both
+paths and identical scaling at exponent 1023. The corrected test splits scaling
+into two powers; gain equality, all original fixtures and bounds remain unchanged.
+
+All five required targets pass 75 boundary integration tests across fourteen
+suites plus six focused frame/DSP tests, with c-api enabled. Each log independently
+verifies exact 10,4,4,5,6,3,4,6,6,6,3,6,6,6,3,3 passing counts, zero failed/ignored
+tests and no error diagnostics. Corrected Windows MSVC x86_64/i686, Windows GNU
+x86_64 and Linux GNU x86_64/i686 runners all terminate with exit zero. Actual
+optimized assert-enabled C callers invoke all 238 exports on every target; Python
+ctypes callers pass on MSVC x86_64, Windows GNU x86_64 and Linux x86_64. Expanded
+optimized MSVC C source independently references every declaration. Warning-denied
+Rustdoc/Clippy, formatting, whitespace and generated-header verification pass.
+
+The source ledger remains 115 implemented C mappings and 217 pending public C
+rows; these scaled owners extend public Rust improvements while original lpc
+still needs its ordinary waveform interface. All 332 public WASM rows remain
+pending. Current family Release, Python32 and static-link callers remain
+unverified. Magnitude estimation/plans, ordinary waveform estimation, spectra and
+resonance reports remain required, alongside the other pending ciglet functions,
+all liblrhsmm/SHIRO C interfaces and all three WASM interfaces. This checkpoint
+does not replace final combined acceptance or reduce the complete public scope.

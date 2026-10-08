@@ -733,6 +733,56 @@ def main():
         assert prediction_gain(coefficients,2,correlation,1,0,ctypes.byref(gain)) == 2 and gain.value == 71
         assert levinson(correlation,2,0,correlation,2) == 0
         assert correlation[0] == 1 and -0.251 < correlation[1] < -0.249
+        scaled_signatures = {
+            "from_samples": [pointer,size,size,slot],
+            "clone": [handle_type,slot],
+            "release": [slot],
+            "length": [handle_type,ctypes.POINTER(size)],
+            "coefficients": [handle_type,pointer,size],
+            "correlation_parts": [handle_type,ctypes.POINTER(ctypes.c_double),ctypes.POINTER(ctypes.c_int32),size],
+            "gain_parts": [handle_type,ctypes.POINTER(ctypes.c_double),ctypes.POINTER(ctypes.c_int32)],
+            "gain": [handle_type,pointer],
+            "ordinary": [handle_type,pointer,pointer,size],
+        }
+        scaled_functions = {}
+        for operation,arguments in scaled_signatures.items():
+            function = getattr(library,f"ciglet_rs_scaled_prediction_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            scaled_functions[operation] = function
+        samples = (scalar*2)(1,0)
+        model,copy = handle_type(),handle_type()
+        count = size(71)
+        coefficients,correlations = (scalar*2)(),(scalar*2)()
+        fractions,exponents = (ctypes.c_double*2)(),(ctypes.c_int32*2)()
+        gain_fraction,gain_exponent = ctypes.c_double(71),ctypes.c_int32(71)
+        assert scaled_functions["from_samples"](samples,2,1,ctypes.byref(model)) == 0
+        assert scaled_functions["length"](model,ctypes.byref(count)) == 0 and count.value == 2
+        assert scaled_functions["ordinary"](model,coefficients,correlations,2) == 0
+        assert list(coefficients) == [1,0] and list(correlations) == [1,0]
+        assert scaled_functions["clone"](model,ctypes.byref(copy)) == 0 and copy.value != model.value
+        assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
+        assert scaled_functions["coefficients"](copy,coefficients,2) == 0 and list(coefficients) == [1,0]
+        assert scaled_functions["correlation_parts"](copy,fractions,exponents,2) == 0
+        assert list(fractions) == [1,0] and list(exponents) == [0,0]
+        assert scaled_functions["gain_parts"](copy,ctypes.byref(gain_fraction),ctypes.byref(gain_exponent)) == 0
+        assert (gain_fraction.value,gain_exponent.value) == (1,0)
+        assert scaled_functions["gain"](copy,ctypes.byref(gain)) == 0 and gain.value == 1
+        assert scaled_functions["release"](ctypes.byref(copy)) == 0 and copy.value is None
+        maximum = float.fromhex("0x1.fffffep+127" if suffix == "f32" else "0x1.fffffffffffffp+1023")
+        samples[0] = maximum
+        for index in range(2):
+            coefficients[index] = correlations[index] = 71
+        assert scaled_functions["from_samples"](samples,2,1,ctypes.byref(model)) == 0
+        assert scaled_functions["ordinary"](model,coefficients,correlations,2) == 3
+        assert list(coefficients) == [71,71] and list(correlations) == [71,71]
+        assert scaled_functions["gain"](model,ctypes.byref(gain)) == 0 and gain.value == maximum
+        assert scaled_functions["correlation_parts"](model,fractions,exponents,2) == 0
+        assert 1 <= fractions[0] < 2 and exponents[0] > 128
+        retained = model.value
+        assert scaled_functions["from_samples"](None,0,0,ctypes.byref(model)) == 3 and model.value == retained
+        assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
+        assert scaled_functions["release"](ctypes.byref(model)) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32
