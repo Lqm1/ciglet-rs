@@ -732,3 +732,69 @@ C interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM interfaces
 remain required. The complete native matrix above predates only these opt-in
 boundary changes, which modify no native numerical source. Symbol counts do
 not replace configuration, ownership or full functionality auditing.
+
+## Filterbank interfaces
+
+Thirty f32/f64 functions expose empty, explicit Mel, default Mel and PLP
+constructors, cloning, clearing release, shape, Nyquist metadata, response/support
+copies, exclusive channel/metadata mutation and single/inferred/explicit-frame
+application. The header declares 186 functions and eight opaque types. Handles
+own native FilterBank values; no native numerical kernel or dependency changes.
+
+Shapes are copied as bins/channels; supports are half-open start/end ranges.
+Both require exactly two pointer-sized outputs. Responses require exactly bins
+scalars. Channels retain complete responses, including signed weights and
+nonfinite values outside active supports. Active response values must be finite.
+Nyquist metadata can retain nonfinite values and does not change application.
+Only inspected spectrum bins require finite values. Compression zero is native
+Logarithmic, one native PLP; unknown codes return status three. The original
+approximate log and PLP exponent 0.33 remain unchanged.
+
+Single applications require bins input samples and channels outputs. Inferred
+spectrograms require positive bins and whole flattened frames. Explicit frames
+support zero-bin frames and validate the supplied frame count. Output count
+mismatches return status two; invalid native shapes/supports/channels or data
+return three. Empty buffers accept null. Complete owned results stage before
+commit, so applications permit input/output overlap and retain caller output
+after a later-frame error. Failed constructors retain their old output slot.
+Release clears sole ownership and accepts a null stored handle repeatedly.
+
+Live correctly typed handles must remain immutable during reads, cloning or
+application; mutations and release require exclusive access. Buffers/owner slots
+must be independent of the handle and all its Rust-owned storage. Pointer checks
+cannot prove these lifetime, allocation or exclusion contracts. Clone uses the
+native Clone implementation; allocator-abort limitations remain as documented.
+
+Six new host boundary tests compare every original generated-bank record, 72
+per precision, and every original custom-bank record, 33 per precision, through
+all typed functions. Responses/supports, compressed single frames and repeated
+spectrogram records are consumed completely. Generated response/output bounds
+remain 2e-7/2e-14 and 2e-6/2e-13; custom response equality and 2e-7/2e-15 output
+bounds remain unchanged. Inert metadata and independently cloned banks are
+verified against the same outputs. Additional cases cover NaN payload copies,
+inactive nonfinite bins, supported overlap, retained output after later-frame
+failure, invalid option/count/support errors, failed owner replacement, zero-bin
+explicit frames, zero-channel applications and idempotent clearing release.
+
+The first custom comparator treated identical infinities as a numerical
+difference; exact equality now handles them before finite difference testing.
+No implementation, fixture or numerical threshold was changed for that test
+failure. Host tests and warning-denied all-target Clippy/Rustdoc, formatting,
+whitespace and cbindgen verification pass. All five required targets pass 54
+boundary integration tests across ten suites and six focused frame/DSP tests
+with c-api enabled. Each log independently contains exact
+10,4,4,5,6,3,4,6,6,6,3,3 passing counts with zero failed or ignored tests and no
+error diagnostic. All runners complete with exit zero. Independently compiled
+optimized, assert-enabled C callers invoke all 186 exports on all five targets;
+MSVC x86_64, Windows GNU x86_64 and Linux x86_64 also pass Python ctypes calls.
+The expanded optimized C caller references every generated declaration.
+
+The ledger retains 334 rows: 101 implemented C source mappings, 231 pending
+public/configuration C rows, two nonpublic macro formals and 332 public WASM rows
+pending. All twelve filterbank source functions/aliases now map typed entry
+points, and every implemented mapping was checked against the header. Current
+family Release, Python32 and static-link callers remain unverified. Remaining
+ciglet C interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM
+interfaces remain required. No native numerical source or original fixture was
+changed. This boundary checkpoint does not replace final combined acceptance;
+symbol counts do not substitute for configuration/ownership auditing.

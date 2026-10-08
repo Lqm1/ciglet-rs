@@ -549,6 +549,73 @@ def main():
         assert band_cepstra["band_to_cepstrum"](bands, 4, 0, 0, None, 0) == 0
         assert band_cepstra["band_spectrogram_to_cepstra"](None, 0, 4, 1, 1, None, 0) == 0
 
+        handle_type = ctypes.c_void_p
+        slot = ctypes.POINTER(handle_type)
+        filterbank_signatures = {
+            "empty": [size,scalar,size,slot],
+            "mel": [size,scalar,size,scalar,scalar,scalar,scalar,slot],
+            "mel_default": [size,scalar,size,scalar,scalar,slot],
+            "plp": [size,scalar,size,slot],
+            "clone": [handle_type,slot], "release": [slot],
+            "shape": [handle_type,ctypes.POINTER(size),size],
+            "nyquist": [handle_type,pointer], "set_nyquist": [handle_type,scalar],
+            "response": [handle_type,size,pointer,size],
+            "support": [handle_type,size,ctypes.POINTER(size),size],
+            "set_channel": [handle_type,size,pointer,size,size,size],
+            "apply": [handle_type,pointer,size,ctypes.c_uint32,pointer,size],
+            "apply_spectrogram": [handle_type,pointer,size,ctypes.c_uint32,pointer,size],
+            "apply_frames": [handle_type,pointer,size,size,ctypes.c_uint32,pointer,size],
+        }
+        bank_functions = {}
+        for operation, arguments in filterbank_signatures.items():
+            function = getattr(library, f"ciglet_rs_filterbank_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            bank_functions[operation] = function
+        bank, copy = handle_type(), handle_type()
+        assert bank_functions["empty"](4,8000,1,ctypes.byref(bank)) == 0
+        shape = (size*2)(71,71)
+        assert bank_functions["shape"](bank,shape,2) == 0 and list(shape) == [4,1]
+        metadata = scalar(71)
+        assert bank_functions["nyquist"](bank,ctypes.byref(metadata)) == 0 and metadata.value == 8000
+        response = (scalar*4)(float("nan"),0.5,1,float("inf"))
+        assert bank_functions["set_channel"](bank,0,response,4,1,3) == 0
+        assert bank_functions["support"](bank,0,shape,2) == 0 and list(shape) == [1,3]
+        copied = (scalar*4)()
+        assert bank_functions["response"](bank,0,copied,4) == 0
+        assert math.isnan(copied[0]) and list(copied)[1:] == [0.5,1,float("inf")]
+        assert bank_functions["clone"](bank,ctypes.byref(copy)) == 0
+        assert bank_functions["set_nyquist"](bank,float("nan")) == 0
+        assert bank_functions["nyquist"](bank,ctypes.byref(metadata)) == 0 and math.isnan(metadata.value)
+        assert bank_functions["nyquist"](copy,ctypes.byref(metadata)) == 0 and metadata.value == 8000
+        spectrum = (scalar*4)(float("nan"),2,3,float("nan"))
+        expected = scalar(71)
+        assert bank_functions["apply"](bank,spectrum,4,1,ctypes.byref(expected),1) == 0 and 1 < expected.value < 2
+        matrix = (scalar*8)(float("nan"),2,3,float("nan"),float("nan"),2,3,float("nan"))
+        output = (scalar*2)()
+        assert bank_functions["apply_spectrogram"](bank,matrix,8,1,output,2) == 0
+        assert list(output) == [expected.value]*2
+        assert bank_functions["apply_frames"](copy,matrix,8,2,1,output,2) == 0
+        assert list(output) == [expected.value]*2
+        assert bank_functions["apply"](bank,spectrum,4,1,spectrum,1) == 0 and spectrum[0] == expected.value
+        matrix[5] = float("nan")
+        output[0] = output[1] = 71
+        assert bank_functions["apply_frames"](bank,matrix,8,2,0,output,2) == 3 and list(output) == [71,71]
+        retained = bank.value
+        assert bank_functions["mel_default"](0,8000,1,0,8000,ctypes.byref(bank)) == 3 and bank.value == retained
+        assert bank_functions["release"](ctypes.byref(copy)) == 0 and copy.value is None
+        assert bank_functions["release"](ctypes.byref(bank)) == 0 and bank.value is None
+        assert bank_functions["release"](ctypes.byref(bank)) == 0
+        assert bank_functions["mel"](65,8000,8,50,8000,0.85,120,ctypes.byref(bank)) == 0
+        assert bank_functions["release"](ctypes.byref(bank)) == 0
+        assert bank_functions["mel_default"](65,8000,8,50,8000,ctypes.byref(bank)) == 0
+        assert bank_functions["release"](ctypes.byref(bank)) == 0
+        assert bank_functions["plp"](65,8000,8,ctypes.byref(bank)) == 0
+        assert bank_functions["release"](ctypes.byref(bank)) == 0
+        assert bank_functions["empty"](0,float("nan"),1,ctypes.byref(bank)) == 0
+        assert bank_functions["apply_frames"](bank,None,0,2,1,output,2) == 0 and list(output) == [0,0]
+        assert bank_functions["apply_spectrogram"](bank,None,0,1,output,2) == 3
+        assert bank_functions["release"](ctypes.byref(bank)) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

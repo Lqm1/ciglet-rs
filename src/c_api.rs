@@ -49,6 +49,10 @@ pub use frame_extrema_functions::*;
 mod band_cepstra;
 mod band_cepstra_functions;
 pub use band_cepstra_functions::*;
+mod filterbank;
+pub use filterbank::{CigletRsFilterBankF32, CigletRsFilterBankF64};
+mod filterbank_functions;
+pub use filterbank_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

@@ -403,6 +403,48 @@ int main(void) {
     CHECK_BAND_CEPSTRA(double, f64, 1e-14);
     #undef CHECK_BAND_CEPSTRA
 
+    #define CHECK_FILTERBANK(type, suffix, handle_type) do { \
+        handle_type *bank = NULL, *copy = NULL; size_t shape[2] = {71,71}, support[2] = {71,71}; \
+        assert(ciglet_rs_filterbank_empty_##suffix(4,8000,1,&bank) == 0); \
+        assert(ciglet_rs_filterbank_shape_##suffix(bank,shape,2) == 0 && shape[0] == 4 && shape[1] == 1); \
+        type metadata = 71, response[] = {NAN,0.5,1,INFINITY}, copied[4]; \
+        assert(ciglet_rs_filterbank_nyquist_##suffix(bank,&metadata) == 0 && metadata == 8000); \
+        assert(ciglet_rs_filterbank_set_channel_##suffix(bank,0,response,4,1,3) == 0); \
+        assert(ciglet_rs_filterbank_support_##suffix(bank,0,support,2) == 0 && support[0] == 1 && support[1] == 3); \
+        assert(ciglet_rs_filterbank_response_##suffix(bank,0,copied,4) == 0); \
+        assert(isnan(copied[0]) && copied[1] == 0.5 && copied[2] == 1 && isinf(copied[3])); \
+        assert(ciglet_rs_filterbank_clone_##suffix(bank,&copy) == 0); \
+        assert(ciglet_rs_filterbank_set_nyquist_##suffix(bank,NAN) == 0); \
+        assert(ciglet_rs_filterbank_nyquist_##suffix(bank,&metadata) == 0 && isnan(metadata)); \
+        assert(ciglet_rs_filterbank_nyquist_##suffix(copy,&metadata) == 0 && metadata == 8000); \
+        type spectrum[] = {NAN,2,3,NAN}, expected = 71, matrix[] = {NAN,2,3,NAN,NAN,2,3,NAN}, output[2]; \
+        assert(ciglet_rs_filterbank_apply_##suffix(bank,spectrum,4,1,&expected,1) == 0 && expected > 1 && expected < 2); \
+        assert(ciglet_rs_filterbank_apply_spectrogram_##suffix(bank,matrix,8,1,output,2) == 0); \
+        assert(output[0] == expected && output[1] == expected); \
+        assert(ciglet_rs_filterbank_apply_frames_##suffix(copy,matrix,8,2,1,output,2) == 0); \
+        assert(output[0] == expected && output[1] == expected); \
+        assert(ciglet_rs_filterbank_apply_##suffix(bank,spectrum,4,1,spectrum,1) == 0 && spectrum[0] == expected); \
+        matrix[5] = NAN; output[0] = output[1] = 71; \
+        assert(ciglet_rs_filterbank_apply_frames_##suffix(bank,matrix,8,2,0,output,2) == 3 && output[0] == 71 && output[1] == 71); \
+        handle_type *retained = bank; \
+        assert(ciglet_rs_filterbank_mel_default_##suffix(0,8000,1,0,8000,&bank) == 3 && bank == retained); \
+        assert(ciglet_rs_filterbank_release_##suffix(&copy) == 0 && copy == NULL); \
+        assert(ciglet_rs_filterbank_release_##suffix(&bank) == 0 && bank == NULL); \
+        assert(ciglet_rs_filterbank_release_##suffix(&bank) == 0); \
+        assert(ciglet_rs_filterbank_mel_##suffix(65,8000,8,50,8000,0.85,120,&bank) == 0); \
+        assert(ciglet_rs_filterbank_release_##suffix(&bank) == 0); \
+        assert(ciglet_rs_filterbank_mel_default_##suffix(65,8000,8,50,8000,&bank) == 0); \
+        assert(ciglet_rs_filterbank_release_##suffix(&bank) == 0); \
+        assert(ciglet_rs_filterbank_plp_##suffix(65,8000,8,&bank) == 0); \
+        assert(ciglet_rs_filterbank_release_##suffix(&bank) == 0); \
+        assert(ciglet_rs_filterbank_empty_##suffix(0,NAN,1,&bank) == 0); \
+        assert(ciglet_rs_filterbank_apply_frames_##suffix(bank,NULL,0,2,1,output,2) == 0 && output[0] == 0 && output[1] == 0); \
+        assert(ciglet_rs_filterbank_apply_spectrogram_##suffix(bank,NULL,0,1,output,2) == 3); \
+        assert(ciglet_rs_filterbank_release_##suffix(&bank) == 0); \
+    } while (0)
+    CHECK_FILTERBANK(float, f32, CigletRsFilterBankF32);
+    CHECK_FILTERBANK(double, f64, CigletRsFilterBankF64);
+    #undef CHECK_FILTERBANK
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

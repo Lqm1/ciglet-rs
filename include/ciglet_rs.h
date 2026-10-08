@@ -39,6 +39,16 @@ typedef struct CigletRsFftF32 CigletRsFftF32;
 typedef struct CigletRsFftF64 CigletRsFftF64;
 
 /**
+ * Opaque binary32 filterbank. Release through its matching typed function.
+ */
+typedef struct CigletRsFilterBankF32 CigletRsFilterBankF32;
+
+/**
+ * Opaque binary64 filterbank. Release through its matching typed function.
+ */
+typedef struct CigletRsFilterBankF64 CigletRsFilterBankF64;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -2474,5 +2484,525 @@ uint32_t ciglet_rs_band_spectrogram_to_cepstra_f64(const double *input,
                                                    uint32_t include_dc,
                                                    double *output,
                                                    uintptr_t output_length);
+
+/**
+ * Create a zero-response bank. Zero bins/channels and nonfinite metadata are allowed.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_empty_f32(uintptr_t bins,
+                                        float nyquist_hz,
+                                        uintptr_t channels,
+                                        struct CigletRsFilterBankF32 **output);
+
+/**
+ * Create a Mel bank with explicit scale and minimum width. Native bounds are retained.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_mel_f32(uintptr_t bins,
+                                      float nyquist_hz,
+                                      uintptr_t channels,
+                                      float minimum_hz,
+                                      float maximum_hz,
+                                      float scale,
+                                      float minimum_width_hz,
+                                      struct CigletRsFilterBankF32 **output);
+
+/**
+ * Create a Mel bank with unit scale and 400-Hz minimum width.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_mel_default_f32(uintptr_t bins,
+                                              float nyquist_hz,
+                                              uintptr_t channels,
+                                              float minimum_hz,
+                                              float maximum_hz,
+                                              struct CigletRsFilterBankF32 **output);
+
+/**
+ * Create a PLP bank, preserving original masks and weighting.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_plp_f32(uintptr_t bins,
+                                      float nyquist_hz,
+                                      uintptr_t channels,
+                                      struct CigletRsFilterBankF32 **output);
+
+/**
+ * Copy the complete owned bank into a separate handle.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_clone_f32(const struct CigletRsFilterBankF32 *handle,
+                                        struct CigletRsFilterBankF32 **output);
+
+/**
+ * Release sole ownership and clear the slot. A null stored handle succeeds.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_release_f32(struct CigletRsFilterBankF32 **slot);
+
+/**
+ * Copy bins/channels to exactly two pointer-sized indices.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_shape_f32(const struct CigletRsFilterBankF32 *handle,
+                                        uintptr_t *output,
+                                        uintptr_t output_count);
+
+/**
+ * Copy Nyquist metadata without filtering nonfinite values.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_nyquist_f32(const struct CigletRsFilterBankF32 *handle,
+                                          float *output);
+
+/**
+ * Set inert Nyquist metadata, retaining all sample bits. Requires exclusive handle access.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_set_nyquist_f32(struct CigletRsFilterBankF32 *handle, float value);
+
+/**
+ * Copy a complete channel response; output count must equal bins.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_response_f32(const struct CigletRsFilterBankF32 *handle,
+                                           uintptr_t channel,
+                                           float *output,
+                                           uintptr_t output_count);
+
+/**
+ * Copy a channel half-open start/end support into exactly two indices.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_support_f32(const struct CigletRsFilterBankF32 *handle,
+                                          uintptr_t channel,
+                                          uintptr_t *output,
+                                          uintptr_t output_count);
+
+/**
+ * Replace a complete channel and half-open support with exclusive access.
+ * Signed weights and nonfinite values outside the active support are retained.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_set_channel_f32(struct CigletRsFilterBankF32 *handle,
+                                              uintptr_t channel,
+                                              const float *response,
+                                              uintptr_t response_count,
+                                              uintptr_t start,
+                                              uintptr_t end);
+
+/**
+ * Apply one spectrum. Compression zero logarithmic, one PLP. Output count equals channels.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_apply_f32(const struct CigletRsFilterBankF32 *handle,
+                                        const float *spectrum,
+                                        uintptr_t input_count,
+                                        uint32_t compression,
+                                        float *output,
+                                        uintptr_t output_count);
+
+/**
+ * Apply flattened frames inferred from positive bins. Compression zero logarithmic, one PLP.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_apply_spectrogram_f32(const struct CigletRsFilterBankF32 *handle,
+                                                    const float *spectrum,
+                                                    uintptr_t input_count,
+                                                    uint32_t compression,
+                                                    float *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Apply an explicit frame count, including zero-bin frames. Compression zero logarithmic, one PLP.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_apply_frames_f32(const struct CigletRsFilterBankF32 *handle,
+                                               const float *spectrum,
+                                               uintptr_t input_count,
+                                               uintptr_t frames,
+                                               uint32_t compression,
+                                               float *output,
+                                               uintptr_t output_count);
+
+/**
+ * Create a zero-response bank. Zero bins/channels and nonfinite metadata are allowed.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_empty_f64(uintptr_t bins,
+                                        double nyquist_hz,
+                                        uintptr_t channels,
+                                        struct CigletRsFilterBankF64 **output);
+
+/**
+ * Create a Mel bank with explicit scale and minimum width. Native bounds are retained.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_mel_f64(uintptr_t bins,
+                                      double nyquist_hz,
+                                      uintptr_t channels,
+                                      double minimum_hz,
+                                      double maximum_hz,
+                                      double scale,
+                                      double minimum_width_hz,
+                                      struct CigletRsFilterBankF64 **output);
+
+/**
+ * Create a Mel bank with unit scale and 400-Hz minimum width.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_mel_default_f64(uintptr_t bins,
+                                              double nyquist_hz,
+                                              uintptr_t channels,
+                                              double minimum_hz,
+                                              double maximum_hz,
+                                              struct CigletRsFilterBankF64 **output);
+
+/**
+ * Create a PLP bank, preserving original masks and weighting.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_plp_f64(uintptr_t bins,
+                                      double nyquist_hz,
+                                      uintptr_t channels,
+                                      struct CigletRsFilterBankF64 **output);
+
+/**
+ * Copy the complete owned bank into a separate handle.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_clone_f64(const struct CigletRsFilterBankF64 *handle,
+                                        struct CigletRsFilterBankF64 **output);
+
+/**
+ * Release sole ownership and clear the slot. A null stored handle succeeds.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_release_f64(struct CigletRsFilterBankF64 **slot);
+
+/**
+ * Copy bins/channels to exactly two pointer-sized indices.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_shape_f64(const struct CigletRsFilterBankF64 *handle,
+                                        uintptr_t *output,
+                                        uintptr_t output_count);
+
+/**
+ * Copy Nyquist metadata without filtering nonfinite values.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_nyquist_f64(const struct CigletRsFilterBankF64 *handle,
+                                          double *output);
+
+/**
+ * Set inert Nyquist metadata, retaining all sample bits. Requires exclusive handle access.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_set_nyquist_f64(struct CigletRsFilterBankF64 *handle, double value);
+
+/**
+ * Copy a complete channel response; output count must equal bins.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_response_f64(const struct CigletRsFilterBankF64 *handle,
+                                           uintptr_t channel,
+                                           double *output,
+                                           uintptr_t output_count);
+
+/**
+ * Copy a channel half-open start/end support into exactly two indices.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_support_f64(const struct CigletRsFilterBankF64 *handle,
+                                          uintptr_t channel,
+                                          uintptr_t *output,
+                                          uintptr_t output_count);
+
+/**
+ * Replace a complete channel and half-open support with exclusive access.
+ * Signed weights and nonfinite values outside the active support are retained.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_set_channel_f64(struct CigletRsFilterBankF64 *handle,
+                                              uintptr_t channel,
+                                              const double *response,
+                                              uintptr_t response_count,
+                                              uintptr_t start,
+                                              uintptr_t end);
+
+/**
+ * Apply one spectrum. Compression zero logarithmic, one PLP. Output count equals channels.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_apply_f64(const struct CigletRsFilterBankF64 *handle,
+                                        const double *spectrum,
+                                        uintptr_t input_count,
+                                        uint32_t compression,
+                                        double *output,
+                                        uintptr_t output_count);
+
+/**
+ * Apply flattened frames inferred from positive bins. Compression zero logarithmic, one PLP.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_apply_spectrogram_f64(const struct CigletRsFilterBankF64 *handle,
+                                                    const double *spectrum,
+                                                    uintptr_t input_count,
+                                                    uint32_t compression,
+                                                    double *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Apply an explicit frame count, including zero-bin frames. Compression zero logarithmic, one PLP.
+ * Failures retain caller outputs; creation transfers ownership only on success.
+ * Buffer counts are explicit, and nonempty buffers must be properly aligned.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations. Reading excludes
+ * mutation/release; mutations and release require exclusive access. Owner slots
+ * and buffers must be independent of the handle and its Rust-owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Application input/output buffers may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_filterbank_apply_frames_f64(const struct CigletRsFilterBankF64 *handle,
+                                               const double *spectrum,
+                                               uintptr_t input_count,
+                                               uintptr_t frames,
+                                               uint32_t compression,
+                                               double *output,
+                                               uintptr_t output_count);
 
 #endif  /* CIGLET_RS_H */
