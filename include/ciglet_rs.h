@@ -69,6 +69,16 @@ typedef struct CigletRsFilterBankF32 CigletRsFilterBankF32;
 typedef struct CigletRsFilterBankF64 CigletRsFilterBankF64;
 
 /**
+ * Opaque binary32 instantaneous-frequency detector.
+ */
+typedef struct CigletRsIfDetectorF32 CigletRsIfDetectorF32;
+
+/**
+ * Opaque binary64 instantaneous-frequency detector.
+ */
+typedef struct CigletRsIfDetectorF64 CigletRsIfDetectorF64;
+
+/**
  * Opaque owned binary32 packed LU factors with row swaps.
  */
 typedef struct CigletRsLuF32 CigletRsLuF32;
@@ -5092,6 +5102,614 @@ uint32_t ciglet_rs_median_filter_f64(const double *signal,
                                      uintptr_t width,
                                      double *output,
                                      uintptr_t output_count);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_create_f32(float frequency,
+                                          float resolution,
+                                          struct CigletRsIfDetectorF32 **output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_from_kernels_f32(float frequency,
+                                                const float *real,
+                                                const float *imaginary,
+                                                const float *derivative_real,
+                                                const float *derivative_imaginary,
+                                                uintptr_t count,
+                                                struct CigletRsIfDetectorF32 **output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_clone_f32(const struct CigletRsIfDetectorF32 *handle,
+                                         struct CigletRsIfDetectorF32 **output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_release_f32(struct CigletRsIfDetectorF32 **handle);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_kernel_count_f32(const struct CigletRsIfDetectorF32 *handle,
+                                                uintptr_t *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_center_frequency_f32(const struct CigletRsIfDetectorF32 *handle,
+                                                    float *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_set_center_frequency_f32(struct CigletRsIfDetectorF32 *handle,
+                                                        float value);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_copy_kernels_f32(const struct CigletRsIfDetectorF32 *handle,
+                                                float *real,
+                                                float *imaginary,
+                                                float *derivative_real,
+                                                float *derivative_imaginary,
+                                                uintptr_t count);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_replace_kernels_f32(struct CigletRsIfDetectorF32 *handle,
+                                                   const float *real,
+                                                   const float *imaginary,
+                                                   const float *derivative_real,
+                                                   const float *derivative_imaginary,
+                                                   uintptr_t count);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_estimate_f32(const struct CigletRsIfDetectorF32 *handle,
+                                            const float *samples,
+                                            uintptr_t count,
+                                            float *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_estimate_with_f32(const struct CigletRsIfDetectorF32 *handle,
+                                                 const float *samples,
+                                                 uintptr_t count,
+                                                 uint32_t policy,
+                                                 float *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_create_f64(double frequency,
+                                          double resolution,
+                                          struct CigletRsIfDetectorF64 **output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_from_kernels_f64(double frequency,
+                                                const double *real,
+                                                const double *imaginary,
+                                                const double *derivative_real,
+                                                const double *derivative_imaginary,
+                                                uintptr_t count,
+                                                struct CigletRsIfDetectorF64 **output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_clone_f64(const struct CigletRsIfDetectorF64 *handle,
+                                         struct CigletRsIfDetectorF64 **output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_release_f64(struct CigletRsIfDetectorF64 **handle);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_kernel_count_f64(const struct CigletRsIfDetectorF64 *handle,
+                                                uintptr_t *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_center_frequency_f64(const struct CigletRsIfDetectorF64 *handle,
+                                                    double *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_set_center_frequency_f64(struct CigletRsIfDetectorF64 *handle,
+                                                        double value);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_copy_kernels_f64(const struct CigletRsIfDetectorF64 *handle,
+                                                double *real,
+                                                double *imaginary,
+                                                double *derivative_real,
+                                                double *derivative_imaginary,
+                                                uintptr_t count);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_replace_kernels_f64(struct CigletRsIfDetectorF64 *handle,
+                                                   const double *real,
+                                                   const double *imaginary,
+                                                   const double *derivative_real,
+                                                   const double *derivative_imaginary,
+                                                   uintptr_t count);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_estimate_f64(const struct CigletRsIfDetectorF64 *handle,
+                                            const double *samples,
+                                            uintptr_t count,
+                                            double *output);
+
+/**
+ * Owned detector operation with checked caller storage and atomic failure behavior.
+ * Frequencies are sampling-rate ratios. Native kernels and scalar arithmetic are
+ * retained. Explicit estimation policy zero Stable, one Legacy; default Stable.
+ * Kernel replacement validates four complete vectors before changing the owner.
+ * Invalid replacement preserves configuration. Kernel copies require four disjoint
+ * output planes of kernel_count elements; count mismatch is status two. Short
+ * samples retain native zero-return/participating-sample validation behavior.
+ * Constructors transfer ownership only on success. Kernel copying allocates no
+ * temporary vectors after complete validation. Scalar output slots are required
+ * even for empty samples. Release accepts an already-null initialized owner slot.
+ * Allocation/panic limits apply.
+ *
+ * # Safety
+ * Handles are live objects from this precision's constructors. Reads exclude all
+ * mutation/release; mutations and release require exclusive owner access. Every
+ * caller buffer/slot is independent of private owner storage. Nonempty inputs are
+ * aligned initialized stable readable allocations; outputs are aligned exclusively
+ * writable for their declared type/count. Copy planes are pairwise disjoint.
+ * Null arrays are accepted only for zero counts. Ownership slots are independent
+ * initialized writable storage; release invalidates aliases and clears the slot.
+ * Constructors/clone output slots must not already own an unreleased object.
+ */
+uint32_t ciglet_rs_if_detector_estimate_with_f64(const struct CigletRsIfDetectorF64 *handle,
+                                                 const double *samples,
+                                                 uintptr_t count,
+                                                 uint32_t policy,
+                                                 double *output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

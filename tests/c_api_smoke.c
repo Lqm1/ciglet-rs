@@ -918,6 +918,46 @@ int main(void) {
     CHECK_ROOT(float, f32, 1e-6);
     CHECK_ROOT(double, f64, 1e-7);
     #undef CHECK_ROOT
+    #define CHECK_IF_DETECTOR(type, suffix, owner_type, tolerance) do { \
+        owner_type *owner = NULL, *copy = NULL, *custom = NULL; size_t count = 71; type center = 71, value = 71; \
+        type real[13], imaginary[13], derivative_real[13], derivative_imaginary[13]; \
+        assert(ciglet_rs_if_detector_create_##suffix(0.125,0.3,&owner) == 0 && owner); \
+        assert(ciglet_rs_if_detector_kernel_count_##suffix(owner,&count) == 0 && count == 13); \
+        assert(ciglet_rs_if_detector_copy_kernels_##suffix(owner,real,imaginary,derivative_real,derivative_imaginary,13) == 0); \
+        for(size_t i=0;i<13;++i) assert(isfinite(real[i]) && isfinite(imaginary[i]) && isfinite(derivative_real[i]) && isfinite(derivative_imaginary[i])); \
+        assert(ciglet_rs_if_detector_center_frequency_##suffix(owner,&center) == 0 && center == 0.125); \
+        assert(ciglet_rs_if_detector_clone_##suffix(owner,&copy) == 0 && copy && copy != owner); \
+        assert(ciglet_rs_if_detector_set_center_frequency_##suffix(copy,0.25) == 0); \
+        assert(ciglet_rs_if_detector_center_frequency_##suffix(copy,&center) == 0 && center == 0.25); \
+        assert(ciglet_rs_if_detector_center_frequency_##suffix(owner,&center) == 0 && center == 0.125); \
+        type r[] = {1,0}, im[] = {0,1}, dr[] = {0,-2}, di[] = {2,0}, samples[] = {1,2}; \
+        assert(ciglet_rs_if_detector_from_kernels_##suffix(0.125,r,im,dr,di,2,&custom) == 0 && custom); \
+        assert(ciglet_rs_if_detector_estimate_##suffix(custom,samples,2,&value) == 0 && fabs((double)value-1.0/acos(-1.0)) < tolerance); \
+        assert(ciglet_rs_if_detector_estimate_with_##suffix(custom,samples,2,0,&value) == 0 && fabs((double)value-1.0/acos(-1.0)) < tolerance); \
+        assert(ciglet_rs_if_detector_estimate_with_##suffix(custom,samples,2,1,&value) == 0 && fabs((double)value-1.0/acos(-1.0)) < tolerance); \
+        assert(ciglet_rs_if_detector_replace_kernels_##suffix(copy,r,im,dr,di,2) == 0); \
+        assert(ciglet_rs_if_detector_kernel_count_##suffix(copy,&count) == 0 && count == 2); \
+        assert(ciglet_rs_if_detector_kernel_count_##suffix(owner,&count) == 0 && count == 13); \
+        assert(ciglet_rs_if_detector_set_center_frequency_##suffix(copy,NAN) == 3); \
+        assert(ciglet_rs_if_detector_center_frequency_##suffix(copy,&center) == 0 && center == 0.25); \
+        assert(ciglet_rs_if_detector_replace_kernels_##suffix(copy,NULL,NULL,NULL,NULL,0) == 3); \
+        assert(ciglet_rs_if_detector_kernel_count_##suffix(copy,&count) == 0 && count == 2); \
+        for(size_t i=0;i<13;++i) real[i] = imaginary[i] = derivative_real[i] = derivative_imaginary[i] = 71; \
+        assert(ciglet_rs_if_detector_copy_kernels_##suffix(copy,real,real,derivative_real,derivative_imaginary,2) == 2); \
+        assert(ciglet_rs_if_detector_copy_kernels_##suffix(copy,real,imaginary,derivative_real,derivative_imaginary,1) == 2); \
+        for(size_t i=0;i<13;++i) assert(real[i] == 71 && imaginary[i] == 71 && derivative_real[i] == 71 && derivative_imaginary[i] == 71); \
+        value = 71; \
+        assert(ciglet_rs_if_detector_estimate_with_##suffix(custom,samples,2,2,&value) == 3 && value == 71); \
+        assert(ciglet_rs_if_detector_estimate_##suffix(custom,NULL,2,&value) == 1 && value == 71); \
+        assert(ciglet_rs_if_detector_estimate_##suffix(custom,NULL,0,&value) == 0 && value == 0); \
+        assert(ciglet_rs_if_detector_release_##suffix(&copy) == 0 && !copy); \
+        assert(ciglet_rs_if_detector_release_##suffix(&copy) == 0); \
+        assert(ciglet_rs_if_detector_release_##suffix(&custom) == 0 && !custom); \
+        assert(ciglet_rs_if_detector_release_##suffix(&owner) == 0 && !owner); \
+    } while (0)
+    CHECK_IF_DETECTOR(float, f32, CigletRsIfDetectorF32, 1e-7);
+    CHECK_IF_DETECTOR(double, f64, CigletRsIfDetectorF64, 2e-16);
+    #undef CHECK_IF_DETECTOR
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

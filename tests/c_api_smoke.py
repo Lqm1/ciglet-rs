@@ -1176,6 +1176,66 @@ def main():
         assert root_find(root_callback,None,3,1,ctypes.byref(value)) == 3 and value.value == 71
         root_state["kind"] = 0
         assert root_find(root_callback,None,0,1,ctypes.byref(value)) == 0 and value.value == 0.25
+        owner_pointer = ctypes.POINTER(ctypes.c_void_p)
+        detector_signatures = {
+            "create": [scalar,scalar,owner_pointer],
+            "from_kernels": [scalar,pointer,pointer,pointer,pointer,size,owner_pointer],
+            "clone": [ctypes.c_void_p,owner_pointer],
+            "release": [owner_pointer],
+            "kernel_count": [ctypes.c_void_p,ctypes.POINTER(size)],
+            "center_frequency": [ctypes.c_void_p,pointer],
+            "set_center_frequency": [ctypes.c_void_p,scalar],
+            "copy_kernels": [ctypes.c_void_p,pointer,pointer,pointer,pointer,size],
+            "replace_kernels": [ctypes.c_void_p,pointer,pointer,pointer,pointer,size],
+            "estimate": [ctypes.c_void_p,pointer,size,pointer],
+            "estimate_with": [ctypes.c_void_p,pointer,size,ctypes.c_uint32,pointer],
+        }
+        detector = {}
+        for operation, signature in detector_signatures.items():
+            function = getattr(library,f"ciglet_rs_if_detector_{operation}_{suffix}")
+            function.argtypes = signature
+            function.restype = ctypes.c_uint32
+            detector[operation] = function
+        owner,copy,custom = ctypes.c_void_p(),ctypes.c_void_p(),ctypes.c_void_p()
+        count,center,value = size(71),scalar(71),scalar(71)
+        planes = [(scalar*13)() for _ in range(4)]
+        assert detector["create"](0.125,0.3,ctypes.byref(owner)) == 0 and owner.value
+        assert detector["kernel_count"](owner,ctypes.byref(count)) == 0 and count.value == 13
+        assert detector["copy_kernels"](owner,*planes,13) == 0
+        assert all(math.isfinite(element) for plane in planes for element in plane)
+        assert detector["center_frequency"](owner,ctypes.byref(center)) == 0 and center.value == 0.125
+        assert detector["clone"](owner,ctypes.byref(copy)) == 0 and copy.value and copy.value != owner.value
+        assert detector["set_center_frequency"](copy,0.25) == 0
+        assert detector["center_frequency"](copy,ctypes.byref(center)) == 0 and center.value == 0.25
+        assert detector["center_frequency"](owner,ctypes.byref(center)) == 0 and center.value == 0.125
+        kernels = [(scalar*2)(*values) for values in ([1,0],[0,1],[0,-2],[2,0])]
+        samples = (scalar*2)(1,2)
+        assert detector["from_kernels"](0.125,*kernels,2,ctypes.byref(custom)) == 0 and custom.value
+        tolerance = 1e-7 if suffix == "f32" else 2e-16
+        assert detector["estimate"](custom,samples,2,ctypes.byref(value)) == 0 and abs(value.value-1/math.pi) < tolerance
+        for policy in (0,1):
+            assert detector["estimate_with"](custom,samples,2,policy,ctypes.byref(value)) == 0 and abs(value.value-1/math.pi) < tolerance
+        assert detector["replace_kernels"](copy,*kernels,2) == 0
+        assert detector["kernel_count"](copy,ctypes.byref(count)) == 0 and count.value == 2
+        assert detector["kernel_count"](owner,ctypes.byref(count)) == 0 and count.value == 13
+        assert detector["set_center_frequency"](copy,math.nan) == 3
+        assert detector["center_frequency"](copy,ctypes.byref(center)) == 0 and center.value == 0.25
+        assert detector["replace_kernels"](copy,None,None,None,None,0) == 3
+        assert detector["kernel_count"](copy,ctypes.byref(count)) == 0 and count.value == 2
+        for plane in planes:
+            for index in range(13):
+                plane[index] = 71
+        assert detector["copy_kernels"](copy,planes[0],planes[0],planes[2],planes[3],2) == 2
+        assert detector["copy_kernels"](copy,*planes,1) == 2
+        assert all(list(plane) == [71]*13 for plane in planes)
+        value.value = 71
+        assert detector["estimate_with"](custom,samples,2,2,ctypes.byref(value)) == 3 and value.value == 71
+        assert detector["estimate"](custom,None,2,ctypes.byref(value)) == 1 and value.value == 71
+        assert detector["estimate"](custom,None,0,ctypes.byref(value)) == 0 and value.value == 0
+        assert detector["release"](ctypes.byref(copy)) == 0 and copy.value is None
+        assert detector["release"](ctypes.byref(copy)) == 0
+        assert detector["release"](ctypes.byref(custom)) == 0 and custom.value is None
+        assert detector["release"](ctypes.byref(owner)) == 0 and owner.value is None
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

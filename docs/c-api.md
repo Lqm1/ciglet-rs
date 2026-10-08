@@ -1636,3 +1636,61 @@ pending public WASM rows; every mapped function or constant exists in the header
 Current family Release, Python32 and static-link callers remain unverified. This
 family evidence does not replace final combined native/bindings acceptance. All
 remaining public C interfaces and all three WASM bindings remain required.
+
+## Owned instantaneous-frequency detectors
+
+Twenty-two f32/f64 exports expose construction from original generated kernels or
+four caller-designed kernel planes, independent cloning, release, kernel length
+and center frequency queries, center frequency updates, kernel copying and atomic
+kernel replacement, and default/explicit-policy estimation. Frequencies remain
+sampling-rate ratios; policy zero selects Stable, one selects Legacy. This covers
+valid configuration of the original public detector structure without exposing
+Rust-owned vector storage. Invalid configurations are rejected before replacement
+and leave the previous configuration usable. Native Rust still exposes checked
+estimation after kernel editing through kernels_mut.
+
+Each handle owns its detector. Read operations may run concurrently if mutation
+and release are excluded; configuration and release require exclusive access.
+Clones own independent kernel vectors. Callers retain initialized readable input
+buffers and exclusively writable output buffers independent of private owner
+storage. Kernel copies require four pairwise disjoint output planes with exactly
+kernel_count elements. All lengths, pointer ranges and pairwise overlaps are
+validated before copying directly from the retained immutable owner; no temporary
+vectors are allocated. Replacement builds a complete validated candidate before
+changing the owner. Constructors publish ownership only on success. Release
+clears the ownership slot and accepts an already-null initialized slot. All
+aliases become invalid on release; constructor output slots must not already own
+an unreleased object. Null arrays are accepted only for zero counts.
+
+Scalar estimates are committed only after success, including when the output
+overlaps samples. Short samples preserve the native positive-zero result; only
+participating samples are checked. Scalar outputs are required even for empty
+samples. Status one reports invalid nullness/alignment, two reports invalid ranges,
+kernel-copy count or overlapping copy planes, and three reports native domain
+errors or unknown policies. Native allocation/panic limits remain applicable.
+
+Host six tests and warning-denied all-target Clippy pass. Both IFD1 corpora consume
+all 24 original C cases and four sample datasets per case. Float kernel and Legacy
+estimate bits are exact; binary64 keeps the existing 3e-15 kernel and 1e-12 estimate
+normalized bounds. Independent configured-kernel checks cover both policies,
+default equals Stable, maximum/subnormal amplitudes, ignored outer NaNs, short
+samples, in-place scalar output, clone independence, configuration retention and
+all six copy-plane alias pairs. No native arithmetic, fixture, dependency or
+existing tolerance changed. The generated header has 390 status-returning exports,
+twenty opaque types and four correlogram constants. Expanded optimized assert-enabled
+C main calls every declared export. All five target runners terminate with exit
+zero. Exact 37 summary counts
+10,4,4,5,6,6,6,3,4,6,6,9,8,9,6,6,3,6,6,6,5,6,8,6,6,8,6,6,3,3,3,3,3,4,2,3,4
+verify 170 boundary plus 28 focused native tests per target, with zero failed or
+ignored tests and no error diagnostics. Optimized assert-enabled C callers invoke
+all 390 exports on every target; Python passes on MSVC64/GNU64/Linux64. Original C
+oracle regeneration checks pass on Windows and Linux: float fixtures are unchanged,
+and Linux binary64 maximum kernel/estimate normalized differences are
+1.1804333753159537e-16/6.236352585145109e-13, within unchanged 3e-15/1e-12 bounds.
+Warning-denied Rustdoc, header verification, formatting and whitespace checks pass.
+The 334-row inventory now has 180 implemented C source mappings, 152 pending public
+C rows, two nonpublic macro formals and 332 pending public WASM rows. Every mapped
+function or constant exists in the header. Current family Release, Python32 and
+static-link callers remain unverified. This evidence does not replace final
+combined native/bindings acceptance. All remaining public C interfaces and all
+three WASM bindings remain required.
