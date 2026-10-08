@@ -9,6 +9,26 @@
 #include <math.h>
 #include <string.h>
 
+struct RootContext { double target; size_t calls; int kind; };
+static float root_callback_f32(float value, void *opaque) {
+    if (!opaque) return value - 0.25f;
+    struct RootContext *context = opaque;
+    ++context->calls;
+    if (context->kind == 1) return value * value - 2.0f;
+    if (context->kind == 2) return NAN;
+    if (context->kind == 3 && value == 0) return NAN;
+    return value - (float)context->target;
+}
+static double root_callback_f64(double value, void *opaque) {
+    if (!opaque) return value - 0.25;
+    struct RootContext *context = opaque;
+    ++context->calls;
+    if (context->kind == 1) return value * value - 2.0;
+    if (context->kind == 2) return NAN;
+    if (context->kind == 3 && value == 0) return NAN;
+    return value - context->target;
+}
+
 struct WindowContext { size_t calls; size_t fail_on; int nonfinite; double angles[16]; };
 static uint32_t trig_f32(double angle, void *opaque, float *output) {
     struct WindowContext *context = opaque;
@@ -880,6 +900,24 @@ int main(void) {
     CHECK_CORRELOGRAM(float, f32, 1e-6);
     CHECK_CORRELOGRAM(double, f64, 1e-14);
     #undef CHECK_CORRELOGRAM
+    #define CHECK_ROOT(type, suffix, tolerance) do { \
+        struct RootContext context = {0.25,0,0}; type value = 71; \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,&context,0,1,&value) == 0 && value == 0.25 && context.calls >= 2); \
+        context.kind = 1; context.calls = 0; \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,&context,0,2,&value) == 0); \
+        assert(fabs((double)value * (double)value - 2) < tolerance && context.calls >= 2); \
+        value = 71; context.kind = 2; \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,&context,0,1,&value) == 3 && value == 71); \
+        context.kind = 3; context.target = 0; context.calls = 0; \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,&context,-1,1,&value) == 3 && value == 71 && context.calls >= 3); \
+        assert(ciglet_rs_root_find_##suffix(NULL,NULL,0,1,&value) == 1 && value == 71); \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,&context,0,1,NULL) == 1); \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,&context,3,1,&value) == 3 && value == 71); \
+        assert(ciglet_rs_root_find_##suffix(root_callback_##suffix,NULL,0,1,&value) == 0 && value == 0.25); \
+    } while (0)
+    CHECK_ROOT(float, f32, 1e-6);
+    CHECK_ROOT(double, f64, 1e-7);
+    #undef CHECK_ROOT
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

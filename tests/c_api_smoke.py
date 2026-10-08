@@ -1143,6 +1143,39 @@ def main():
         assert correlogram_frequency(periods,1,4,4,0,frequencies,5,output,5) == 3 and list(output) == [71]*5
         assert correlogram_compute(None,0,None,None,0,5,0,None,0) == 0
         assert correlogram_frequency(None,0,4,0,100,frequencies,5,None,0) == 0
+        root_callback_type = ctypes.CFUNCTYPE(scalar,scalar,ctypes.c_void_p)
+        root_find = getattr(library, f"ciglet_rs_root_find_{suffix}")
+        root_find.argtypes = [root_callback_type,ctypes.c_void_p,scalar,scalar,pointer]
+        root_find.restype = ctypes.c_uint32
+        root_state = {"calls":0,"kind":0}
+        root_target = scalar(0.25)
+        @root_callback_type
+        def root_callback(value, opaque):
+            root_state["calls"] += 1
+            if root_state["kind"] == 1:
+                # Match each native scalar operation before returning through C ABI.
+                return scalar(scalar(value*value).value-2).value
+            if root_state["kind"] == 2 or (root_state["kind"] == 3 and value == 0):
+                return math.nan
+            target = ctypes.cast(opaque,pointer).contents.value if opaque else 0.25
+            return scalar(value-target).value
+        value = scalar(71)
+        assert root_find(root_callback,ctypes.byref(root_target),0,1,ctypes.byref(value)) == 0 and value.value == 0.25 and root_state["calls"] >= 2
+        root_state["kind"] = 1
+        assert root_find(root_callback,None,0,2,ctypes.byref(value)) == 0
+        assert abs(value.value*value.value-2) < (1e-6 if suffix == "f32" else 1e-7)
+        value.value = 71
+        root_state["kind"] = 2
+        assert root_find(root_callback,None,0,1,ctypes.byref(value)) == 3 and value.value == 71
+        root_state["kind"] = 3
+        root_state["calls"] = 0
+        root_target.value = 0
+        assert root_find(root_callback,ctypes.byref(root_target),-1,1,ctypes.byref(value)) == 3 and value.value == 71 and root_state["calls"] >= 3
+        assert root_find(root_callback_type(),None,0,1,ctypes.byref(value)) == 1 and value.value == 71
+        assert root_find(root_callback,None,0,1,None) == 1
+        assert root_find(root_callback,None,3,1,ctypes.byref(value)) == 3 and value.value == 71
+        root_state["kind"] = 0
+        assert root_find(root_callback,None,0,1,ctypes.byref(value)) == 0 and value.value == 0.25
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

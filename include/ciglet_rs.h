@@ -5094,6 +5094,50 @@ uint32_t ciglet_rs_median_filter_f64(const double *signal,
                                      uintptr_t output_count);
 
 /**
+ * Find a root using native tolerance, interpolation and midpoint fallback.
+ * Callback and context are used synchronously and never retained. Null callback
+ * returns one; native invalid bounds/nonfinite callback values return three.
+ * Output is committed only on success. The callback may mutate its own context
+ * but must leave output storage untouched. Native panic/abort limits apply;
+ * catch_unwind cannot protect against callback unwinding across this C boundary.
+ *
+ * # Safety
+ * A present callback must have the declared C ABI and scalar precision and be
+ * callable for every argument in the bracket for this entire call. Context must
+ * satisfy its callback's validity/lifetime/access requirements; null is allowed
+ * if that callback supports it. Callback must not unwind, throw or panic across
+ * its C boundary. Output is aligned exclusively writable single-allocation
+ * storage for one scalar, independent of any storage the callback mutates.
+ */
+uint32_t ciglet_rs_root_find_f32(float (*callback)(float, void*),
+                                 void *context,
+                                 float start,
+                                 float end,
+                                 float *output);
+
+/**
+ * Find a root using native tolerance, interpolation and midpoint fallback.
+ * Callback and context are used synchronously and never retained. Null callback
+ * returns one; native invalid bounds/nonfinite callback values return three.
+ * Output is committed only on success. The callback may mutate its own context
+ * but must leave output storage untouched. Native panic/abort limits apply;
+ * catch_unwind cannot protect against callback unwinding across this C boundary.
+ *
+ * # Safety
+ * A present callback must have the declared C ABI and scalar precision and be
+ * callable for every argument in the bracket for this entire call. Context must
+ * satisfy its callback's validity/lifetime/access requirements; null is allowed
+ * if that callback supports it. Callback must not unwind, throw or panic across
+ * its C boundary. Output is aligned exclusively writable single-allocation
+ * storage for one scalar, independent of any storage the callback mutates.
+ */
+uint32_t ciglet_rs_root_find_f64(double (*callback)(double, void*),
+                                 void *context,
+                                 double start,
+                                 double end,
+                                 double *output);
+
+/**
  * Frame correlogram with native Stable policy.
  * Methods: zero autocorrelation, one absolute difference, two squared difference,
  * three YIN. Centers are signed sample indices; lengths are positive window sizes.

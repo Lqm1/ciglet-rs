@@ -1594,3 +1594,45 @@ public WASM rows. Every mapped function or constant exists in the header. Curren
 family Release, Python32 and static-link callers remain unverified. This family
 evidence does not replace final combined native/bindings acceptance. All remaining
 public C interfaces and all three WASM bindings remain required.
+
+
+## Synchronous root-finding callbacks
+
+Two f32/f64 exports expose native bracketed scalar root finding with a correctly
+typed C callback and opaque context pointer. Calls are synchronous; neither
+callback nor context is retained. Null callbacks return one. The context passes
+through unchanged and may be null if the callback supports it. Scalar output is
+staged and committed only after native success. Invalid bounds or nonfinite
+callback values return three; invalid output alignment/nullness returns one.
+The callback may mutate its own context but must not mutate output storage.
+
+Nullable callbacks use Option<unsafe extern "C" fn>, following the official
+[Rust nullable-pointer rules](https://doc.rust-lang.org/nomicon/ffi.html#the-nullable-pointer-optimization)
+and [Option representation guarantees](https://doc.rust-lang.org/std/option/index.html#representation).
+Callbacks must not unwind across their ordinary C boundary. The surrounding
+native catch_unwind cannot protect against a callback panic/foreign exception
+crossing that boundary; see the official [FFI unwinding rules](https://doc.rust-lang.org/nomicon/ffi.html#ffi-and-unwinding).
+Native abort/allocation and callback memory-validity limits remain unchanged.
+
+Host six tests and warning-denied all-target Clippy/Rustdoc pass. Both ROT1 corpora
+consume all 25 original C roots with exact numerical values. Independent stateful
+context, endpoint roots, nonbracketing midpoint fallback, maximum finite midpoint,
+null context, invalid bounds/null callback/misaligned output, first/second and
+interior nonfinite callback results and atomic output preservation are checked.
+Invalid pointer/bounds calls do not invoke callbacks. Native root arithmetic,
+iteration limit, tolerance, fixtures and dependencies are unchanged. Header
+contains 368 status-returning exports, eighteen opaque types and four correlogram
+method constants. Expanded optimized assert-enabled MSVC C references every export.
+Actual C/Python callers exercise linear and nonlinear scalar-return callbacks.
+All five target runners terminate with exit zero. Exact 35 summary counts
+10,4,4,5,6,6,6,3,4,6,9,8,9,6,6,3,6,6,6,5,6,8,6,6,8,6,6,3,3,3,3,4,2,3,4 verify
+164 boundary plus 25 focused native tests per target, zero failed/ignored and no
+error diagnostics. Optimized assert-enabled C callers invoke all 368 exports on
+every target; Python passes on MSVC64/GNU64/Linux64. Scalar-return callbacks are
+therefore exercised on both 32bit native C targets as well. Header verification,
+formatting and whitespace checks pass. The 334-row inventory has 174 implemented
+C source mappings, 158 pending public C rows, two nonpublic macro formals and 332
+pending public WASM rows; every mapped function or constant exists in the header.
+Current family Release, Python32 and static-link callers remain unverified. This
+family evidence does not replace final combined native/bindings acceptance. All
+remaining public C interfaces and all three WASM bindings remain required.
