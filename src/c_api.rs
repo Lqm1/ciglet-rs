@@ -89,6 +89,8 @@ pub use interpolation_functions::*;
 mod smoothing;
 mod smoothing_functions;
 pub use smoothing_functions::*;
+mod correlogram_functions;
+pub use correlogram_functions::*;
 mod kalman_functions;
 pub use kalman_functions::*;
 mod synthesis_functions;

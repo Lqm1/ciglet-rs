@@ -1540,3 +1540,57 @@ pending public WASM rows; every mapped export exists in the header. Current fami
 Release, Python32 and static-link callers remain unverified. This family evidence
 does not replace final combined native/bindings acceptance. All remaining public
 C interfaces and all three WASM bindings remain required.
+
+
+## Frame correlograms and frequency conversion
+
+Six typed f32/f64 exports expose all three native correlogram functions. Method
+codes are zero autocorrelation, one absolute difference, two squared difference
+and three YIN. Default compute selects Stable; explicit policy zero Stable or
+one Legacy retains the corresponding native arithmetic. Signed sample centers
+and positive window lengths share the frame count. Row-major output dimensions
+are frame_count by periods. Native strict trailing boundaries and unavailable-lag
+values are retained. Frequency conversion accepts a row-major period matrix and
+finite queries in caller order, including signed-zero endpoint semantics.
+
+Complete owned staging preserves output on every error and permits input/output
+overlap. Compute assembles owned frame descriptors from checked center/length
+arrays. Frequency conversion copies the period matrix into native owned storage;
+all input borrowing ends before output commit. Counts must match checked dimension
+products; mismatches/overflow return two. Nonempty null or misaligned pointers
+return one; native domain errors and unknown method/policy codes return three.
+Empty buffers are never borrowed or copied. Native allocation/panic limits apply.
+
+Host six tests and warning-denied all-target Clippy/Rustdoc pass. Both CRG1 corpora
+consume all 32 original C cases, preserving exact float bits and the unchanged
+3e-15 binary64 normalized error bound. Independent ramp/YIN calculations, strict
+trailing boundaries, constant/negative correlation, DC-offset stability, maximum
+amplitudes, silence, both policies, frequency knots/fractional/endpoints, signed
+zero, singleton axes and empty frames are checked. Default equals explicit Stable
+for all four methods in both precisions. Input/output overlap, malformed dimensions,
+unknown selectors and nonfinite queries are tested. A failure in the second frame
+preserves every output; misaligned center, length and result buffers are rejected.
+No native kernel, fixture, dependency or tolerance changed. Header has 366 exports
+and eighteen opaque types; expanded optimized assert-enabled MSVC C references all
+366 declarations. Four prefixed public C method constants also expose the original
+codes. They are generated with cbindgen's constants item category; unrelated
+Rust-native LEGACY names remain outside this header and their separate C mappings
+remain pending. The official [cbindgen export configuration](https://github.com/mozilla/cbindgen/blob/main/docs.md#export)
+is used rather than manually editing the header.
+
+All initial five-target runners terminate with exit zero. Exact 33 summary counts
+10,4,4,5,6,6,6,3,4,6,9,8,9,6,6,3,6,6,6,5,6,8,6,8,6,6,3,3,3,3,4,2,4 verify
+158 boundary plus 22 focused native tests per target, zero failed/ignored and no
+error diagnostics. After adding the named method constants, six focused tests
+pass again on each target, including assertions against every native Method value.
+The final optimized assert-enabled C caller invokes all 366 exports and uses all
+four method constants on every target; Python passes again on MSVC64/GNU64/Linux64.
+The first constant-specific C compilation failed because the header configuration
+excluded constants; enabling that category fixed the generated declarations, and
+all final caller runs terminate with exit zero. Header verification, formatting
+and whitespace checks pass. The 334-row inventory has 172 implemented C source
+mappings, 160 pending public C rows, two nonpublic macro formals and 332 pending
+public WASM rows. Every mapped function or constant exists in the header. Current
+family Release, Python32 and static-link callers remain unverified. This family
+evidence does not replace final combined native/bindings acceptance. All remaining
+public C interfaces and all three WASM bindings remain required.

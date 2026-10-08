@@ -855,6 +855,31 @@ int main(void) {
     CHECK_KALMAN(float, f32, 1e-7);
     CHECK_KALMAN(double, f64, 1e-15);
     #undef CHECK_KALMAN
+    #define CHECK_CORRELOGRAM(type, suffix, tolerance) do { \
+        type samples[] = {0,1,2,3,4,5,6,7}, output[5] = {71,71,71,71,71}, selected[5]; int32_t center = 2; size_t length = 4; \
+        int32_t methods[] = {CIGLET_RS_CORRELOGRAM_AUTOCORRELATION,CIGLET_RS_CORRELOGRAM_ABSOLUTE_DIFFERENCE,CIGLET_RS_CORRELOGRAM_SQUARED_DIFFERENCE,CIGLET_RS_CORRELOGRAM_YIN}; \
+        for(size_t method_index=0;method_index<4;++method_index) { int32_t method = methods[method_index]; \
+            assert(ciglet_rs_correlogram_compute_##suffix(samples,8,&center,&length,1,5,method,output,5) == 0); \
+            assert(ciglet_rs_correlogram_compute_with_##suffix(samples,8,&center,&length,1,5,method,0,selected,5) == 0); \
+            for(size_t i=0;i<5;++i) assert(output[i] == selected[i]); \
+            assert(ciglet_rs_correlogram_compute_with_##suffix(samples,8,&center,&length,1,5,method,1,selected,5) == 0); \
+        } \
+        assert(ciglet_rs_correlogram_compute_##suffix(samples,8,&center,&length,1,5,1,output,5) == 0); \
+        assert(output[0] == 0 && output[1] == 4 && output[2] == 8 && output[3] == 12 && output[4] == 0); \
+        type periods[] = {0,10,20,30}, frequencies[] = {100,50,40,0,-0.0}; \
+        assert(ciglet_rs_correlogram_to_frequency_##suffix(periods,1,4,4,100,frequencies,5,output,5) == 0); \
+        assert(output[0] == 10 && output[1] == 20 && fabs((double)output[2]-25) < tolerance && output[3] == 30 && output[4] == 0); \
+        for(size_t i=0;i<5;++i) output[i] = 71; \
+        assert(ciglet_rs_correlogram_compute_with_##suffix(samples,8,&center,&length,1,5,0,2,output,5) == 3); \
+        assert(ciglet_rs_correlogram_compute_##suffix(samples,8,&center,&length,1,5,4,output,5) == 3); \
+        assert(ciglet_rs_correlogram_to_frequency_##suffix(periods,1,4,4,0,frequencies,5,output,5) == 3); \
+        for(size_t i=0;i<5;++i) assert(output[i] == 71); \
+        assert(ciglet_rs_correlogram_compute_##suffix(NULL,0,NULL,NULL,0,5,0,NULL,0) == 0); \
+        assert(ciglet_rs_correlogram_to_frequency_##suffix(NULL,0,4,0,100,frequencies,5,NULL,0) == 0); \
+    } while (0)
+    CHECK_CORRELOGRAM(float, f32, 1e-6);
+    CHECK_CORRELOGRAM(double, f64, 1e-14);
+    #undef CHECK_CORRELOGRAM
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

@@ -9,6 +9,26 @@
 #include <stdlib.h>
 
 /**
+ * Autocorrelation correlogram method code.
+ */
+#define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
+
+/**
+ * Absolute-difference correlogram method code.
+ */
+#define CIGLET_RS_CORRELOGRAM_ABSOLUTE_DIFFERENCE 1
+
+/**
+ * Squared-difference correlogram method code.
+ */
+#define CIGLET_RS_CORRELOGRAM_SQUARED_DIFFERENCE 2
+
+/**
+ * YIN correlogram method code.
+ */
+#define CIGLET_RS_CORRELOGRAM_YIN 3
+
+/**
  * Opaque binary32 array. Obtain and release it through its typed C functions.
  */
 typedef struct CigletRsArrayF32 CigletRsArrayF32;
@@ -5072,6 +5092,160 @@ uint32_t ciglet_rs_median_filter_f64(const double *signal,
                                      uintptr_t width,
                                      double *output,
                                      uintptr_t output_count);
+
+/**
+ * Frame correlogram with native Stable policy.
+ * Methods: zero autocorrelation, one absolute difference, two squared difference,
+ * three YIN. Centers are signed sample indices; lengths are positive window sizes.
+ * Output is frame_count by periods in row-major order. Native strict trailing
+ * boundaries and unavailable-lag values are retained. Complete staging preserves
+ * output on error and permits input/output overlap. Unknown selectors return three.
+ * Native validation, allocation and panic limitations apply.
+ *
+ * # Safety
+ * Samples are aligned initialized readable storage for sample_count scalars;
+ * centers/lengths are aligned initialized readable arrays for frame_count entries.
+ * Output is aligned exclusive writable single-allocation storage for output_count
+ * scalars. All inputs remain stable during calculation. Null buffers are accepted
+ * only for zero associated counts. Input buffers may overlap one another.
+ */
+uint32_t ciglet_rs_correlogram_compute_f32(const float *samples,
+                                           uintptr_t sample_count,
+                                           const int32_t *centers,
+                                           const uintptr_t *lengths,
+                                           uintptr_t frame_count,
+                                           uintptr_t periods,
+                                           int32_t method,
+                                           float *output,
+                                           uintptr_t output_count);
+
+/**
+ * Frame correlogram with explicit policy zero Stable, one Legacy.
+ * Methods: zero autocorrelation, one absolute difference, two squared difference,
+ * three YIN. Centers are signed sample indices; lengths are positive window sizes.
+ * Output is frame_count by periods in row-major order. Native strict trailing
+ * boundaries and unavailable-lag values are retained. Complete staging preserves
+ * output on error and permits input/output overlap. Unknown selectors return three.
+ * Native validation, allocation and panic limitations apply.
+ *
+ * # Safety
+ * Samples are aligned initialized readable storage for sample_count scalars;
+ * centers/lengths are aligned initialized readable arrays for frame_count entries.
+ * Output is aligned exclusive writable single-allocation storage for output_count
+ * scalars. All inputs remain stable during calculation. Null buffers are accepted
+ * only for zero associated counts. Input buffers may overlap one another.
+ */
+uint32_t ciglet_rs_correlogram_compute_with_f32(const float *samples,
+                                                uintptr_t sample_count,
+                                                const int32_t *centers,
+                                                const uintptr_t *lengths,
+                                                uintptr_t frame_count,
+                                                uintptr_t periods,
+                                                int32_t method,
+                                                uint32_t policy,
+                                                float *output,
+                                                uintptr_t output_count);
+
+/**
+ * Map row-major period values to finite query frequencies, retaining query order.
+ * Input is frames by periods; output is frames by frequency_count. Positive zero
+ * queries map to the last lag; negative values/zero clamp to lag zero. Native
+ * sample-rate validation and singleton/empty-axis handling are retained. Complete
+ * source copying and staging preserve output on errors and permit input overlap.
+ * Allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Values/frequencies are aligned initialized stable readable single-allocation
+ * storage for input_count/frequency_count scalars. Output is aligned exclusively
+ * writable storage for output_count scalars. Null buffers are accepted only for
+ * zero associated counts. All declared dimensions must match their counts.
+ */
+uint32_t ciglet_rs_correlogram_to_frequency_f32(const float *values,
+                                                uintptr_t frames,
+                                                uintptr_t periods,
+                                                uintptr_t input_count,
+                                                int32_t sample_rate,
+                                                const float *frequencies,
+                                                uintptr_t frequency_count,
+                                                float *output,
+                                                uintptr_t output_count);
+
+/**
+ * Frame correlogram with native Stable policy.
+ * Methods: zero autocorrelation, one absolute difference, two squared difference,
+ * three YIN. Centers are signed sample indices; lengths are positive window sizes.
+ * Output is frame_count by periods in row-major order. Native strict trailing
+ * boundaries and unavailable-lag values are retained. Complete staging preserves
+ * output on error and permits input/output overlap. Unknown selectors return three.
+ * Native validation, allocation and panic limitations apply.
+ *
+ * # Safety
+ * Samples are aligned initialized readable storage for sample_count scalars;
+ * centers/lengths are aligned initialized readable arrays for frame_count entries.
+ * Output is aligned exclusive writable single-allocation storage for output_count
+ * scalars. All inputs remain stable during calculation. Null buffers are accepted
+ * only for zero associated counts. Input buffers may overlap one another.
+ */
+uint32_t ciglet_rs_correlogram_compute_f64(const double *samples,
+                                           uintptr_t sample_count,
+                                           const int32_t *centers,
+                                           const uintptr_t *lengths,
+                                           uintptr_t frame_count,
+                                           uintptr_t periods,
+                                           int32_t method,
+                                           double *output,
+                                           uintptr_t output_count);
+
+/**
+ * Frame correlogram with explicit policy zero Stable, one Legacy.
+ * Methods: zero autocorrelation, one absolute difference, two squared difference,
+ * three YIN. Centers are signed sample indices; lengths are positive window sizes.
+ * Output is frame_count by periods in row-major order. Native strict trailing
+ * boundaries and unavailable-lag values are retained. Complete staging preserves
+ * output on error and permits input/output overlap. Unknown selectors return three.
+ * Native validation, allocation and panic limitations apply.
+ *
+ * # Safety
+ * Samples are aligned initialized readable storage for sample_count scalars;
+ * centers/lengths are aligned initialized readable arrays for frame_count entries.
+ * Output is aligned exclusive writable single-allocation storage for output_count
+ * scalars. All inputs remain stable during calculation. Null buffers are accepted
+ * only for zero associated counts. Input buffers may overlap one another.
+ */
+uint32_t ciglet_rs_correlogram_compute_with_f64(const double *samples,
+                                                uintptr_t sample_count,
+                                                const int32_t *centers,
+                                                const uintptr_t *lengths,
+                                                uintptr_t frame_count,
+                                                uintptr_t periods,
+                                                int32_t method,
+                                                uint32_t policy,
+                                                double *output,
+                                                uintptr_t output_count);
+
+/**
+ * Map row-major period values to finite query frequencies, retaining query order.
+ * Input is frames by periods; output is frames by frequency_count. Positive zero
+ * queries map to the last lag; negative values/zero clamp to lag zero. Native
+ * sample-rate validation and singleton/empty-axis handling are retained. Complete
+ * source copying and staging preserve output on errors and permit input overlap.
+ * Allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Values/frequencies are aligned initialized stable readable single-allocation
+ * storage for input_count/frequency_count scalars. Output is aligned exclusively
+ * writable storage for output_count scalars. Null buffers are accepted only for
+ * zero associated counts. All declared dimensions must match their counts.
+ */
+uint32_t ciglet_rs_correlogram_to_frequency_f64(const double *values,
+                                                uintptr_t frames,
+                                                uintptr_t periods,
+                                                uintptr_t input_count,
+                                                int32_t sample_rate,
+                                                const double *frequencies,
+                                                uintptr_t frequency_count,
+                                                double *output,
+                                                uintptr_t output_count);
 
 /**
  * Kalman filtering with the first measurement as initial mean.

@@ -1119,6 +1119,30 @@ def main():
         assert kalman_smooth(None,None,None,0,None,0) == 0
         assert kalman_filter(None,None,None,0,None,None,0,None) == 1
         assert kalman_initial(measurement,process,noise,1,0,measurement,variances,1,ctypes.byref(likelihood)) == 0 and measurement[0] == 0.5
+        correlogram_compute = getattr(library, f"ciglet_rs_correlogram_compute_{suffix}")
+        correlogram_compute.argtypes = [pointer,size,ctypes.POINTER(ctypes.c_int32),ctypes.POINTER(size),size,size,ctypes.c_int32,pointer,size]
+        correlogram_compute.restype = ctypes.c_uint32
+        correlogram_selected = getattr(library, f"ciglet_rs_correlogram_compute_with_{suffix}")
+        correlogram_selected.argtypes = correlogram_compute.argtypes[:-2] + [ctypes.c_uint32,pointer,size]
+        correlogram_selected.restype = ctypes.c_uint32
+        correlogram_frequency = getattr(library, f"ciglet_rs_correlogram_to_frequency_{suffix}")
+        correlogram_frequency.argtypes = [pointer,size,size,size,ctypes.c_int32,pointer,size,pointer,size]
+        correlogram_frequency.restype = ctypes.c_uint32
+        samples,output,selected,center,length = (scalar*8)(*range(8)),(scalar*5)(71,71,71,71,71),(scalar*5)(),ctypes.c_int32(2),size(4)
+        for method in range(4):
+            assert correlogram_compute(samples,8,ctypes.byref(center),ctypes.byref(length),1,5,method,output,5) == 0
+            assert correlogram_selected(samples,8,ctypes.byref(center),ctypes.byref(length),1,5,method,0,selected,5) == 0 and list(output) == list(selected)
+            assert correlogram_selected(samples,8,ctypes.byref(center),ctypes.byref(length),1,5,method,1,selected,5) == 0
+        assert correlogram_compute(samples,8,ctypes.byref(center),ctypes.byref(length),1,5,1,output,5) == 0 and list(output) == [0,4,8,12,0]
+        periods,frequencies = (scalar*4)(0,10,20,30),(scalar*5)(100,50,40,0,-0.0)
+        assert correlogram_frequency(periods,1,4,4,100,frequencies,5,output,5) == 0 and list(output) == [10,20,25,30,0]
+        for index in range(5):
+            output[index] = 71
+        assert correlogram_selected(samples,8,ctypes.byref(center),ctypes.byref(length),1,5,0,2,output,5) == 3
+        assert correlogram_compute(samples,8,ctypes.byref(center),ctypes.byref(length),1,5,4,output,5) == 3
+        assert correlogram_frequency(periods,1,4,4,0,frequencies,5,output,5) == 3 and list(output) == [71]*5
+        assert correlogram_compute(None,0,None,None,0,5,0,None,0) == 0
+        assert correlogram_frequency(None,0,4,0,100,frequencies,5,None,0) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32
