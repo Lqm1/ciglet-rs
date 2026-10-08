@@ -798,3 +798,73 @@ ciglet C interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM
 interfaces remain required. No native numerical source or original fixture was
 changed. This boundary checkpoint does not replace final combined acceptance;
 symbol counts do not substitute for configuration/ownership auditing.
+
+## Real cepstrum interfaces
+
+Twenty-two f32/f64 functions expose owned reusable plans, clearing release,
+length/bin shape, log analysis/reconstruction, minimum-phase angles, magnitude
+spectrogram/cepstral matrices and three modern one-shot conveniences. The header
+declares 208 functions and ten opaque types. Plan lengths remain positive powers
+of two within the native legacy bound. Shape contains length and bins; positive
+length implies the native is_empty result is always false.
+
+Nyquist code zero Preserve retains supplied data, one Legacy substitutes the
+source neighboring bin. Lifter code zero Causal selects the corrected lifter,
+one Legacy retains doubled Nyquist and the first uncleared negative-quefrency
+sample. Unknown codes return status three. Analysis and minimum-phase inputs
+are already logarithmic; neither applies a log. Reconstruction mirrors the
+native used prefix, ignores the unused suffix and returns full-grid logs.
+One-shots from_log_spectrum and minimum_phase_default infer length=2*(bins-1)
+and need at least two bins. Their defaults Preserve/Causal match native Rust.
+to_log_spectrum uses the explicit output count as the transform length.
+
+Magnitude matrices use original approximate log(magnitude+1e-15); reverse
+matrices use original approximate exp. Explicit reverse frame counts represent
+zero-coefficient rows. Zero selected coefficients still validate used magnitude
+bins. Native policies inspect only used values, including ignored Legacy
+Nyquist/suffix samples. Empty matrices accept null buffers. Invalid native
+input shapes return status three; explicit output mismatches or checked output
+count overflow return two. Complete owned results retain all output on error,
+including a later frame, and permit supported input/output overlap.
+
+Typed handles own Mutex-protected Plan scratch. Calls serialize computation;
+caller inputs must remain stable while waiting. Immutable length/bin queries
+do not lock. Expected native errors release the guard and permit reuse.
+Observed poisoning returns three, without treating poisoning as a memory
+safety condition. The guard is inside the unwind boundary; release must exclude
+all outstanding calls and transfer sole ownership exactly once. Buffers and
+owner slots must remain independent of handles and Rust-owned storage.
+
+Six new host boundary tests consume all 72 original RCP1 records per precision,
+reusing each plan across every operation and all seven original comparisons.
+Their unchanged f32 bounds are 3e-8,1.2e-7,2e-7,1.6e-7,7e-9,0,2.5e-6; f64 bounds
+are 5e-17,3e-16,3e-16,3e-16,3e-17,0,0. Independent analytic round-trip and phase
+tests retain 1e-15 accuracy. Both Nyquist policies and both lifters are exercised,
+including the independent uncleared-sample difference. Additional cases prove
+ignored NaNs, supported overlap, late-frame atomic failure, overflow/recovery,
+invalid options/shapes/counts, owner retention after failed creation, singleton
+plans, empty matrices, zero coefficients and four concurrent shared-plan calls.
+The induced-poison unit test passes on MSVC x86_64 Debug and confirms unchanged
+output plus clearing release. No native numerical implementation, old fixture,
+dependency or acceptance threshold changed.
+
+Host checks and warning-denied all-target Clippy/Rustdoc, formatting, whitespace
+and generated-header verification pass. All five required targets pass 60
+boundary integration tests across eleven suites and six focused frame/DSP tests
+with c-api enabled. Every log independently has exact
+10,4,4,5,6,3,4,6,6,6,6,3,3 passing counts, zero failed/ignored and no error
+diagnostics. All runners terminate with exit zero. Independently compiled
+optimized, assert-enabled C callers invoke all 208 exports on every target;
+MSVC x86_64, Windows GNU x86_64 and Linux x86_64 also pass Python ctypes calls.
+The expanded optimized C caller references every generated declaration.
+
+The 334-row ledger has 106 implemented C mappings, 226 pending public or
+configuration C rows, two nonpublic macro formals and 332 public WASM rows
+pending. All five real-cepstrum source symbols now map typed operations, including
+modern conveniences and explicit legacy selections. Every implemented mapping
+was checked against the header. Current family Release, Python32 and static-link
+callers remain unverified. Remaining ciglet C interfaces, all liblrhsmm/SHIRO C
+interfaces and all three WASM interfaces remain required. This opt-in boundary
+checkpoint changes no native numerical implementation, original fixture or
+threshold and does not replace final combined acceptance. Symbol counts do not
+substitute for configuration, scratch, ownership or full functionality audits.

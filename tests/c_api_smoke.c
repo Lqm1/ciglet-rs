@@ -445,6 +445,46 @@ int main(void) {
     CHECK_FILTERBANK(float, f32, CigletRsFilterBankF32);
     CHECK_FILTERBANK(double, f64, CigletRsFilterBankF64);
     #undef CHECK_FILTERBANK
+    #define CHECK_REAL_CEPSTRUM(type, suffix, handle_type) do { \
+        handle_type *plan = NULL; size_t shape[2] = {71,71}; \
+        assert(ciglet_rs_real_cepstrum_new_##suffix(4,&plan) == 0); \
+        assert(ciglet_rs_real_cepstrum_shape_##suffix(plan,shape,2) == 0 && shape[0] == 4 && shape[1] == 3); \
+        type logs[] = {0,0,4}, coefficients[4], spectrum[4], phase[4], modern[4]; \
+        assert(ciglet_rs_real_cepstrum_analyze_##suffix(plan,logs,3,0,coefficients,4) == 0); \
+        assert(coefficients[0] == 1 && coefficients[1] == -1 && coefficients[2] == 1 && coefficients[3] == -1); \
+        assert(ciglet_rs_real_cepstrum_reconstruct_##suffix(plan,coefficients,4,0,spectrum,4) == 0); \
+        assert(spectrum[0] == 0 && spectrum[1] == 0 && spectrum[2] == 4 && spectrum[3] == 0); \
+        assert(ciglet_rs_real_cepstrum_minimum_phase_##suffix(plan,logs,3,0,0,phase,4) == 0); \
+        assert(phase[0] == 0 && phase[1] == 2 && phase[2] == 0 && phase[3] == -2); \
+        assert(ciglet_rs_real_cepstrum_from_log_spectrum_##suffix(logs,3,modern,4) == 0); \
+        for(size_t i=0;i<4;++i) assert(modern[i] == coefficients[i]); \
+        assert(ciglet_rs_real_cepstrum_to_log_spectrum_##suffix(coefficients,4,modern,4) == 0); \
+        for(size_t i=0;i<4;++i) assert(modern[i] == spectrum[i]); \
+        assert(ciglet_rs_real_cepstrum_minimum_phase_default_##suffix(logs,3,modern,4) == 0); \
+        for(size_t i=0;i<4;++i) assert(modern[i] == phase[i]); \
+        type ignored[] = {0,0,NAN}; \
+        assert(ciglet_rs_real_cepstrum_analyze_##suffix(plan,ignored,3,1,modern,4) == 0); \
+        for(size_t i=0;i<4;++i) assert(modern[i] == 0); \
+        for(size_t i=0;i<4;++i) modern[i] = 71; \
+        assert(ciglet_rs_real_cepstrum_analyze_##suffix(plan,ignored,3,0,modern,4) == 3); \
+        for(size_t i=0;i<4;++i) assert(modern[i] == 71); \
+        type magnitudes[] = {1,1,1,1,1,1}, matrix[2], reconstructed[6]; \
+        assert(ciglet_rs_real_cepstrum_spectrogram_to_cepstra_##suffix(plan,magnitudes,6,1,0,matrix,2) == 0); \
+        assert(isfinite(matrix[0]) && matrix[0] == matrix[1]); \
+        assert(ciglet_rs_real_cepstrum_cepstra_to_spectrogram_##suffix(plan,NULL,0,2,0,0,reconstructed,6) == 0); \
+        for(size_t i=0;i<6;++i) assert(reconstructed[i] == reconstructed[0] && reconstructed[i] > 0.9 && reconstructed[i] < 1.1); \
+        magnitudes[3] = NAN; matrix[0] = matrix[1] = 71; \
+        assert(ciglet_rs_real_cepstrum_spectrogram_to_cepstra_##suffix(plan,magnitudes,6,1,0,matrix,2) == 3); \
+        assert(matrix[0] == 71 && matrix[1] == 71); \
+        assert(ciglet_rs_real_cepstrum_analyze_##suffix(plan,logs,3,0,modern,4) == 0 && modern[0] == 1); \
+        handle_type *retained = plan; \
+        assert(ciglet_rs_real_cepstrum_new_##suffix(3,&plan) == 3 && plan == retained); \
+        assert(ciglet_rs_real_cepstrum_release_##suffix(&plan) == 0 && plan == NULL); \
+        assert(ciglet_rs_real_cepstrum_release_##suffix(&plan) == 0); \
+    } while (0)
+    CHECK_REAL_CEPSTRUM(float, f32, CigletRsRealCepstrumF32);
+    CHECK_REAL_CEPSTRUM(double, f64, CigletRsRealCepstrumF64);
+    #undef CHECK_REAL_CEPSTRUM
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

@@ -49,6 +49,16 @@ typedef struct CigletRsFilterBankF32 CigletRsFilterBankF32;
 typedef struct CigletRsFilterBankF64 CigletRsFilterBankF64;
 
 /**
+ * Opaque binary32 real-cepstrum plan with reusable synchronized scratch.
+ */
+typedef struct CigletRsRealCepstrumF32 CigletRsRealCepstrumF32;
+
+/**
+ * Opaque binary64 real-cepstrum plan with reusable synchronized scratch.
+ */
+typedef struct CigletRsRealCepstrumF64 CigletRsRealCepstrumF64;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -3004,5 +3014,393 @@ uint32_t ciglet_rs_filterbank_apply_frames_f64(const struct CigletRsFilterBankF6
                                                uint32_t compression,
                                                double *output,
                                                uintptr_t output_count);
+
+/**
+ * Create a positive power-of-two plan within the native legacy bound.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_new_f32(uintptr_t length, struct CigletRsRealCepstrumF32 **output);
+
+/**
+ * Release sole ownership and clear the slot, excluding outstanding calls. Null stored handles succeed.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_release_f32(struct CigletRsRealCepstrumF32 **slot);
+
+/**
+ * Copy length and bins to exactly two indices. Length is positive, so the plan is never empty.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_shape_f32(const struct CigletRsRealCepstrumF32 *handle,
+                                           uintptr_t *output,
+                                           uintptr_t output_count);
+
+/**
+ * Analyze exactly bins already-logarithmic values into length coefficients. No log is applied.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_analyze_f32(const struct CigletRsRealCepstrumF32 *handle,
+                                             const float *input,
+                                             uintptr_t input_count,
+                                             uint32_t nyquist,
+                                             float *output,
+                                             uintptr_t output_count);
+
+/**
+ * Reconstruct a coefficient prefix, including empty prefixes, into length full-grid log values.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_reconstruct_f32(const struct CigletRsRealCepstrumF32 *handle,
+                                                 const float *input,
+                                                 uintptr_t input_count,
+                                                 uint32_t nyquist,
+                                                 float *output,
+                                                 uintptr_t output_count);
+
+/**
+ * Return length minimum-phase angles from bins log values. Lifter zero Causal, one Legacy.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_minimum_phase_f32(const struct CigletRsRealCepstrumF32 *handle,
+                                                   const float *input,
+                                                   uintptr_t input_count,
+                                                   uint32_t nyquist,
+                                                   uint32_t lifter,
+                                                   float *output,
+                                                   uintptr_t output_count);
+
+/**
+ * Convert flattened one-sided magnitudes using native approximate log(magnitude+1e-15).
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_spectrogram_to_cepstra_f32(const struct CigletRsRealCepstrumF32 *handle,
+                                                            const float *input,
+                                                            uintptr_t input_count,
+                                                            uintptr_t coefficients,
+                                                            uint32_t nyquist,
+                                                            float *output,
+                                                            uintptr_t output_count);
+
+/**
+ * Convert explicit coefficient frames using native approximate exp, including zero-coefficient rows.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_cepstra_to_spectrogram_f32(const struct CigletRsRealCepstrumF32 *handle,
+                                                            const float *input,
+                                                            uintptr_t input_count,
+                                                            uintptr_t frames,
+                                                            uintptr_t coefficients,
+                                                            uint32_t nyquist,
+                                                            float *output,
+                                                            uintptr_t output_count);
+
+/**
+ * Analyze log values with Preserve Nyquist, inferring length=2*(bins-1). Requires at least two bins.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_from_log_spectrum_f32(const float *input,
+                                                       uintptr_t input_count,
+                                                       float *output,
+                                                       uintptr_t output_count);
+
+/**
+ * Reconstruct a coefficient prefix with Preserve Nyquist and output_count transform length.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_to_log_spectrum_f32(const float *input,
+                                                     uintptr_t input_count,
+                                                     float *output,
+                                                     uintptr_t output_count);
+
+/**
+ * Return minimum-phase angles with Preserve Nyquist and Causal lifter, inferring length=2*(bins-1).
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_minimum_phase_default_f32(const float *input,
+                                                           uintptr_t input_count,
+                                                           float *output,
+                                                           uintptr_t output_count);
+
+/**
+ * Create a positive power-of-two plan within the native legacy bound.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_new_f64(uintptr_t length, struct CigletRsRealCepstrumF64 **output);
+
+/**
+ * Release sole ownership and clear the slot, excluding outstanding calls. Null stored handles succeed.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_release_f64(struct CigletRsRealCepstrumF64 **slot);
+
+/**
+ * Copy length and bins to exactly two indices. Length is positive, so the plan is never empty.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_shape_f64(const struct CigletRsRealCepstrumF64 *handle,
+                                           uintptr_t *output,
+                                           uintptr_t output_count);
+
+/**
+ * Analyze exactly bins already-logarithmic values into length coefficients. No log is applied.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_analyze_f64(const struct CigletRsRealCepstrumF64 *handle,
+                                             const double *input,
+                                             uintptr_t input_count,
+                                             uint32_t nyquist,
+                                             double *output,
+                                             uintptr_t output_count);
+
+/**
+ * Reconstruct a coefficient prefix, including empty prefixes, into length full-grid log values.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_reconstruct_f64(const struct CigletRsRealCepstrumF64 *handle,
+                                                 const double *input,
+                                                 uintptr_t input_count,
+                                                 uint32_t nyquist,
+                                                 double *output,
+                                                 uintptr_t output_count);
+
+/**
+ * Return length minimum-phase angles from bins log values. Lifter zero Causal, one Legacy.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_minimum_phase_f64(const struct CigletRsRealCepstrumF64 *handle,
+                                                   const double *input,
+                                                   uintptr_t input_count,
+                                                   uint32_t nyquist,
+                                                   uint32_t lifter,
+                                                   double *output,
+                                                   uintptr_t output_count);
+
+/**
+ * Convert flattened one-sided magnitudes using native approximate log(magnitude+1e-15).
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_spectrogram_to_cepstra_f64(const struct CigletRsRealCepstrumF64 *handle,
+                                                            const double *input,
+                                                            uintptr_t input_count,
+                                                            uintptr_t coefficients,
+                                                            uint32_t nyquist,
+                                                            double *output,
+                                                            uintptr_t output_count);
+
+/**
+ * Convert explicit coefficient frames using native approximate exp, including zero-coefficient rows.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_cepstra_to_spectrogram_f64(const struct CigletRsRealCepstrumF64 *handle,
+                                                            const double *input,
+                                                            uintptr_t input_count,
+                                                            uintptr_t frames,
+                                                            uintptr_t coefficients,
+                                                            uint32_t nyquist,
+                                                            double *output,
+                                                            uintptr_t output_count);
+
+/**
+ * Analyze log values with Preserve Nyquist, inferring length=2*(bins-1). Requires at least two bins.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_from_log_spectrum_f64(const double *input,
+                                                       uintptr_t input_count,
+                                                       double *output,
+                                                       uintptr_t output_count);
+
+/**
+ * Reconstruct a coefficient prefix with Preserve Nyquist and output_count transform length.
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_to_log_spectrum_f64(const double *input,
+                                                     uintptr_t input_count,
+                                                     double *output,
+                                                     uintptr_t output_count);
+
+/**
+ * Return minimum-phase angles with Preserve Nyquist and Causal lifter, inferring length=2*(bins-1).
+ * Nyquist selectors are zero Preserve, one Legacy; unknown selectors fail.
+ * Explicit output counts must match the native shape; failures retain outputs.
+ *
+ * # Safety
+ * Handles must be live, correctly typed library allocations retained throughout
+ * calls. Scratch is serialized; release excludes outstanding calls. Independent
+ * buffers and owner slots must not reference handles or their owned storage.
+ * Inputs must be initialized and stable; outputs must be exclusively writable.
+ * Empty buffers accept null. Transform input/output may overlap after borrowing ends.
+ */
+uint32_t ciglet_rs_real_cepstrum_minimum_phase_default_f64(const double *input,
+                                                           uintptr_t input_count,
+                                                           double *output,
+                                                           uintptr_t output_count);
 
 #endif  /* CIGLET_RS_H */

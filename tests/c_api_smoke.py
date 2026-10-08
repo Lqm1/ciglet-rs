@@ -616,6 +616,58 @@ def main():
         assert bank_functions["apply_frames"](bank,None,0,2,1,output,2) == 0 and list(output) == [0,0]
         assert bank_functions["apply_spectrogram"](bank,None,0,1,output,2) == 3
         assert bank_functions["release"](ctypes.byref(bank)) == 0
+        real_cepstrum_signatures = {
+            "new": [size,slot], "release": [slot],
+            "shape": [handle_type,ctypes.POINTER(size),size],
+            "analyze": [handle_type,pointer,size,ctypes.c_uint32,pointer,size],
+            "reconstruct": [handle_type,pointer,size,ctypes.c_uint32,pointer,size],
+            "minimum_phase": [handle_type,pointer,size,ctypes.c_uint32,ctypes.c_uint32,pointer,size],
+            "spectrogram_to_cepstra": [handle_type,pointer,size,size,ctypes.c_uint32,pointer,size],
+            "cepstra_to_spectrogram": [handle_type,pointer,size,size,size,ctypes.c_uint32,pointer,size],
+            "from_log_spectrum": [pointer,size,pointer,size],
+            "to_log_spectrum": [pointer,size,pointer,size],
+            "minimum_phase_default": [pointer,size,pointer,size],
+        }
+        cepstrum_functions = {}
+        for operation,arguments in real_cepstrum_signatures.items():
+            function = getattr(library,f"ciglet_rs_real_cepstrum_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            cepstrum_functions[operation] = function
+        plan = handle_type()
+        assert cepstrum_functions["new"](4,ctypes.byref(plan)) == 0
+        assert cepstrum_functions["shape"](plan,shape,2) == 0 and list(shape) == [4,3]
+        logs = (scalar*3)(0,0,4)
+        coefficients,spectrum,phase,modern = [(scalar*4)() for _ in range(4)]
+        assert cepstrum_functions["analyze"](plan,logs,3,0,coefficients,4) == 0
+        assert list(coefficients) == [1,-1,1,-1]
+        assert cepstrum_functions["reconstruct"](plan,coefficients,4,0,spectrum,4) == 0
+        assert list(spectrum) == [0,0,4,0]
+        assert cepstrum_functions["minimum_phase"](plan,logs,3,0,0,phase,4) == 0
+        assert list(phase) == [0,2,0,-2]
+        assert cepstrum_functions["from_log_spectrum"](logs,3,modern,4) == 0 and list(modern) == list(coefficients)
+        assert cepstrum_functions["to_log_spectrum"](coefficients,4,modern,4) == 0 and list(modern) == list(spectrum)
+        assert cepstrum_functions["minimum_phase_default"](logs,3,modern,4) == 0 and list(modern) == list(phase)
+        ignored = (scalar*3)(0,0,float("nan"))
+        assert cepstrum_functions["analyze"](plan,ignored,3,1,modern,4) == 0 and list(modern) == [0]*4
+        for i in range(4):
+            modern[i] = 71
+        assert cepstrum_functions["analyze"](plan,ignored,3,0,modern,4) == 3 and list(modern) == [71]*4
+        magnitudes = (scalar*6)(1,1,1,1,1,1)
+        matrix = (scalar*2)()
+        reconstructed = (scalar*6)()
+        assert cepstrum_functions["spectrogram_to_cepstra"](plan,magnitudes,6,1,0,matrix,2) == 0
+        assert math.isfinite(matrix[0]) and matrix[0] == matrix[1]
+        assert cepstrum_functions["cepstra_to_spectrogram"](plan,None,0,2,0,0,reconstructed,6) == 0
+        assert list(reconstructed) == [reconstructed[0]]*6 and 0.9 < reconstructed[0] < 1.1
+        magnitudes[3] = float("nan")
+        matrix[0] = matrix[1] = 71
+        assert cepstrum_functions["spectrogram_to_cepstra"](plan,magnitudes,6,1,0,matrix,2) == 3 and list(matrix) == [71]*2
+        assert cepstrum_functions["analyze"](plan,logs,3,0,modern,4) == 0 and modern[0] == 1
+        retained = plan.value
+        assert cepstrum_functions["new"](3,ctypes.byref(plan)) == 3 and plan.value == retained
+        assert cepstrum_functions["release"](ctypes.byref(plan)) == 0 and plan.value is None
+        assert cepstrum_functions["release"](ctypes.byref(plan)) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

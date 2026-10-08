@@ -53,6 +53,10 @@ mod filterbank;
 pub use filterbank::{CigletRsFilterBankF32, CigletRsFilterBankF64};
 mod filterbank_functions;
 pub use filterbank_functions::*;
+mod real_cepstrum;
+pub use real_cepstrum::{CigletRsRealCepstrumF32, CigletRsRealCepstrumF64};
+mod real_cepstrum_functions;
+pub use real_cepstrum_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,
