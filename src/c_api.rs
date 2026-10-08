@@ -89,6 +89,8 @@ pub use interpolation_functions::*;
 mod smoothing;
 mod smoothing_functions;
 pub use smoothing_functions::*;
+mod sinc_functions;
+pub use sinc_functions::*;
 mod matrices;
 pub use matrices::{CigletRsMatrixF32, CigletRsMatrixF64};
 mod matrix_lu;

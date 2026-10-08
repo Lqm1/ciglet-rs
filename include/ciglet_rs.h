@@ -5074,6 +5074,103 @@ uint32_t ciglet_rs_median_filter_f64(const double *signal,
                                      uintptr_t output_count);
 
 /**
+ * Stable aliased sinc or its angular-frequency derivative.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_aliased_f32(float length, float angle, float *output);
+
+/**
+ * Explicit policy zero Stable, one Legacy source denominator plateau.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_aliased_with_f32(float length, float angle, uint32_t mode, float *output);
+
+/**
+ * Stable aliased sinc or its angular-frequency derivative.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_derivative_f32(float length, float angle, float *output);
+
+/**
+ * Explicit policy zero Stable, one Legacy source denominator plateau.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_derivative_with_f32(float length,
+                                            float angle,
+                                            uint32_t mode,
+                                            float *output);
+
+/**
+ * Stable aliased sinc or its angular-frequency derivative.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_aliased_f64(double length, double angle, double *output);
+
+/**
+ * Explicit policy zero Stable, one Legacy source denominator plateau.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_aliased_with_f64(double length,
+                                         double angle,
+                                         uint32_t mode,
+                                         double *output);
+
+/**
+ * Stable aliased sinc or its angular-frequency derivative.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_derivative_f64(double length, double angle, double *output);
+
+/**
+ * Explicit policy zero Stable, one Legacy source denominator plateau.
+ * Selected scalar precision and native arithmetic are retained. Complete scalar
+ * staging preserves output on failure. Nonfinite inputs and unknown policy codes
+ * return three. Native allocation/abort and panic limitations still apply.
+ *
+ * # Safety
+ * Output is aligned exclusively writable single-allocation storage for one scalar.
+ */
+uint32_t ciglet_rs_sinc_derivative_with_f64(double length,
+                                            double angle,
+                                            uint32_t mode,
+                                            double *output);
+
+/**
  * Own initialized finite column-major values, index row + column * rows.
  *
  * # Safety

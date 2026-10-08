@@ -1433,3 +1433,34 @@ public WASM rows; all mapped exports exist in the header. Current family Release
 Python32 and static-link callers remain unverified. This family evidence does not
 replace final combined native/bindings acceptance. Remaining
 public C and all three WASM interfaces are required.
+
+
+## Aliased sinc and angular-frequency derivatives
+
+Eight typed f32/f64 exports expose all four native sinc functions. Convenience
+functions use Stable arithmetic. Explicit policy zero selects Stable; one selects
+Legacy, including the original distinct value/derivative denominator plateaus.
+Length remains a signed or fractional scalar, not an integer buffer count.
+One staged scalar output preserves caller storage on native errors. Unknown
+policies and nonfinite inputs return three; null or misaligned outputs return one.
+
+Host six tests and warning-denied all-target Clippy/Rustdoc pass. Both SNC1 corpora
+consume every192 original C records. Float Legacy output bits remain exact;
+binary64 normalized error bounds remain2e-16 for values and5e-16 for derivatives,
+with exact zero signs in both precisions. Independent integer-length analytic
+values/slopes, even-length poles, fractional near-zero slopes, maximum finite
+lengths, malformed pointers and atomic errors are checked. The default agrees
+with explicit Stable; the source plateaus remain selectable through Legacy.
+No native numerical kernel, fixture, tolerance or dependency changed. Header
+contains350 status-returning exports and eighteen opaque types. Optimized expanded
+MSVC C references every declaration. All five target runners terminate with exit
+zero. Exact27 summary counts10,4,4,5,6,6,3,4,6,9,9,6,6,3,6,6,6,5,6,8,6,8,6,3,3,3,2
+verify138 boundary plus11 focused native tests pertarget, zero failed/ignored and
+no error diagnostics. Actual optimized assert-enabled C callers invoke all350
+exports on every target; Python passes on MSVC64/GNU64/Linux64. Header verification,
+formatting and whitespace checks pass. The334-row inventory has159 implemented
+C source mappings,173 pending public C rows, two nonpublic macro formals and332
+pending public WASM rows; all mapped exports exist in the header. Current family
+Release, Python32 and static-link callers remain unverified. This family evidence
+does not replace final combined native/bindings acceptance. All remaining public
+C interfaces and all three WASM bindings remain required.

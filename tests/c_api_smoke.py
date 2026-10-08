@@ -1047,6 +1047,28 @@ def main():
         assert smoothers["moving_average"](None,0,1,None,0) == 0
         assert smoothers["moving_rms"](None,0,1,None,0) == 0
         assert smoothers["median_filter"](None,0,3,None,0) == 0
+        sinc_functions = {}
+        for operation in ("aliased", "aliased_with", "derivative", "derivative_with"):
+            function = getattr(library, f"ciglet_rs_sinc_{operation}_{suffix}")
+            function.argtypes = [scalar, scalar] + ([ctypes.c_uint32] if operation.endswith("with") else []) + [pointer]
+            function.restype = ctypes.c_uint32
+            sinc_functions[operation] = function
+        value, selected, derivative = scalar(71), scalar(71), scalar(71)
+        assert sinc_functions["aliased"](2,0,ctypes.byref(value)) == 0 and value.value == 2
+        for policy in (0,1):
+            assert sinc_functions["aliased_with"](2,0,policy,ctypes.byref(selected)) == 0 and selected.value == 2
+        assert sinc_functions["derivative"](2,1,ctypes.byref(derivative)) == 0
+        assert abs(derivative.value + math.sin(0.5)) < (1e-7 if suffix == "f32" else 2e-15)
+        assert sinc_functions["derivative_with"](2,1,0,ctypes.byref(selected)) == 0 and selected.value == derivative.value
+        assert sinc_functions["derivative_with"](3,0,1,ctypes.byref(selected)) == 0 and selected.value == 0
+        assert sinc_functions["aliased"](maximum,0,ctypes.byref(value)) == 0 and value.value == maximum
+        value.value = selected.value = derivative.value = 71
+        assert sinc_functions["aliased"](math.nan,0,ctypes.byref(value)) == 3 and value.value == 71
+        assert sinc_functions["derivative"](2,math.inf,ctypes.byref(derivative)) == 3 and derivative.value == 71
+        for operation in ("aliased_with", "derivative_with"):
+            assert sinc_functions[operation](2,0,2,ctypes.byref(selected)) == 3 and selected.value == 71
+        assert sinc_functions["aliased"](2,0,None) == 1
+        assert sinc_functions["derivative"](2,0,None) == 1
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

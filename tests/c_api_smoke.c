@@ -786,6 +786,27 @@ int main(void) {
     CHECK_SMOOTHING(float, f32, FLT_MAX);
     CHECK_SMOOTHING(double, f64, DBL_MAX);
     #undef CHECK_SMOOTHING
+    #define CHECK_SINC(type, suffix, maximum, tolerance) do { \
+        type value = 71, selected = 71, derivative = 71; \
+        assert(ciglet_rs_sinc_aliased_##suffix(2,0,&value) == 0 && value == 2); \
+        assert(ciglet_rs_sinc_aliased_with_##suffix(2,0,0,&selected) == 0 && selected == value); \
+        assert(ciglet_rs_sinc_aliased_with_##suffix(2,0,1,&selected) == 0 && selected == 2); \
+        assert(ciglet_rs_sinc_derivative_##suffix(2,1,&derivative) == 0); \
+        assert(fabs((double)derivative + sin(0.5)) < tolerance); \
+        assert(ciglet_rs_sinc_derivative_with_##suffix(2,1,0,&selected) == 0 && selected == derivative); \
+        assert(ciglet_rs_sinc_derivative_with_##suffix(3,0,1,&selected) == 0 && selected == 0); \
+        assert(ciglet_rs_sinc_aliased_##suffix(maximum,0,&value) == 0 && value == maximum); \
+        value = selected = derivative = 71; \
+        assert(ciglet_rs_sinc_aliased_##suffix(NAN,0,&value) == 3 && value == 71); \
+        assert(ciglet_rs_sinc_derivative_##suffix(2,INFINITY,&derivative) == 3 && derivative == 71); \
+        assert(ciglet_rs_sinc_aliased_with_##suffix(2,0,2,&selected) == 3 && selected == 71); \
+        assert(ciglet_rs_sinc_derivative_with_##suffix(2,0,2,&selected) == 3 && selected == 71); \
+        assert(ciglet_rs_sinc_aliased_##suffix(2,0,NULL) == 1); \
+        assert(ciglet_rs_sinc_derivative_##suffix(2,0,NULL) == 1); \
+    } while (0)
+    CHECK_SINC(float, f32, FLT_MAX, 1e-7);
+    CHECK_SINC(double, f64, DBL_MAX, 2e-15);
+    #undef CHECK_SINC
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
