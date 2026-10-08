@@ -1034,6 +1034,63 @@ resonance reports remain required, alongside the other pending ciglet functions,
 all liblrhsmm/SHIRO C interfaces and all three WASM interfaces. This checkpoint
 does not replace final combined acceptance or reduce the complete public scope.
 
+## Reusable prediction spectrum plans
+
+Twelve f32/f64 functions expose native SpectrumPlan construction, clearing
+release, two-value shape, ordinary/scaled magnitude estimation and full-grid
+prediction spectra. The generated header now declares 256 functions with fourteen
+opaque types. Shape reports transform length and maximum half-spectrum bins.
+Native nonempty FFT restrictions apply, including singleton plans; all valid
+owners are nonempty. Mutable transform/workspace access is internally serialized
+with Mutex. Release excludes all outstanding users, and output storage must be
+independent of every owner allocation.
+
+Estimation retains both Nyquist/arithmetic selectors and accepts native bounded
+prefix spectra. Legacy discards a Nyquist value only for a full half-spectrum,
+so an inactive nonfinite value can be ignored for a four-point plan but rejected
+for a longer plan. Ordinary coefficients and correlations commit atomically.
+Scaled estimation publishes an independently owned result without requiring
+ordinary conversion or scalar gain. Complete owned staging permits input/output
+overlap after borrowing ends. Constructor failures retain existing owners;
+successful slot replacement leaves older ownership the caller's responsibility.
+
+Spectra return the complete native FFT grid, preserving signed gain and negative
+zero. Native exceptional-bin scaled response evaluation handles large/tiny
+polynomials without normalizing away small coefficients. A pole on the grid
+returns a native error while retaining output. Native errors do not poison the
+mutex, and later successful calls can reuse the plan. An observed poisoned mutex
+returns status three; metadata remains readable and owners remain releasable.
+
+Five new host integration tests pass. All 48 LPS1 original records per precision
+compare correlations, coefficients, gain, isolated spectra and combined spectra
+with unchanged f32 bounds 2e-8/3e-8/0/7e-8/8e-8 and f64 bounds
+5e-17/2e-15/4e-16/2e-15/3e-15. Extra cases cover repeated estimates, both policies,
+full/prefix Nyquist distinctions, maximum/subnormal spectra and scaled estimates,
+signed negative zero, singleton plans, failed constructors, pole errors/recovery,
+overlap and four concurrent callers sharing scratch. A separate host unit test
+induces poison and verifies atomic ordinary/scaled/spectrum failure, readable
+shape and clearing release. Warning-denied all-target Clippy passes. No native
+numerical kernel, original fixture or threshold changes.
+
+All five required targets pass 86 boundary integration tests across sixteen
+suites plus six focused frame/DSP tests. Each log independently verifies exact
+10,4,4,5,6,3,4,6,6,6,3,6,6,5,6,6,3,3 passing counts, zero failed/ignored tests and
+no error diagnostics. MSVC x86_64/i686, Windows GNU x86_64 and Linux GNU
+x86_64/i686 runners terminate with exit zero. Actual optimized assert-enabled C
+callers invoke all 256 exports on every target; Python ctypes callers pass on
+the three x86_64 environments. Expanded optimized MSVC C source references every
+declaration. Warning-denied Rustdoc, formatting, whitespace and generated-header
+verification pass. The induced-poison unit proof remains host MSVC x86_64 only.
+
+The ledger has 118 implemented C source mappings, 214 pending public C rows,
+two nonpublic macro formals and 332 pending public WASM rows. flpc now includes
+both one-shot policies and reusable ordinary/scaled estimation; lpspec maps
+complete spectrum evaluation with reusable ownership and shape. Every implemented
+mapping was checked against the header. Current family Release, Python32 and
+static-link callers remain unverified. Resonance reports and all other remaining
+ciglet interfaces, liblrhsmm/SHIRO C interfaces and all three WASM interfaces remain
+required. This evidence does not replace final combined acceptance or reduce scope.
+
 ## One-shot waveform and magnitude estimates
 
 Six f32/f64 entry points expose complete ordinary waveform/magnitude estimates

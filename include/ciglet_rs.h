@@ -49,6 +49,16 @@ typedef struct CigletRsFilterBankF32 CigletRsFilterBankF32;
 typedef struct CigletRsFilterBankF64 CigletRsFilterBankF64;
 
 /**
+ * Opaque reusable binary32 prediction spectrum plan.
+ */
+typedef struct CigletRsPredictionSpectrumF32 CigletRsPredictionSpectrumF32;
+
+/**
+ * Opaque reusable binary64 prediction spectrum plan.
+ */
+typedef struct CigletRsPredictionSpectrumF64 CigletRsPredictionSpectrumF64;
+
+/**
  * Opaque binary32 real-cepstrum plan with reusable synchronized scratch.
  */
 typedef struct CigletRsRealCepstrumF32 CigletRsRealCepstrumF32;
@@ -3986,5 +3996,207 @@ uint32_t ciglet_rs_scaled_prediction_from_magnitude_f64(const double *input,
                                                         uintptr_t order,
                                                         uint32_t nyquist,
                                                         struct CigletRsScaledPredictionF64 **output);
+
+/**
+ * Create a reusable native prediction FFT plan; failures retain output ownership.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_new_f32(uintptr_t length,
+                                               struct CigletRsPredictionSpectrumF32 **output);
+
+/**
+ * Release a plan and clear its slot; initialized null slots succeed.
+ *
+ * # Safety
+ * Slot is initialized, aligned and exclusively writable. Release exactly once
+ * a typed owner from this API, excluding every outstanding call and alias.
+ * A released owner must never be reused.
+ */
+uint32_t ciglet_rs_prediction_spectrum_release_f32(struct CigletRsPredictionSpectrumF32 **slot);
+
+/**
+ * Copy transform length and maximum half-spectrum bin count into two usize values.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_shape_f32(const struct CigletRsPredictionSpectrumF32 *handle,
+                                                 uintptr_t *output,
+                                                 uintptr_t count);
+
+/**
+ * Return coefficients and correlations; Nyquist zero Preserve/one Legacy, arithmetic zero Stable/one Legacy.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_estimate_f32(const struct CigletRsPredictionSpectrumF32 *handle,
+                                                    const float *input,
+                                                    uintptr_t input_count,
+                                                    uintptr_t order,
+                                                    uint32_t nyquist,
+                                                    uint32_t arithmetic,
+                                                    float *coefficients,
+                                                    float *correlations,
+                                                    uintptr_t output_count);
+
+/**
+ * Publish a scaled estimate without requiring ordinary conversion; Nyquist zero Preserve/one Legacy.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_estimate_scaled_f32(const struct CigletRsPredictionSpectrumF32 *handle,
+                                                           const float *input,
+                                                           uintptr_t input_count,
+                                                           uintptr_t order,
+                                                           uint32_t nyquist,
+                                                           struct CigletRsScaledPredictionF32 **output);
+
+/**
+ * Evaluate the full native FFT-grid magnitude response, retaining signed gain.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_spectrum_f32(const struct CigletRsPredictionSpectrumF32 *handle,
+                                                    const float *coefficients,
+                                                    uintptr_t coefficient_count,
+                                                    float gain,
+                                                    float *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Create a reusable native prediction FFT plan; failures retain output ownership.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_new_f64(uintptr_t length,
+                                               struct CigletRsPredictionSpectrumF64 **output);
+
+/**
+ * Release a plan and clear its slot; initialized null slots succeed.
+ *
+ * # Safety
+ * Slot is initialized, aligned and exclusively writable. Release exactly once
+ * a typed owner from this API, excluding every outstanding call and alias.
+ * A released owner must never be reused.
+ */
+uint32_t ciglet_rs_prediction_spectrum_release_f64(struct CigletRsPredictionSpectrumF64 **slot);
+
+/**
+ * Copy transform length and maximum half-spectrum bin count into two usize values.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_shape_f64(const struct CigletRsPredictionSpectrumF64 *handle,
+                                                 uintptr_t *output,
+                                                 uintptr_t count);
+
+/**
+ * Return coefficients and correlations; Nyquist zero Preserve/one Legacy, arithmetic zero Stable/one Legacy.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_estimate_f64(const struct CigletRsPredictionSpectrumF64 *handle,
+                                                    const double *input,
+                                                    uintptr_t input_count,
+                                                    uintptr_t order,
+                                                    uint32_t nyquist,
+                                                    uint32_t arithmetic,
+                                                    double *coefficients,
+                                                    double *correlations,
+                                                    uintptr_t output_count);
+
+/**
+ * Publish a scaled estimate without requiring ordinary conversion; Nyquist zero Preserve/one Legacy.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_estimate_scaled_f64(const struct CigletRsPredictionSpectrumF64 *handle,
+                                                           const double *input,
+                                                           uintptr_t input_count,
+                                                           uintptr_t order,
+                                                           uint32_t nyquist,
+                                                           struct CigletRsScaledPredictionF64 **output);
+
+/**
+ * Evaluate the full native FFT-grid magnitude response, retaining signed gain.
+ *
+ * # Safety
+ * Retain typed live owners throughout the call, excluding release. Nonempty
+ * inputs are initialized, stable, readable single-allocation storage. Outputs
+ * are aligned, exclusively writable, pairwise disjoint and independent of
+ * owner allocations. Complete staged results permit input/output overlap.
+ * Keep and release older ownership before successful slot replacement; no
+ * implicit release occurs. Failures preserve all outputs. Mutable scratch
+ * is internally serialized, permitting concurrent calls excluding release.
+ */
+uint32_t ciglet_rs_prediction_spectrum_spectrum_f64(const struct CigletRsPredictionSpectrumF64 *handle,
+                                                    const double *coefficients,
+                                                    uintptr_t coefficient_count,
+                                                    double gain,
+                                                    double *output,
+                                                    uintptr_t output_count);
 
 #endif  /* CIGLET_RS_H */

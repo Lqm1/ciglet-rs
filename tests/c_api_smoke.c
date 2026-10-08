@@ -581,6 +581,34 @@ int main(void) {
     CHECK_SCALED_PREDICTION(float, f32, CigletRsScaledPredictionF32, FLT_MAX);
     CHECK_SCALED_PREDICTION(double, f64, CigletRsScaledPredictionF64, DBL_MAX);
     #undef CHECK_SCALED_PREDICTION
+    #define CHECK_PREDICTION_SPECTRUM(type, suffix, handle_type, scaled_type, maximum) do { \
+        handle_type *plan = NULL; scaled_type *model = NULL; size_t shape[2] = {71,71}; \
+        type input[] = {1,1,1}, coefficients[2], correlations[2], spectrum[4], gain = 71; \
+        assert(ciglet_rs_prediction_spectrum_new_##suffix(4,&plan) == 0); \
+        assert(ciglet_rs_prediction_spectrum_shape_##suffix(plan,shape,2) == 0 && shape[0] == 4 && shape[1] == 3); \
+        for(uint32_t arithmetic=0;arithmetic<2;++arithmetic) { \
+            assert(ciglet_rs_prediction_spectrum_estimate_##suffix(plan,input,3,1,0,arithmetic,coefficients,correlations,2) == 0); \
+            assert(coefficients[0] == 1 && coefficients[1] == 0 && correlations[0] == 1 && correlations[1] == 0); \
+        } \
+        assert(ciglet_rs_prediction_spectrum_spectrum_##suffix(plan,coefficients,2,2,spectrum,4) == 0); \
+        for(size_t i=0;i<4;++i) assert(spectrum[i] == 2); \
+        type pole[] = {1,-1}; \
+        for(size_t i=0;i<4;++i) spectrum[i] = 71; \
+        assert(ciglet_rs_prediction_spectrum_spectrum_##suffix(plan,pole,2,1,spectrum,4) == 3); \
+        for(size_t i=0;i<4;++i) assert(spectrum[i] == 71); \
+        assert(ciglet_rs_prediction_spectrum_spectrum_##suffix(plan,coefficients,2,2,spectrum,4) == 0); \
+        handle_type *retained = plan; \
+        assert(ciglet_rs_prediction_spectrum_new_##suffix(3,&plan) == 3 && plan == retained); \
+        type extreme[] = {maximum,maximum,maximum}; \
+        assert(ciglet_rs_prediction_spectrum_estimate_scaled_##suffix(plan,extreme,3,3,0,&model) == 0); \
+        assert(ciglet_rs_prediction_spectrum_release_##suffix(&plan) == 0 && plan == NULL); \
+        assert(ciglet_rs_scaled_prediction_gain_##suffix(model,&gain) == 0 && gain == maximum); \
+        assert(ciglet_rs_scaled_prediction_release_##suffix(&model) == 0 && model == NULL); \
+        assert(ciglet_rs_prediction_spectrum_release_##suffix(&plan) == 0); \
+    } while (0)
+    CHECK_PREDICTION_SPECTRUM(float, f32, CigletRsPredictionSpectrumF32, CigletRsScaledPredictionF32, FLT_MAX);
+    CHECK_PREDICTION_SPECTRUM(double, f64, CigletRsPredictionSpectrumF64, CigletRsScaledPredictionF64, DBL_MAX);
+    #undef CHECK_PREDICTION_SPECTRUM
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

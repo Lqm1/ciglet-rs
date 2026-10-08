@@ -70,6 +70,10 @@ pub use prediction_scaled_functions::*;
 mod prediction_estimate;
 mod prediction_estimate_functions;
 pub use prediction_estimate_functions::*;
+mod prediction_spectrum;
+pub use prediction_spectrum::{CigletRsPredictionSpectrumF32, CigletRsPredictionSpectrumF64};
+mod prediction_spectrum_functions;
+pub use prediction_spectrum_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

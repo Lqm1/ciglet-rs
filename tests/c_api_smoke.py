@@ -801,6 +801,43 @@ def main():
         assert scaled_functions["from_magnitude"](scaled_magnitudes,3,3,0,ctypes.byref(model)) == 0
         assert scaled_functions["gain"](model,ctypes.byref(gain)) == 0 and gain.value == maximum
         assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
+        prediction_spectrum_signatures = {
+            "new": [size,slot],
+            "release": [slot],
+            "shape": [handle_type,ctypes.POINTER(size),size],
+            "estimate": [handle_type,pointer,size,size,ctypes.c_uint32,ctypes.c_uint32,pointer,pointer,size],
+            "estimate_scaled": [handle_type,pointer,size,size,ctypes.c_uint32,slot],
+            "spectrum": [handle_type,pointer,size,scalar,pointer,size],
+        }
+        prediction_spectrum_functions = {}
+        for operation,arguments in prediction_spectrum_signatures.items():
+            function = getattr(library,f"ciglet_rs_prediction_spectrum_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            prediction_spectrum_functions[operation] = function
+        plan = handle_type()
+        shape = (size*2)(71,71)
+        input_values = (scalar*3)(1,1,1)
+        coefficients,correlations,spectrum = (scalar*2)(),(scalar*2)(),(scalar*4)()
+        assert prediction_spectrum_functions["new"](4,ctypes.byref(plan)) == 0
+        assert prediction_spectrum_functions["shape"](plan,shape,2) == 0 and list(shape) == [4,3]
+        for arithmetic in (0,1):
+            assert prediction_spectrum_functions["estimate"](plan,input_values,3,1,0,arithmetic,coefficients,correlations,2) == 0
+            assert list(coefficients) == [1,0] and list(correlations) == [1,0]
+        assert prediction_spectrum_functions["spectrum"](plan,coefficients,2,2,spectrum,4) == 0 and list(spectrum) == [2]*4
+        pole = (scalar*2)(1,-1)
+        for index in range(4):
+            spectrum[index] = 71
+        assert prediction_spectrum_functions["spectrum"](plan,pole,2,1,spectrum,4) == 3 and list(spectrum) == [71]*4
+        assert prediction_spectrum_functions["spectrum"](plan,coefficients,2,2,spectrum,4) == 0 and list(spectrum) == [2]*4
+        retained = plan.value
+        assert prediction_spectrum_functions["new"](3,ctypes.byref(plan)) == 3 and plan.value == retained
+        extreme = (scalar*3)(maximum,maximum,maximum)
+        assert prediction_spectrum_functions["estimate_scaled"](plan,extreme,3,3,0,ctypes.byref(model)) == 0
+        assert prediction_spectrum_functions["release"](ctypes.byref(plan)) == 0 and plan.value is None
+        assert scaled_functions["gain"](model,ctypes.byref(gain)) == 0 and gain.value == maximum
+        assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
+        assert prediction_spectrum_functions["release"](ctypes.byref(plan)) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32
