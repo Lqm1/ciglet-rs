@@ -756,6 +756,36 @@ int main(void) {
     CHECK_INTERPOLATION(float, f32, FLT_MAX);
     CHECK_INTERPOLATION(double, f64, DBL_MAX);
     #undef CHECK_INTERPOLATION
+
+    #define CHECK_SMOOTHING(type, suffix, maximum) do { \
+        type signal[] = {1,2,8}, output[4] = {71,71,71,71}, selected[3]; \
+        assert(ciglet_rs_moving_average_##suffix(signal,3,1,output,3) == 0); \
+        assert(output[0] == 1.5 && output[1] == 5 && output[2] == 8); \
+        assert(ciglet_rs_moving_average_with_##suffix(signal,3,1,0,selected,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(output[i] == selected[i]); \
+        assert(ciglet_rs_moving_average_with_##suffix(signal,3,0,1,selected,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(signal[i] == selected[i]); \
+        type signed_input[] = {-3,4}; \
+        assert(ciglet_rs_moving_rms_##suffix(signed_input,2,0,output,2) == 0 && output[0] == 3 && output[1] == 4); \
+        assert(ciglet_rs_moving_rms_with_##suffix(signed_input,2,0,0,selected,2) == 0 && selected[0] == 3 && selected[1] == 4); \
+        type peak[] = {maximum}; \
+        assert(ciglet_rs_moving_rms_##suffix(peak,1,1,output,1) == 0 && output[0] == maximum); \
+        output[0] = 71; \
+        assert(ciglet_rs_moving_rms_with_##suffix(peak,1,1,1,output,1) == 3 && output[0] == 71); \
+        type median[] = {4,1,9,2}; \
+        assert(ciglet_rs_median_filter_##suffix(median,4,2,median,4) == 0); \
+        assert(median[0] == 4 && median[1] == 2.5 && median[2] == 5 && median[3] == 2); \
+        for(size_t i=0;i<4;++i) output[i] = 71; \
+        assert(ciglet_rs_moving_average_with_##suffix(signal,3,1,2,output,3) == 3); \
+        assert(ciglet_rs_median_filter_##suffix(median,4,0,output,4) == 3); \
+        for(size_t i=0;i<4;++i) assert(output[i] == 71); \
+        assert(ciglet_rs_moving_average_##suffix(NULL,0,1,NULL,0) == 0); \
+        assert(ciglet_rs_moving_rms_##suffix(NULL,0,1,NULL,0) == 0); \
+        assert(ciglet_rs_median_filter_##suffix(NULL,0,3,NULL,0) == 0); \
+    } while (0)
+    CHECK_SMOOTHING(float, f32, FLT_MAX);
+    CHECK_SMOOTHING(double, f64, DBL_MAX);
+    #undef CHECK_SMOOTHING
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

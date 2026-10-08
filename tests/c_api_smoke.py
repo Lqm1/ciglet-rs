@@ -1014,6 +1014,39 @@ def main():
         assert interpolators["linear"](coordinates,values,3,queries,4,output,3) == 2 and list(output) == [71]*4
         assert interpolators["uniform"](0,2,impulse,2,None,0,None,0) == 0
         assert interpolators["fill_missing"](None,0,math.nan,None,0) == 0
+        smoothing_signatures = {
+            "moving_average": [pointer,size,scalar,pointer,size],
+            "moving_average_with": [pointer,size,scalar,ctypes.c_uint32,pointer,size],
+            "moving_rms": [pointer,size,size,pointer,size],
+            "moving_rms_with": [pointer,size,size,ctypes.c_uint32,pointer,size],
+            "median_filter": [pointer,size,size,pointer,size],
+        }
+        smoothers = {}
+        for operation,arguments in smoothing_signatures.items():
+            function = getattr(library,f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            smoothers[operation] = function
+        signal,output,selected = (scalar*3)(1,2,8),(scalar*4)(71,71,71,71),(scalar*3)()
+        assert smoothers["moving_average"](signal,3,1,output,3) == 0 and list(output)[:3] == [1.5,5,8]
+        assert smoothers["moving_average_with"](signal,3,1,0,selected,3) == 0 and list(selected) == list(output)[:3]
+        assert smoothers["moving_average_with"](signal,3,0,1,selected,3) == 0 and list(selected) == list(signal)
+        signed_input = (scalar*2)(-3,4)
+        assert smoothers["moving_rms"](signed_input,2,0,output,2) == 0 and list(output)[:2] == [3,4]
+        assert smoothers["moving_rms_with"](signed_input,2,0,0,selected,2) == 0 and list(selected)[:2] == [3,4]
+        peak = (scalar*1)(maximum)
+        assert smoothers["moving_rms"](peak,1,1,output,1) == 0 and output[0] == maximum
+        output[0] = 71
+        assert smoothers["moving_rms_with"](peak,1,1,1,output,1) == 3 and output[0] == 71
+        median = (scalar*4)(4,1,9,2)
+        assert smoothers["median_filter"](median,4,2,median,4) == 0 and list(median) == [4,2.5,5,2]
+        for index in range(4):
+            output[index] = 71
+        assert smoothers["moving_average_with"](signal,3,1,2,output,3) == 3
+        assert smoothers["median_filter"](median,4,0,output,4) == 3 and list(output) == [71]*4
+        assert smoothers["moving_average"](None,0,1,None,0) == 0
+        assert smoothers["moving_rms"](None,0,1,None,0) == 0
+        assert smoothers["median_filter"](None,0,3,None,0) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

@@ -1392,3 +1392,44 @@ replace final combined native/bindings acceptance. Linux next-phase artifacts us
 Linux filesystem target directory per official Cargo/Microsoft guidance; source
 repositories stay at the required Windows paths. Existing proof/cache retained.
 All remaining public interfaces and all three WASM bindings stay in scope.
+
+
+## Moving averages, RMS and progressive median filtering
+
+Ten f32/f64 entry points expose both native moving average/RMS convenience and
+explicit-policy functions plus median filtering. Moving defaults select Stable;
+explicit policy zero Stable, one Legacy. Fractional average half-widths and
+integer RMS half-widths preserve native endpoint replication, sample-cell layout
+and source-compatible cumulative arithmetic. Stable RMS uses scaled squares;
+Legacy overflow remains an error. Zero average width copies original sample bits,
+zero Stable RMS width gives absolute values. Median windows retain original
+growing prefixes and shrinking suffixes, including even-width median averaging
+with the native finite-overflow correction.
+
+All array outputs require exact input length. Complete owned staging preserves
+output on failure and permits input/output overlap. Null empty buffers are never
+borrowed or copied; native width/domain validation still applies. Median requires
+positive bounded width even for empty input; nonempty width may not exceed signal
+length. Empty signals with positive widths return empty results. Unknown policy
+or native arithmetic errors return three; count mismatches return two.
+
+Host eight tests, warning-denied all-target Clippy and Rustdoc pass. Each precision
+consumes all60 original SMO1 mean/RMS cases,96 original MED1 cases and330 exact
+rational/high-precision SSW1 cases with10,920 Stable outputs. Existing bounds remain
+2e-7 f32/4e-15 f64 normal relative error; zero outputs remain exact except the
+existing one-minimum-quantum subnormal RMS allowance. Convenience functions and
+policy-zero results agree. Independent endpoint/window, maximum finite/Legacy
+error, negative-zero identity, in-place, empty/nonfinite/width/count/policy and
+atomic-error cases pass. No native kernel, fixture, dependency or threshold
+changed. Header342/eighteen opaque types. All five target runners terminate with exit zero. Exact26 summary counts
+10,4,4,5,6,6,3,4,6,9,9,6,6,3,6,6,6,5,6,8,8,6,3,3,3,2 independently verify132
+boundary tests plus11 focused native tests pertarget, zero failed/ignored and
+no error diagnostics. Actual optimized assert-enabled C callers invoke all342
+exports on every target; Python passes on MSVC64/GNU64/Linux64. Expanded optimized
+MSVC C independently references every declaration. Header verification, formatting
+and whitespace checks pass. The334-row inventory now has157 implemented C source
+mappings,175 pending public C rows, two nonpublic macro formals and332 pending
+public WASM rows; all mapped exports exist in the header. Current family Release,
+Python32 and static-link callers remain unverified. This family evidence does not
+replace final combined native/bindings acceptance. Remaining
+public C and all three WASM interfaces are required.

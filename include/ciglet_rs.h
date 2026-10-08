@@ -4900,6 +4900,180 @@ uint32_t ciglet_rs_interpolate_fill_missing_f64(const double *values,
                                                 uintptr_t output_count);
 
 /**
+ * Stable moving average; fractional half-widths and endpoint replication retained.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_average_f32(const float *signal,
+                                      uintptr_t count,
+                                      float half_width,
+                                      float *output,
+                                      uintptr_t output_count);
+
+/**
+ * Moving average policy zero Stable, one Legacy cumulative interpolation grid.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_average_with_f32(const float *signal,
+                                           uintptr_t count,
+                                           float half_width,
+                                           uint32_t policy,
+                                           float *output,
+                                           uintptr_t output_count);
+
+/**
+ * Stable moving RMS with scaled squares and endpoint replication.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_rms_f32(const float *signal,
+                                  uintptr_t count,
+                                  uintptr_t half_width,
+                                  float *output,
+                                  uintptr_t output_count);
+
+/**
+ * Moving RMS policy zero Stable, one Legacy source arithmetic.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_rms_with_f32(const float *signal,
+                                       uintptr_t count,
+                                       uintptr_t half_width,
+                                       uint32_t policy,
+                                       float *output,
+                                       uintptr_t output_count);
+
+/**
+ * Median filter with original growing-prefix and shrinking-suffix endpoints.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_median_filter_f32(const float *signal,
+                                     uintptr_t count,
+                                     uintptr_t width,
+                                     float *output,
+                                     uintptr_t output_count);
+
+/**
+ * Stable moving average; fractional half-widths and endpoint replication retained.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_average_f64(const double *signal,
+                                      uintptr_t count,
+                                      double half_width,
+                                      double *output,
+                                      uintptr_t output_count);
+
+/**
+ * Moving average policy zero Stable, one Legacy cumulative interpolation grid.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_average_with_f64(const double *signal,
+                                           uintptr_t count,
+                                           double half_width,
+                                           uint32_t policy,
+                                           double *output,
+                                           uintptr_t output_count);
+
+/**
+ * Stable moving RMS with scaled squares and endpoint replication.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_rms_f64(const double *signal,
+                                  uintptr_t count,
+                                  uintptr_t half_width,
+                                  double *output,
+                                  uintptr_t output_count);
+
+/**
+ * Moving RMS policy zero Stable, one Legacy source arithmetic.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_moving_rms_with_f64(const double *signal,
+                                       uintptr_t count,
+                                       uintptr_t half_width,
+                                       uint32_t policy,
+                                       double *output,
+                                       uintptr_t output_count);
+
+/**
+ * Median filter with original growing-prefix and shrinking-suffix endpoints.
+ * Complete staged output has exactly input length. Errors preserve all output;
+ * input/output overlap is supported after input borrowing ends. Null empty buffers
+ * are not borrowed or copied. Native finite-input, width and allocation validation
+ * still applies, including to zero-sized calls where relevant.
+ *
+ * # Safety
+ * Nonempty input is aligned initialized stable readable single-allocation storage.
+ * Output is aligned exclusively writable single-allocation storage for its count.
+ */
+uint32_t ciglet_rs_median_filter_f64(const double *signal,
+                                     uintptr_t count,
+                                     uintptr_t width,
+                                     double *output,
+                                     uintptr_t output_count);
+
+/**
  * Own initialized finite column-major values, index row + column * rows.
  *
  * # Safety
