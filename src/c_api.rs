@@ -95,6 +95,13 @@ mod if_detector_functions;
 pub use if_detector_functions::*;
 mod spectral_peak_functions;
 pub use spectral_peak_functions::*;
+mod glottal;
+pub use glottal::{
+    CIGLET_RS_GLOTTAL_APPROXIMATE, CIGLET_RS_GLOTTAL_EXACT, CIGLET_RS_GLOTTAL_FAST,
+    CigletRsGlottalF32, CigletRsGlottalF64,
+};
+mod glottal_functions;
+pub use glottal_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

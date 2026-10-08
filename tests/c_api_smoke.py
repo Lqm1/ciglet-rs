@@ -1176,6 +1176,55 @@ def main():
         assert root_find(root_callback,None,3,1,ctypes.byref(value)) == 3 and value.value == 71
         root_state["kind"] = 0
         assert root_find(root_callback,None,0,1,ctypes.byref(value)) == 0 and value.value == 0.25
+        glottal_signatures = {
+            "model_from_shape": [scalar,scalar,scalar,pointer,size],
+            "model_spectrum": [pointer,size,pointer,size,pointer,pointer,size],
+            "model_sampled_period": [pointer,size,ctypes.c_int32,size,pointer,size],
+            "prepared_create": [pointer,size,ctypes.POINTER(ctypes.c_void_p)],
+            "prepared_clone": [ctypes.c_void_p,ctypes.POINTER(ctypes.c_void_p)],
+            "prepared_release": [ctypes.POINTER(ctypes.c_void_p)],
+            "prepared_model": [ctypes.c_void_p,pointer,size],
+            "prepared_spectrum": [ctypes.c_void_p,pointer,size,pointer,pointer,size],
+            "prepared_spectrum_with": [ctypes.c_void_p,pointer,size,ctypes.c_uint32,pointer,pointer,size],
+            "prepared_sampled_period": [ctypes.c_void_p,ctypes.c_int32,size,pointer,size],
+        }
+        glottal = {}
+        for operation,signature in glottal_signatures.items():
+            function = getattr(library,f"ciglet_rs_glottal_{operation}_{suffix}")
+            function.argtypes = signature
+            function.restype = ctypes.c_uint32
+            glottal[operation] = function
+        fields,copied = (scalar*5)(),(scalar*5)()
+        owner,clone = ctypes.c_void_p(),ctypes.c_void_p()
+        assert glottal["model_from_shape"](1,0.005,0.5,fields,5) == 0
+        assert fields[0] == scalar(0.005).value and fields[4] == 0.5
+        assert glottal["prepared_create"](fields,5,ctypes.byref(owner)) == 0 and owner.value
+        assert glottal["prepared_clone"](owner,ctypes.byref(clone)) == 0 and clone.value and clone.value != owner.value
+        assert glottal["prepared_release"](ctypes.byref(owner)) == 0 and owner.value is None
+        assert glottal["prepared_release"](ctypes.byref(owner)) == 0
+        assert glottal["prepared_model"](clone,copied,5) == 0 and list(copied) == list(fields)
+        frequencies,magnitude,phase,selected,selected_phase = (scalar*3)(-400,0,400),(scalar*3)(),(scalar*3)(),(scalar*3)(),(scalar*3)()
+        assert glottal["prepared_spectrum"](clone,frequencies,3,magnitude,phase,3) == 0
+        assert magnitude[1] == phase[1] == 0
+        assert glottal["prepared_spectrum_with"](clone,frequencies,3,1,selected,selected_phase,3) == 0
+        assert list(selected) == list(magnitude) and list(selected_phase) == list(phase)
+        assert glottal["model_spectrum"](fields,5,frequencies,3,selected,selected_phase,3) == 0
+        assert list(selected) == list(magnitude) and list(selected_phase) == list(phase)
+        for precision in (0,2):
+            assert glottal["prepared_spectrum_with"](clone,frequencies,3,precision,selected,selected_phase,3) == 0
+        wave,one_wave = (scalar*16)(),(scalar*16)()
+        assert glottal["prepared_sampled_period"](clone,16000,16,wave,16) == 0
+        assert glottal["model_sampled_period"](fields,5,16000,16,one_wave,16) == 0 and list(wave) == list(one_wave)
+        frequencies[2] = math.nan
+        for index in range(3):
+            magnitude[index] = phase[index] = 71
+        assert glottal["prepared_spectrum"](clone,frequencies,3,magnitude,phase,3) == 3
+        assert glottal["prepared_spectrum_with"](clone,frequencies,3,3,magnitude,phase,3) == 3
+        assert glottal["prepared_spectrum"](clone,frequencies,3,magnitude,magnitude,3) == 2
+        assert list(magnitude) == list(phase) == [71]*3
+        assert glottal["prepared_spectrum"](clone,None,0,None,None,0) == 0
+        assert glottal["prepared_sampled_period"](clone,16000,0,None,0) == 0
+        assert glottal["prepared_release"](ctypes.byref(clone)) == 0 and clone.value is None
         peak_interpolate = getattr(library,f"ciglet_rs_spectral_peak_interpolate_{suffix}")
         peak_interpolate.argtypes = [pointer,size,size,pointer,pointer]
         peak_interpolate.restype = ctypes.c_uint32

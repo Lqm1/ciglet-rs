@@ -918,6 +918,41 @@ int main(void) {
     CHECK_ROOT(float, f32, 1e-6);
     CHECK_ROOT(double, f64, 1e-7);
     #undef CHECK_ROOT
+    #define CHECK_GLOTTAL(type, suffix, owner_type) do { \
+        type fields[5], copied[5], frequencies[] = {-400,0,400}, magnitude[3], phase[3], selected[3], selected_phase[3], wave[16], one_wave[16]; \
+        owner_type *owner = NULL, *clone = NULL; \
+        assert(ciglet_rs_glottal_model_from_shape_##suffix(1,0.005,0.5,fields,5) == 0); \
+        assert(fields[0] == (type)0.005 && fields[4] == 0.5); \
+        assert(ciglet_rs_glottal_prepared_create_##suffix(fields,5,&owner) == 0 && owner); \
+        assert(ciglet_rs_glottal_prepared_clone_##suffix(owner,&clone) == 0 && clone && owner != clone); \
+        assert(ciglet_rs_glottal_prepared_release_##suffix(&owner) == 0 && !owner); \
+        assert(ciglet_rs_glottal_prepared_release_##suffix(&owner) == 0); \
+        assert(ciglet_rs_glottal_prepared_model_##suffix(clone,copied,5) == 0); \
+        for(size_t i=0;i<5;++i) assert(copied[i] == fields[i]); \
+        assert(ciglet_rs_glottal_prepared_spectrum_##suffix(clone,frequencies,3,magnitude,phase,3) == 0); \
+        assert(magnitude[1] == 0 && phase[1] == 0); \
+        assert(ciglet_rs_glottal_prepared_spectrum_with_##suffix(clone,frequencies,3,CIGLET_RS_GLOTTAL_APPROXIMATE,selected,selected_phase,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(selected[i] == magnitude[i] && selected_phase[i] == phase[i]); \
+        assert(ciglet_rs_glottal_model_spectrum_##suffix(fields,5,frequencies,3,selected,selected_phase,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(selected[i] == magnitude[i] && selected_phase[i] == phase[i]); \
+        assert(ciglet_rs_glottal_prepared_spectrum_with_##suffix(clone,frequencies,3,CIGLET_RS_GLOTTAL_FAST,selected,selected_phase,3) == 0); \
+        assert(ciglet_rs_glottal_prepared_spectrum_with_##suffix(clone,frequencies,3,CIGLET_RS_GLOTTAL_EXACT,selected,selected_phase,3) == 0); \
+        assert(ciglet_rs_glottal_prepared_sampled_period_##suffix(clone,16000,16,wave,16) == 0); \
+        assert(ciglet_rs_glottal_model_sampled_period_##suffix(fields,5,16000,16,one_wave,16) == 0); \
+        for(size_t i=0;i<16;++i) assert(wave[i] == one_wave[i]); \
+        for(size_t i=0;i<3;++i) magnitude[i] = phase[i] = 71; \
+        frequencies[2] = NAN; \
+        assert(ciglet_rs_glottal_prepared_spectrum_##suffix(clone,frequencies,3,magnitude,phase,3) == 3); \
+        assert(ciglet_rs_glottal_prepared_spectrum_with_##suffix(clone,frequencies,3,3,magnitude,phase,3) == 3); \
+        assert(ciglet_rs_glottal_prepared_spectrum_##suffix(clone,frequencies,3,magnitude,magnitude,3) == 2); \
+        for(size_t i=0;i<3;++i) assert(magnitude[i] == 71 && phase[i] == 71); \
+        assert(ciglet_rs_glottal_prepared_spectrum_##suffix(clone,NULL,0,NULL,NULL,0) == 0); \
+        assert(ciglet_rs_glottal_prepared_sampled_period_##suffix(clone,16000,0,NULL,0) == 0); \
+        assert(ciglet_rs_glottal_prepared_release_##suffix(&clone) == 0 && !clone); \
+    } while (0)
+    CHECK_GLOTTAL(float, f32, CigletRsGlottalF32);
+    CHECK_GLOTTAL(double, f64, CigletRsGlottalF64);
+    #undef CHECK_GLOTTAL
     #define CHECK_SPECTRAL_PEAK(type, suffix, tolerance) do { \
         type samples[] = {NAN,0,1,0.5,NAN}, bin = 71, magnitude = 71; \
         assert(ciglet_rs_spectral_peak_interpolate_##suffix(samples,5,2,&bin,&magnitude) == 0); \

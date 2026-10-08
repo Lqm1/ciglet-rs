@@ -9,6 +9,21 @@
 #include <stdlib.h>
 
 /**
+ * Fast LF spectrum exponential/trigonometric approximation.
+ */
+#define CIGLET_RS_GLOTTAL_FAST 0
+
+/**
+ * Original LF spectrum exponential/trigonometric approximation.
+ */
+#define CIGLET_RS_GLOTTAL_APPROXIMATE 1
+
+/**
+ * Host-libm LF spectrum exponential/trigonometric evaluation.
+ */
+#define CIGLET_RS_GLOTTAL_EXACT 2
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -67,6 +82,16 @@ typedef struct CigletRsFilterBankF32 CigletRsFilterBankF32;
  * Opaque binary64 filterbank. Release through its matching typed function.
  */
 typedef struct CigletRsFilterBankF64 CigletRsFilterBankF64;
+
+/**
+ * Opaque reusable binary32 LF model.
+ */
+typedef struct CigletRsGlottalF32 CigletRsGlottalF32;
+
+/**
+ * Opaque reusable binary64 LF model.
+ */
+typedef struct CigletRsGlottalF64 CigletRsGlottalF64;
 
 /**
  * Opaque binary32 instantaneous-frequency detector.
@@ -5748,6 +5773,496 @@ uint32_t ciglet_rs_spectral_peak_interpolate_f64(const double *magnitudes,
                                                  uintptr_t bin,
                                                  double *output_bin,
                                                  double *output_magnitude);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_model_from_shape_f32(float shape,
+                                                float period,
+                                                float excitation,
+                                                float *output,
+                                                uintptr_t count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_model_spectrum_f32(const float *fields,
+                                              uintptr_t field_count,
+                                              const float *frequencies,
+                                              uintptr_t count,
+                                              float *magnitude,
+                                              float *phase,
+                                              uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_model_sampled_period_f32(const float *fields,
+                                                    uintptr_t field_count,
+                                                    int32_t rate,
+                                                    uintptr_t count,
+                                                    float *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_create_f32(const float *fields,
+                                               uintptr_t count,
+                                               struct CigletRsGlottalF32 **output);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_clone_f32(const struct CigletRsGlottalF32 *handle,
+                                              struct CigletRsGlottalF32 **output);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_release_f32(struct CigletRsGlottalF32 **handle);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_model_f32(const struct CigletRsGlottalF32 *handle,
+                                              float *output,
+                                              uintptr_t count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_spectrum_f32(const struct CigletRsGlottalF32 *handle,
+                                                 const float *frequencies,
+                                                 uintptr_t count,
+                                                 float *magnitude,
+                                                 float *phase,
+                                                 uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_spectrum_with_f32(const struct CigletRsGlottalF32 *handle,
+                                                      const float *frequencies,
+                                                      uintptr_t count,
+                                                      uint32_t precision,
+                                                      float *magnitude,
+                                                      float *phase,
+                                                      uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_sampled_period_f32(const struct CigletRsGlottalF32 *handle,
+                                                       int32_t rate,
+                                                       uintptr_t count,
+                                                       float *output,
+                                                       uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_model_from_shape_f64(double shape,
+                                                double period,
+                                                double excitation,
+                                                double *output,
+                                                uintptr_t count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_model_spectrum_f64(const double *fields,
+                                              uintptr_t field_count,
+                                              const double *frequencies,
+                                              uintptr_t count,
+                                              double *magnitude,
+                                              double *phase,
+                                              uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_model_sampled_period_f64(const double *fields,
+                                                    uintptr_t field_count,
+                                                    int32_t rate,
+                                                    uintptr_t count,
+                                                    double *output,
+                                                    uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_create_f64(const double *fields,
+                                               uintptr_t count,
+                                               struct CigletRsGlottalF64 **output);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_clone_f64(const struct CigletRsGlottalF64 *handle,
+                                              struct CigletRsGlottalF64 **output);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_release_f64(struct CigletRsGlottalF64 **handle);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_model_f64(const struct CigletRsGlottalF64 *handle,
+                                              double *output,
+                                              uintptr_t count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_spectrum_f64(const struct CigletRsGlottalF64 *handle,
+                                                 const double *frequencies,
+                                                 uintptr_t count,
+                                                 double *magnitude,
+                                                 double *phase,
+                                                 uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_spectrum_with_f64(const struct CigletRsGlottalF64 *handle,
+                                                      const double *frequencies,
+                                                      uintptr_t count,
+                                                      uint32_t precision,
+                                                      double *magnitude,
+                                                      double *phase,
+                                                      uintptr_t output_count);
+
+/**
+ * Checked LF model configuration and calculation operation.
+ * Model fields are period (seconds), closure, peak, return_time (period ratios),
+ * excitation; field count must be five. Spectrum outputs match frequency count
+ * and are disjoint. Native arithmetic is retained. Default spectrum precision is
+ * Approximate; explicit codes use CIGLET_RS_GLOTTAL_FAST/APPROXIMATE/EXACT.
+ * All outputs are retained on error. Ownership is published only on success.
+ *
+ * # Safety
+ * Nonempty input arrays are aligned initialized stable readable storage for their
+ * declared counts. Output arrays are aligned exclusive writable storage for their
+ * counts; magnitude and phase are disjoint. Input/output overlap is permitted once
+ * computation ends. Null arrays are accepted only for zero counts. Handles are
+ * live matching-precision owners; reads exclude release. Release requires exclusive
+ * owner access, invalidates aliases and clears the initialized ownership slot.
+ * Output ownership slots are independent and must not already own an unreleased
+ * object. Owner/output storage is independent of private owner memory. Allocation
+ * validity remains the caller's responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_glottal_prepared_sampled_period_f64(const struct CigletRsGlottalF64 *handle,
+                                                       int32_t rate,
+                                                       uintptr_t count,
+                                                       double *output,
+                                                       uintptr_t output_count);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

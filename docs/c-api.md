@@ -1598,9 +1598,6 @@ public C interfaces and all three WASM bindings remain required.
 
 ## Synchronous root-finding callbacks
 
-The later instantaneous-frequency and spectral-peak additions retain this callback
-interface and are included in subsequent combined C caller checks.
-
 Two f32/f64 exports expose native bracketed scalar root finding with a correctly
 typed C callback and opaque context pointer. Calls are synchronous; neither
 callback nor context is retained. Null callbacks return one. The context passes
@@ -1735,5 +1732,70 @@ The 334-row inventory now has 180 implemented C source mappings, 152 pending pub
 C rows, two nonpublic macro formals and 332 pending public WASM rows. Every mapped
 function or constant exists in the header. Current family Release, Python32 and
 static-link callers remain unverified. This evidence does not replace final
+combined native/bindings acceptance. All remaining public C interfaces and all
+three WASM bindings remain required.
+
+## LF model configuration and reusable plans
+
+Twenty f32/f64 exports expose every native public Model field, shape construction,
+direct caller configuration, one-shot spectra and sampled periods, and reusable
+Prepared owners with independent cloning, model queries, both spectrum methods
+and sampled periods. Configuration buffers contain exactly five selected-precision
+scalars in this order: period in seconds, closure, peak, return_time as period
+ratios, and signed excitation. The complete configuration is copied before model
+preparation; private prepared coefficients remain owned by Rust. Model output uses
+a stack array and commits all five fields only after native success.
+
+Named precision constants are FAST zero, APPROXIMATE one, EXACT two. The default
+spectrum retains Approximate. These select native exponential/trigonometric
+precision and preserve all source preparation arithmetic, eight Newton updates,
+800 Hz rescaling, stability shortcuts, accurate output atan2, DC positive zero,
+sample-index rounding, truncated periods and zero-padded suffixes. Finite source
+results are retained; no different preparation optimizer is substituted.
+
+Prepared handles are immutable and support concurrent reads while release is
+excluded. Release requires exclusive access, clears its initialized ownership slot
+and accepts an already-null slot. Cloning owns a separate native Prepared instance
+that remains usable after the source owner is released. Constructors publish the
+owner only after success; destination slots must not already own an unreleased
+object. Caller output storage must remain independent of private owner memory.
+
+Spectrum calls validate matching frequency/output counts and pairwise disjoint
+magnitude/phase planes before computation. Native owned vectors stage both outputs;
+both lengths are checked before either plane is committed. Every error preserves
+both planes, including a late finite-frequency overflow after an earlier response
+was calculated. Input/output overlap is supported after input borrows end. Sampled
+periods use owned staging and check requested/output counts before any writes.
+Null arrays are allowed only for zero counts; model configuration still requires
+five initialized elements. Alignment/null failures return one, count/range/overlap
+failures return two, and native domain/unknown-selector failures return three.
+Callers retain valid initialized stable readable input allocations and exclusively
+writable aligned output ranges. Native panic/allocation limits remain applicable.
+
+Six host tests and warning-denied all-target Clippy pass. Both 53-record LFM1 corpora
+compare all 265 model fields exactly and all 8,304 response/wave outputs per precision.
+Binary32 outputs retain exact bits; binary64 bounds remain 1e-17 magnitude, 3e-15
+phase and 5e-16 waveform normalized error. One-shot and reusable spectra/periods,
+default and explicit Approximate, and queried configurations all pass the original
+corpora. Independent tests cover all precision selectors, Exact conjugate symmetry,
+DC, directly configured signed excitation, zero excitation, clone lifetime,
+spectrum input/output overlap, empty calculations, invalid configurations/rates,
+null/misaligned pointers, exact/partial plane aliasing, excessive counts, unknown
+precision and late overflow with atomic output retention. Native arithmetic,
+fixtures, dependencies and existing tolerances are unchanged.
+
+Generated header verification passes with 412 status-returning exports, twenty-two
+opaque types and seven named constants. Expanded optimized assert-enabled C main
+calls every export. All five target runners terminate with exit zero. Exact 41
+summary counts
+10,4,4,5,6,6,6,3,4,6,6,6,9,8,9,6,6,3,6,6,6,5,6,8,6,6,8,6,6,6,3,3,3,3,3,3,4,2,3,2,4
+verify 182 boundary plus 33 focused native tests per target, zero failed/ignored
+and no error diagnostics. Optimized assert-enabled C callers invoke all 412 exports
+and use all seven named constants on every target; Python passes on MSVC64/GNU64/
+Linux64. Warning-denied Rustdoc, header verification, formatting and whitespace
+checks pass. The 334-row inventory has 188 implemented C mappings, 144 pending
+public C rows, two nonpublic macro formals and 332 pending public WASM rows; every
+mapped function or constant exists in the header. Current family Release, Python32
+and static-link callers remain unverified. This evidence does not replace final
 combined native/bindings acceptance. All remaining public C interfaces and all
 three WASM bindings remain required.
