@@ -93,6 +93,8 @@ mod if_detector;
 pub use if_detector::{CigletRsIfDetectorF32, CigletRsIfDetectorF64};
 mod if_detector_functions;
 pub use if_detector_functions::*;
+mod spectral_peak_functions;
+pub use spectral_peak_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

@@ -1176,6 +1176,24 @@ def main():
         assert root_find(root_callback,None,3,1,ctypes.byref(value)) == 3 and value.value == 71
         root_state["kind"] = 0
         assert root_find(root_callback,None,0,1,ctypes.byref(value)) == 0 and value.value == 0.25
+        peak_interpolate = getattr(library,f"ciglet_rs_spectral_peak_interpolate_{suffix}")
+        peak_interpolate.argtypes = [pointer,size,size,pointer,pointer]
+        peak_interpolate.restype = ctypes.c_uint32
+        samples,bin_value,magnitude_value = (scalar*5)(math.nan,0,1,0.5,math.nan),scalar(71),scalar(71)
+        tolerance = 2e-7 if suffix == "f32" else 1e-15
+        assert peak_interpolate(samples,5,2,ctypes.byref(bin_value),ctypes.byref(magnitude_value)) == 0
+        assert abs(bin_value.value-13/6) < tolerance and abs(magnitude_value.value-49/48) < tolerance
+        assert peak_interpolate((scalar*3)(0,10,10),3,1,ctypes.byref(bin_value),ctypes.byref(magnitude_value)) == 0
+        assert bin_value.value == 1.5 and magnitude_value.value == scalar(10.2).value
+        bin_value.value = magnitude_value.value = 71
+        assert peak_interpolate(samples,5,0,ctypes.byref(bin_value),ctypes.byref(magnitude_value)) == 3
+        assert peak_interpolate(samples,5,2,ctypes.byref(bin_value),ctypes.byref(bin_value)) == 2
+        assert peak_interpolate(None,0,0,ctypes.byref(bin_value),ctypes.byref(magnitude_value)) == 3
+        assert peak_interpolate(samples,5,2,None,ctypes.byref(magnitude_value)) == 1
+        assert bin_value.value == magnitude_value.value == 71
+        shared = (scalar*3)(0,1,0.5)
+        assert peak_interpolate(shared,3,1,shared,ctypes.cast(ctypes.byref(shared,ctypes.sizeof(scalar)),pointer)) == 0
+        assert abs(shared[0]-7/6) < tolerance and abs(shared[1]-49/48) < tolerance
         owner_pointer = ctypes.POINTER(ctypes.c_void_p)
         detector_signatures = {
             "create": [scalar,scalar,owner_pointer],

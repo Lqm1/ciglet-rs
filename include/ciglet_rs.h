@@ -5712,6 +5712,44 @@ uint32_t ciglet_rs_if_detector_estimate_with_f64(const struct CigletRsIfDetector
                                                  double *output);
 
 /**
+ * Interpolate a three-bin peak, returning fractional bin and capped magnitude.
+ * Only participating samples are validated. Both outputs are retained on error.
+ * Missing neighbors or native domain errors return three; invalid pointers return
+ * one; invalid ranges or overlapping output slots return two.
+ *
+ * # Safety
+ * Nonempty magnitudes point to aligned initialized stable readable storage for
+ * count elements. Both output slots are aligned, disjoint and exclusively writable
+ * for their scalar type. Outputs may overlap input after computation ends. Null
+ * input is accepted only for zero count. Allocation validity remains the caller's
+ * responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_spectral_peak_interpolate_f32(const float *magnitudes,
+                                                 uintptr_t count,
+                                                 uintptr_t bin,
+                                                 float *output_bin,
+                                                 float *output_magnitude);
+
+/**
+ * Interpolate a three-bin peak, returning fractional bin and capped magnitude.
+ * Only participating samples are validated. Both outputs are retained on error.
+ * Missing neighbors or native domain errors return three; invalid pointers return
+ * one; invalid ranges or overlapping output slots return two.
+ *
+ * # Safety
+ * Nonempty magnitudes point to aligned initialized stable readable storage for
+ * count elements. Both output slots are aligned, disjoint and exclusively writable
+ * for their scalar type. Outputs may overlap input after computation ends. Null
+ * input is accepted only for zero count. Allocation validity remains the caller's
+ * responsibility; native panic/allocation limits apply.
+ */
+uint32_t ciglet_rs_spectral_peak_interpolate_f64(const double *magnitudes,
+                                                 uintptr_t count,
+                                                 uintptr_t bin,
+                                                 double *output_bin,
+                                                 double *output_magnitude);
+
+/**
  * Find a root using native tolerance, interpolation and midpoint fallback.
  * Callback and context are used synchronously and never retained. Null callback
  * returns one; native invalid bounds/nonfinite callback values return three.

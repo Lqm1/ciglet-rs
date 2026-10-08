@@ -1598,6 +1598,9 @@ public C interfaces and all three WASM bindings remain required.
 
 ## Synchronous root-finding callbacks
 
+The later instantaneous-frequency and spectral-peak additions retain this callback
+interface and are included in subsequent combined C caller checks.
+
 Two f32/f64 exports expose native bracketed scalar root finding with a correctly
 typed C callback and opaque context pointer. Calls are synchronous; neither
 callback nor context is retained. Null callbacks return one. The context passes
@@ -1636,6 +1639,46 @@ pending public WASM rows; every mapped function or constant exists in the header
 Current family Release, Python32 and static-link callers remain unverified. This
 family evidence does not replace final combined native/bindings acceptance. All
 remaining public C interfaces and all three WASM bindings remain required.
+
+## Quadratic spectral peak interpolation
+
+Two f32/f64 exports expose the native three-bin quadratic interpolation. Calls take
+an explicit magnitude count and interior bin, returning fractional FFT-bin position
+and capped magnitude through separate scalar outputs. This preserves cig_qifft and
+qifft functionality without converting bin position to hertz. Signed magnitudes,
+flat/displaced fallback, mixed-precision operations and the center-plus-0.2 cap are
+unchanged. Only three participating samples are validated.
+
+Both aligned exclusive output slots must be disjoint. Input range and output
+ranges/overlap are checked before computation; an owned native Peak is computed
+inside the existing panic boundary before either scalar is written. Every error
+preserves both outputs. Input/output overlap is supported after input borrowing
+ends. Null input is permitted only for zero count; missing neighbors subsequently
+return native error three. Invalid nullness/alignment returns one; range/count or
+overlapping outputs return two. Callers guarantee allocation validity, initialized
+stable readable samples and exclusive output storage. Native panic/allocation
+limits still apply.
+
+Six host tests and warning-denied all-target Clippy/Rustdoc pass. Both original
+64-case QIF1 corpora retain exact bits for both outputs. Independent parabola/cap,
+flat response, ignored outside NaNs and supported in-place output are checked in
+both precisions. Missing neighbors, overflowing arithmetic, participating NaNs,
+null/misaligned outputs, aliasing outputs and excessive counts retain both slots.
+No native arithmetic, fixture, dependency or existing tolerance changed. Generated
+header verification passes with 392 status-returning exports, twenty opaque types
+and four correlogram constants. Expanded optimized assert-enabled C main references
+every export. All five target runners terminate with exit zero. Exact 39 summary
+counts 10,4,4,5,6,6,6,3,4,6,6,9,8,9,6,6,3,6,6,6,5,6,8,6,6,8,6,6,6,3,3,3,3,3,4,2,3,2,4
+verify 176 boundary plus 30 focused native tests per target, zero failed/ignored
+and no error diagnostics. Optimized assert-enabled C callers invoke all 392
+exports on every target; Python passes on MSVC64/GNU64/Linux64. Both source aliases
+are mapped and verified against the generated header: the 334-row inventory has
+182 implemented C mappings, 150 pending public C rows, two nonpublic macro formals
+and 332 pending public WASM rows. Current family Release, Python32 and static-link
+callers remain unverified. This evidence does not replace final combined native/
+bindings acceptance. All remaining public C interfaces and all three WASM bindings
+remain required.
+
 
 ## Owned instantaneous-frequency detectors
 

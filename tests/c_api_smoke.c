@@ -918,6 +918,25 @@ int main(void) {
     CHECK_ROOT(float, f32, 1e-6);
     CHECK_ROOT(double, f64, 1e-7);
     #undef CHECK_ROOT
+    #define CHECK_SPECTRAL_PEAK(type, suffix, tolerance) do { \
+        type samples[] = {NAN,0,1,0.5,NAN}, bin = 71, magnitude = 71; \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(samples,5,2,&bin,&magnitude) == 0); \
+        assert(fabs((double)bin-13.0/6.0) < tolerance && fabs((double)magnitude-49.0/48.0) < tolerance); \
+        type capped[] = {0,10,10}; \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(capped,3,1,&bin,&magnitude) == 0 && bin == 1.5 && magnitude == (type)10.2); \
+        bin = magnitude = 71; \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(samples,5,0,&bin,&magnitude) == 3); \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(samples,5,2,&bin,&bin) == 2); \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(NULL,0,0,&bin,&magnitude) == 3); \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(samples,5,2,NULL,&magnitude) == 1); \
+        assert(bin == 71 && magnitude == 71); \
+        type shared[] = {0,1,0.5}; \
+        assert(ciglet_rs_spectral_peak_interpolate_##suffix(shared,3,1,shared,shared+1) == 0); \
+        assert(fabs((double)shared[0]-7.0/6.0) < tolerance && fabs((double)shared[1]-49.0/48.0) < tolerance); \
+    } while (0)
+    CHECK_SPECTRAL_PEAK(float, f32, 2e-7);
+    CHECK_SPECTRAL_PEAK(double, f64, 1e-15);
+    #undef CHECK_SPECTRAL_PEAK
     #define CHECK_IF_DETECTOR(type, suffix, owner_type, tolerance) do { \
         owner_type *owner = NULL, *copy = NULL, *custom = NULL; size_t count = 71; type center = 71, value = 71; \
         type real[13], imaginary[13], derivative_real[13], derivative_imaginary[13]; \
