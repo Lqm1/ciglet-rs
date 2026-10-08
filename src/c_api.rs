@@ -139,6 +139,8 @@ mod fastapprox_special;
 pub use fastapprox_special::*;
 mod lane_helpers;
 pub use lane_helpers::*;
+mod scalar_functions;
+pub use scalar_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

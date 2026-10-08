@@ -2141,3 +2141,53 @@ also verified despite not being separate upstream inventory rows. Current-family
 Release, Python32 and static-link callers remain unverified. Remaining ciglet
 random/wave/plotting/macros/constants, all liblrhsmm/SHIRO C bindings, all three
 WASM bindings and final combined acceptance remain required.
+
+### Source scalar expressions, caller-defined folds and constants
+
+`ciglet_rs_scalar_add_f32/f64` and
+`ciglet_rs_scalar_accumulate_square_f32/f64` expose the original `CIG_DEF_ADD`
+and `CIG_DEF_ADDSQR` expressions in the selected scalar precision. The square is
+multiplied before addition without requesting a fused multiply-add. Ordinary IEEE
+results are retained, including NaNs and infinities.
+`ciglet_rs_scalar_minimum_f32/f64` and `ciglet_rs_scalar_maximum_f32/f64` delegate
+to the native second-operand comparison helpers. Equal or unordered operands
+retain the second operand, including its signed zero or NaN payload.
+
+`ciglet_rs_scalar_fold_f32/f64` exposes the customizable `CIG_DEF_N_TO_ONE`
+operation as a synchronous C callback receiving accumulator, next input and opaque
+context. Input order and caller-provided initial value are preserved. Empty input
+returns initial unchanged, permits null input and a null callback, and performs no
+callback. Nonempty input requires a callback. Pointer/range errors are rejected
+before invoking it; output is committed only after input borrowing ends, allowing
+an input element to serve as the eventual result slot. Callbacks must not unwind
+or modify input/output storage. They may modify their independent context and are
+never retained. Foreign exceptions and panics crossing C callbacks are outside
+Rust's `catch_unwind` protection.
+
+`ciglet_rs_math_constants` fills a natural `repr(C)` descriptor containing the
+original binary64 `M_EPS`, finite `M_INF`, `M_PI` and `M_PI_2` values. These are
+`1e-15`, `1e15`, pi and half-pi. The descriptor uses native Rust constants for pi
+and half-pi, avoiding duplicated decimal approximations.
+
+The fold follows the standard library's documented left-associative semantics:
+https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.fold
+The source macro likewise processes every input in increasing index order.
+Boundary tests include both unchanged original SCM1 comparator tails, independent
+order-sensitive folds with callback counts and in-place output, empty-input signed
+zero, invalid pointers/counts/callbacks, IEEE behavior and source constant bits.
+Independent callers are `tests/c_api_scalar_smoke.c` and
+`tests/c_api_scalar_smoke.py`; the existing aggregate callers cover the previously
+published exports separately.
+Validation checkpoint: the five executed native targets
+(`x86_64-pc-windows-msvc`, `i686-pc-windows-msvc`,
+`x86_64-pc-windows-gnu`, `x86_64-unknown-linux-gnu`,
+`i686-unknown-linux-gnu`) each passed all 59 selected suites: 227 boundary tests
+and 64 focused native tests, with no failures or ignored tests. Both assert-enabled
+optimized C callers passed on every target. Both Python callers passed on the three
+64bit targets. The header contains 576 functions; the new independent C caller
+invokes all 11 added functions and verifies all four descriptor fields. Clippy,
+Rust documentation generation, formatting and generated-header verification passed.
+Native kernels, Cargo manifest/lock and original fixtures remain unchanged.
+This checkpoint covers Debug shared libraries; Release, 32bit Python and static
+link callers are not claimed here. Full combined project/binding acceptance remains
+required.

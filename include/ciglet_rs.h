@@ -488,6 +488,28 @@ typedef struct CigletRsIntegers64x2 {
 } CigletRsIntegers64x2;
 
 /**
+ * Original binary64 constants, including a finite infinity sentinel.
+ */
+typedef struct CigletRsMathConstants {
+  /**
+   * Original M_EPS, distinct from machine epsilon.
+   */
+  double epsilon;
+  /**
+   * Original M_INF, distinct from IEEE infinity.
+   */
+  double infinity_sentinel;
+  /**
+   * Original M_PI.
+   */
+  double pi;
+  /**
+   * Original M_PI_2.
+   */
+  double half_pi;
+} CigletRsMathConstants;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -8866,6 +8888,132 @@ uint32_t ciglet_rs_lanes_absolute(struct CigletRsFloats4 value, struct CigletRsF
  */
 uint32_t ciglet_rs_lanes_from_integer64_lanes(struct CigletRsIntegers64x2 value,
                                               struct CigletRsIntegers4 *output);
+
+/**
+ * Read the four original source constants without scalar precision conversion.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one descriptor.
+ */
+uint32_t ciglet_rs_math_constants(struct CigletRsMathConstants *output);
+
+/**
+ * Add two scalars in the selected precision.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_add_f32(float first, float second, float *output);
+
+/**
+ * Add the square of the second scalar, without fused multiply-add.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_accumulate_square_f32(float first, float second, float *output);
+
+/**
+ * Return the smaller scalar, retaining the second operand on ties or unordered comparisons.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_minimum_f32(float first, float second, float *output);
+
+/**
+ * Return the larger scalar, retaining the second operand on ties or unordered comparisons.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_maximum_f32(float first, float second, float *output);
+
+/**
+ * Apply the callback from left to right, starting with the caller's initial value.
+ * The callback receives accumulator, next input and context, and is never retained.
+ * Empty input returns initial unchanged, permits null input and a null callback,
+ * and performs no callbacks. Nonempty input with null callback returns status one.
+ * Invalid ranges/output are rejected before any callback. Ordinary IEEE callback
+ * results are preserved. Output is committed after input borrowing ends.
+ *
+ * # Safety
+ * Nonempty input must be aligned initialized single-allocation storage for count
+ * scalars, stable throughout the call. Output must be aligned writable storage for
+ * one scalar and may overlap input only because the write occurs after the fold.
+ * Callback must have the declared ABI and not unwind, throw or panic. Context must
+ * satisfy callback validity and lifetime requirements. Callback may mutate its own
+ * context but must not modify input or output, or create conflicting references.
+ */
+uint32_t ciglet_rs_scalar_fold_f32(const float *input,
+                                   uintptr_t count,
+                                   float initial,
+                                   float (*callback)(float, float, void*),
+                                   void *context,
+                                   float *output);
+
+/**
+ * Add two scalars in the selected precision.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_add_f64(double first, double second, double *output);
+
+/**
+ * Add the square of the second scalar, without fused multiply-add.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_accumulate_square_f64(double first, double second, double *output);
+
+/**
+ * Return the smaller scalar, retaining the second operand on ties or unordered comparisons.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_minimum_f64(double first, double second, double *output);
+
+/**
+ * Return the larger scalar, retaining the second operand on ties or unordered comparisons.
+ * Ordinary IEEE values, including NaNs and infinities, are preserved.
+ *
+ * # Safety
+ * Output must be aligned, exclusively writable storage for one scalar.
+ */
+uint32_t ciglet_rs_scalar_maximum_f64(double first, double second, double *output);
+
+/**
+ * Apply the callback from left to right, starting with the caller's initial value.
+ * The callback receives accumulator, next input and context, and is never retained.
+ * Empty input returns initial unchanged, permits null input and a null callback,
+ * and performs no callbacks. Nonempty input with null callback returns status one.
+ * Invalid ranges/output are rejected before any callback. Ordinary IEEE callback
+ * results are preserved. Output is committed after input borrowing ends.
+ *
+ * # Safety
+ * Nonempty input must be aligned initialized single-allocation storage for count
+ * scalars, stable throughout the call. Output must be aligned writable storage for
+ * one scalar and may overlap input only because the write occurs after the fold.
+ * Callback must have the declared ABI and not unwind, throw or panic. Context must
+ * satisfy callback validity and lifetime requirements. Callback may mutate its own
+ * context but must not modify input or output, or create conflicting references.
+ */
+uint32_t ciglet_rs_scalar_fold_f64(const double *input,
+                                   uintptr_t count,
+                                   double initial,
+                                   double (*callback)(double, double, void*),
+                                   void *context,
+                                   double *output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.
