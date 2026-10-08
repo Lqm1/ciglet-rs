@@ -74,6 +74,9 @@ mod prediction_spectrum;
 pub use prediction_spectrum::{CigletRsPredictionSpectrumF32, CigletRsPredictionSpectrumF64};
 mod prediction_spectrum_functions;
 pub use prediction_spectrum_functions::*;
+mod prediction_resonance;
+mod prediction_resonance_functions;
+pub use prediction_resonance_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

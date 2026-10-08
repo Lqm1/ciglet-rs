@@ -609,6 +609,23 @@ int main(void) {
     CHECK_PREDICTION_SPECTRUM(float, f32, CigletRsPredictionSpectrumF32, CigletRsScaledPredictionF32, FLT_MAX);
     CHECK_PREDICTION_SPECTRUM(double, f64, CigletRsPredictionSpectrumF64, CigletRsScaledPredictionF64, DBL_MAX);
     #undef CHECK_PREDICTION_SPECTRUM
+    #define CHECK_RESONANCES(type, suffix) do { \
+        type coefficients[] = {1,0,1}, frequencies[3] = {71,71,71}, real[3] = {71,71,71}, imaginary[3] = {71,71,71}; \
+        size_t count = 71, iterations = 71; uint32_t converged = 71; double residual = 71; \
+        assert(ciglet_rs_prediction_resonances_##suffix(coefficients,3,frequencies,real,imaginary,3,&count,&iterations,&converged,&residual) == 0); \
+        assert(count == 1 && iterations > 0 && iterations <= 50 && converged == 1 && residual < 1e-6); \
+        assert(fabs((double)frequencies[0]-0.5) < 1e-6 && fabs((double)real[0]) < 1e-6 && fabs((double)imaginary[0]-1) < 1e-6); \
+        assert(frequencies[1] == 71 && frequencies[2] == 71 && real[1] == 71 && real[2] == 71 && imaginary[1] == 71 && imaginary[2] == 71); \
+        count = iterations = converged = 71; residual = 71; \
+        assert(ciglet_rs_prediction_resonances_##suffix(coefficients,3,NULL,NULL,NULL,0,&count,&iterations,&converged,&residual) == 2); \
+        assert(count == 71 && iterations == 71 && converged == 71 && residual == 71); \
+        type constant[] = {1}; \
+        assert(ciglet_rs_prediction_resonances_##suffix(constant,1,NULL,NULL,NULL,0,&count,&iterations,&converged,&residual) == 0); \
+        assert(count == 0 && iterations == 0 && converged == 1 && residual == 0); \
+    } while (0)
+    CHECK_RESONANCES(float, f32);
+    CHECK_RESONANCES(double, f64);
+    #undef CHECK_RESONANCES
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

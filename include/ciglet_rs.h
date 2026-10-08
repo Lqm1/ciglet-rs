@@ -4199,4 +4199,54 @@ uint32_t ciglet_rs_prediction_spectrum_spectrum_f64(const struct CigletRsPredict
                                                     double *output,
                                                     uintptr_t output_count);
 
+/**
+ * Return sorted normalized frequencies, complex poles and root diagnostics.
+ * All planes have caller capacity; count reports the populated prefix. Unused
+ * capacity is retained. Nonconvergence succeeds with its complete native report.
+ * Insufficient capacity returns two, retaining every output; constants can have
+ * zero capacity and null planes. Frequencies retain native strict 0.001..0.999 filtering.
+ *
+ * # Safety
+ * Nonempty input is initialized stable readable single-allocation storage.
+ * Each output plane is aligned and exclusively writable for its capacity, and
+ * scalar outputs are aligned and exclusively writable for their types. All seven
+ * output ranges must be pairwise disjoint. Input/output overlap is supported after
+ * all input borrowing ends. Pointer checks cannot prove caller allocation validity.
+ */
+uint32_t ciglet_rs_prediction_resonances_f32(const float *input,
+                                             uintptr_t input_count,
+                                             float *frequencies,
+                                             float *real,
+                                             float *imaginary,
+                                             uintptr_t capacity,
+                                             uintptr_t *count,
+                                             uintptr_t *iterations,
+                                             uint32_t *converged,
+                                             double *maximum_residual);
+
+/**
+ * Return sorted normalized frequencies, complex poles and root diagnostics.
+ * All planes have caller capacity; count reports the populated prefix. Unused
+ * capacity is retained. Nonconvergence succeeds with its complete native report.
+ * Insufficient capacity returns two, retaining every output; constants can have
+ * zero capacity and null planes. Frequencies retain native strict 0.001..0.999 filtering.
+ *
+ * # Safety
+ * Nonempty input is initialized stable readable single-allocation storage.
+ * Each output plane is aligned and exclusively writable for its capacity, and
+ * scalar outputs are aligned and exclusively writable for their types. All seven
+ * output ranges must be pairwise disjoint. Input/output overlap is supported after
+ * all input borrowing ends. Pointer checks cannot prove caller allocation validity.
+ */
+uint32_t ciglet_rs_prediction_resonances_f64(const double *input,
+                                             uintptr_t input_count,
+                                             double *frequencies,
+                                             double *real,
+                                             double *imaginary,
+                                             uintptr_t capacity,
+                                             uintptr_t *count,
+                                             uintptr_t *iterations,
+                                             uint32_t *converged,
+                                             double *maximum_residual);
+
 #endif  /* CIGLET_RS_H */

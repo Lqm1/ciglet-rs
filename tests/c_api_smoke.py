@@ -838,6 +838,23 @@ def main():
         assert scaled_functions["gain"](model,ctypes.byref(gain)) == 0 and gain.value == maximum
         assert scaled_functions["release"](ctypes.byref(model)) == 0 and model.value is None
         assert prediction_spectrum_functions["release"](ctypes.byref(plan)) == 0
+        resonances = getattr(library,f"ciglet_rs_prediction_resonances_{suffix}")
+        resonances.argtypes = [pointer,size,pointer,pointer,pointer,size,ctypes.POINTER(size),ctypes.POINTER(size),ctypes.POINTER(ctypes.c_uint32),ctypes.POINTER(ctypes.c_double)]
+        resonances.restype = ctypes.c_uint32
+        coefficients = (scalar*3)(1,0,1)
+        frequencies,real,imaginary = [(scalar*3)(71,71,71) for _ in range(3)]
+        count,iterations,converged,residual = size(71),size(71),ctypes.c_uint32(71),ctypes.c_double(71)
+        assert resonances(coefficients,3,frequencies,real,imaginary,3,ctypes.byref(count),ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
+        assert count.value == 1 and 0 < iterations.value <= 50 and converged.value == 1 and residual.value < 1e-6
+        assert abs(frequencies[0]-0.5) < 1e-6 and abs(real[0]) < 1e-6 and abs(imaginary[0]-1) < 1e-6
+        assert all(list(plane)[1:] == [71,71] for plane in (frequencies,real,imaginary))
+        count.value = iterations.value = converged.value = 71
+        residual.value = 71
+        assert resonances(coefficients,3,None,None,None,0,ctypes.byref(count),ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 2
+        assert (count.value,iterations.value,converged.value,residual.value) == (71,71,71,71)
+        constant = (scalar*1)(1)
+        assert resonances(constant,1,None,None,None,0,ctypes.byref(count),ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
+        assert (count.value,iterations.value,converged.value,residual.value) == (0,0,1,0)
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

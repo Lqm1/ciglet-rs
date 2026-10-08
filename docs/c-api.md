@@ -1091,6 +1091,57 @@ static-link callers remain unverified. Resonance reports and all other remaining
 ciglet interfaces, liblrhsmm/SHIRO C interfaces and all three WASM interfaces remain
 required. This evidence does not replace final combined acceptance or reduce scope.
 
+## Complete resonance reports
+
+Two f32/f64 functions expose sorted normalized frequencies, complete complex
+poles and native root iterations, convergence and maximum residual. Frequency
+filtering remains strictly 0.001..0.999 Nyquist. Complex poles use separate real
+and imaginary planes; no Rust complex layout crosses the ABI. The header now
+declares 258 functions with fourteen opaque types.
+
+All three result planes use a caller capacity; a required usize output reports
+the populated prefix. Unused capacity remains unchanged. Constants can have
+zero capacity and null planes, reporting count/iterations/residual zero and
+convergence one. Insufficient capacity returns two after staging, retaining every
+output rather than publishing partial results. Nonconvergence succeeds with the
+complete native estimate and diagnostics, even when filtering leaves no poles.
+
+All seven output ranges, including mixed usize/u32/f64 scalars, are validated
+pairwise. Scalar alignment is checked with each original type before byte-range
+intersection checks. Overlap returns two. Complete owned staging ends all input
+borrowing before committing and supports input/output overlap. Pointer checks
+cannot establish allocation validity, initialized stable input or exclusive
+writable storage; callers retain those obligations.
+
+Six host tests pass. Both precisions consume all eleven LPS1 original resonance
+records and compare frequency/pole bits exactly, retaining unused capacity.
+Diagnostics agree with the existing native root report. Other cases cover an
+analytic imaginary pole, filtered real poles, zero-capacity constants, empty and
+invalid coefficients, insufficient capacity, atomic output retention, supported
+input overlap, all 21 output-range pairs in each precision and a partial f64/u32
+intersection. A 50-iteration unconverged estimate succeeds with complete
+diagnostics matching the separately exposed polynomial root API. Sorted retained
+poles belong to that root report; unused capacity is preserved. No native kernel,
+original fixture or threshold changes. Warning-denied all-target Clippy passes.
+
+All five required targets pass 92 boundary integration tests across seventeen
+suites plus six focused frame/DSP tests. Each log independently verifies exact
+10,4,4,5,6,3,4,6,6,6,3,6,6,6,5,6,6,3,3 passing counts, zero failed/ignored tests and
+no error diagnostics. MSVC x86_64/i686, Windows GNU x86_64 and Linux GNU
+x86_64/i686 runners terminate with exit zero. Actual optimized assert-enabled C
+callers invoke all 258 exports on every target; Python ctypes callers pass on
+the three x86_64 environments. Expanded optimized MSVC C source references every
+declaration. Warning-denied Rustdoc/Clippy, formatting, whitespace and
+generated-header verification pass.
+
+The ledger has 119 implemented C source mappings, 213 pending public C rows,
+two nonpublic macro formals and 332 pending public WASM rows. lpresf now maps
+complete frequency/pole estimates and all convergence diagnostics, and every
+implemented mapping was checked against the header. Current family Release,
+Python32 and static-link callers remain unverified. All remaining ciglet C
+functionality, liblrhsmm/SHIRO C interfaces and all three WASM interfaces remain
+required. This checkpoint does not replace final combined acceptance or reduce scope.
+
 ## One-shot waveform and magnitude estimates
 
 Six f32/f64 entry points expose complete ordinary waveform/magnitude estimates
