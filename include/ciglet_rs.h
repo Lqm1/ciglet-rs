@@ -558,4 +558,70 @@ uint32_t ciglet_rs_cross_correlation_f64(const double *left,
                                          double *output,
                                          uintptr_t lags);
 
+/**
+ * Partition values by IEEE total order and return the value at index.
+ * Out-of-range index returns status three. Outputs must be disjoint; overlap
+ * returns status two. Any failure leaves both outputs unchanged.
+ *
+ * # Safety
+ * Values must contain length initialized elements in a single allocation,
+ * readable during computation and exclusively writable on commit. Selected
+ * must be exclusively writable for one value. No conflicting concurrent access.
+ */
+uint32_t ciglet_rs_select_nth_f32(float *values,
+                                  uintptr_t length,
+                                  uintptr_t index,
+                                  float *selected);
+
+/**
+ * Stable IEEE total-order sort with original indices for ties.
+ * Both output lengths must equal the input length; empty ranges accept null.
+ * Sorted/indices outputs must be disjoint; either may overlap input. Invalid
+ * lengths or overlapping outputs return status two without any writes.
+ *
+ * # Safety
+ * Nonempty input must be initialized and readable in one allocation, stable
+ * until computation ends. Both nonempty outputs must be exclusively writable
+ * for their stated lengths and element types. No conflicting concurrent access.
+ */
+uint32_t ciglet_rs_sort_f32(const float *input,
+                            uintptr_t length,
+                            float *sorted,
+                            uintptr_t sorted_length,
+                            uintptr_t *indices,
+                            uintptr_t indices_length);
+
+/**
+ * Partition values by IEEE total order and return the value at index.
+ * Out-of-range index returns status three. Outputs must be disjoint; overlap
+ * returns status two. Any failure leaves both outputs unchanged.
+ *
+ * # Safety
+ * Values must contain length initialized elements in a single allocation,
+ * readable during computation and exclusively writable on commit. Selected
+ * must be exclusively writable for one value. No conflicting concurrent access.
+ */
+uint32_t ciglet_rs_select_nth_f64(double *values,
+                                  uintptr_t length,
+                                  uintptr_t index,
+                                  double *selected);
+
+/**
+ * Stable IEEE total-order sort with original indices for ties.
+ * Both output lengths must equal the input length; empty ranges accept null.
+ * Sorted/indices outputs must be disjoint; either may overlap input. Invalid
+ * lengths or overlapping outputs return status two without any writes.
+ *
+ * # Safety
+ * Nonempty input must be initialized and readable in one allocation, stable
+ * until computation ends. Both nonempty outputs must be exclusively writable
+ * for their stated lengths and element types. No conflicting concurrent access.
+ */
+uint32_t ciglet_rs_sort_f64(const double *input,
+                            uintptr_t length,
+                            double *sorted,
+                            uintptr_t sorted_length,
+                            uintptr_t *indices,
+                            uintptr_t indices_length);
+
 #endif  /* CIGLET_RS_H */

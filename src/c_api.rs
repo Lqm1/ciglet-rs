@@ -13,6 +13,29 @@ mod generation;
 pub use generation::*;
 mod pair_statistics;
 pub use pair_statistics::*;
+mod ordering;
+pub use ordering::*;
+
+fn disjoint_outputs<T, U>(
+    first: *const T,
+    first_length: usize,
+    second: *const U,
+    second_length: usize,
+) -> Result<(), u32> {
+    range(first, first_length)?;
+    range(second, second_length)?;
+    if first_length != 0 && second_length != 0 {
+        let first_start = first as usize;
+        let second_start = second as usize;
+        // Range validation established bounded multiplication and no address wrap.
+        let first_end = first_start + first_length * std::mem::size_of::<T>();
+        let second_end = second_start + second_length * std::mem::size_of::<U>();
+        if first_start < second_end && second_start < first_end {
+            return Err(2);
+        }
+    }
+    Ok(())
+}
 
 unsafe fn pair_result<T: std::panic::RefUnwindSafe, R>(
     left: *const T,

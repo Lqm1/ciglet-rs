@@ -8,6 +8,7 @@ This is the first binding checkpoint, not complete binding coverage. Currently
 the ABI version and binary32/binary64 minimum/maximum operations are exported.
 Binary32/binary64 first difference, cumulative sum and reverse are also exported.
 Statistics and array generation exports are listed in the checkpoint below.
+Selection/partition and stable sort with original indices are also exported.
 All remaining public ciglet operations, including the bundled approximation
 functions, still require bindings. Liblrhsmm and SHIRO bindings and all browser/
 Node WebAssembly bindings remain required work.
@@ -124,8 +125,8 @@ Linux and Windows GNU binding validation remain pending. Cbindgen's `--verify`
 confirms the checked-in header matches generation. All-target Clippy and Rustdoc
 with warnings denied, formatting and whitespace checks pass.
 
-Statistics bindings still need selection/partition mutation and stable sorting
-with original indices. Array2 ownership/dimensions/reshape/transpose also remain
+Statistics selection/partition and stable sorting with original indices are now
+bound, as documented below. Array2 ownership/dimensions/reshape/transpose remain
 required. These additions do not complete ciglet or the three-package bindings.
 
 ## Paired statistics checkpoint
@@ -168,3 +169,44 @@ remain pending for WASM. Two macro formal-parameter rows are explicitly nonpubli
 The native status column preserves the existing Rust implementation audit;
 binding status does not replace or infer that audit. Export count and upstream
 row count differ because precision/policy variants and aliases are explicit.
+
+## Ordering checkpoint
+
+Four more functions expose in-place rank selection and stable sorting with
+original indices in both precisions. The interface now has 48 functions.
+Selection stages the native partition in a separate allocation before copying
+it back and writing the selected value. Its scalar output must not overlap the
+partition output. Sorting takes separate explicit counts for input, sorted values
+and size_t original indices. All counts must match. Either output may overlap
+input; the two output regions must be disjoint. Overlapping output byte ranges
+return status two before reading or writing, including ranges with different
+element types. Empty sort accepts three null pointers; empty selection returns
+an invalid-index error when its scalar output is otherwise valid.
+
+Total ordering retains negative/positive NaNs, payload bits and signed zeros.
+Stable sorting retains the original indices of duplicate values. Selection
+guarantees the native total-order partition, not a particular order inside its
+lower/upper partitions. Invalid indices, lengths, output overlap and allocation/
+calculation failures leave every caller output unchanged. No new algorithm or
+native numerical policy is introduced.
+
+Windows MSVC x86_64/i686 and Windows GNU x86_64 Debug pass ten boundary tests
+and independently compiled C callers for all 48 functions. Windows x86_64
+MSVC Debug/Release and GNU Debug pass Python ctypes calls; MSVC Release passes
+the same ten Rust tests and optimized C caller. C tests check both precisions'
+signed zeros and exact positive/negative NaN payloads in sorting and selection.
+Rust additionally checks permutation preservation, partial-order partitions,
+overlapping outputs of different types and atomic failure behavior.
+Linux GNU x86_64/i686 Debug also passes all ten boundary tests and independently
+compiled GCC callers for all 48 exports; Linux x86_64 passes Python ctypes too.
+Thus the updated boundary tests and real C callers pass on all five agreed
+native targets. Cbindgen header verification, Clippy/Rustdoc with warnings denied,
+formatting and whitespace checks pass. This does not replace the earlier full
+native matrix or prove complete bindings. Other targets' Release callers and
+32-bit Python remain unverified.
+
+The binding inventory now maps 24 upstream rows, including all four ordering
+aliases, to implemented C endpoints; 308 other public/configuration rows remain
+pending for C. All 332 public rows remain pending for WASM. This completes the
+current native statistics module's calculation endpoints through C, while the
+rest of ciglet and the three-package binding objective remain unfinished.

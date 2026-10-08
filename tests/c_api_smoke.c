@@ -86,6 +86,42 @@ int main(void) {
     CHECK_PAIR(float, f32);
     CHECK_PAIR(double, f64);
     #undef CHECK_PAIR
+    #define CHECK_ORDER(type, suffix) do { \
+        type values[] = {3, -0.0, 0.0, 3, 1}; \
+        size_t indices[5]; \
+        assert(ciglet_rs_sort_##suffix(values, 5, values, 5, indices, 5) == 0); \
+        assert(indices[0] == 1 && indices[1] == 2 && indices[2] == 4 && indices[3] == 0 && indices[4] == 3); \
+        type result = -71; \
+        assert(ciglet_rs_select_nth_##suffix(values, 5, 2, &result) == 0 && result == 1); \
+        result = -71; \
+        assert(ciglet_rs_select_nth_##suffix(values, 5, 5, &result) == 3 && result == -71); \
+        assert(ciglet_rs_select_nth_##suffix(values, 5, 2, &values[2]) == 2); \
+        assert(ciglet_rs_sort_##suffix(NULL, 0, NULL, 0, NULL, 0) == 0); \
+    } while (0)
+    CHECK_ORDER(float, f32);
+    CHECK_ORDER(double, f64);
+    #undef CHECK_ORDER
+    #define CHECK_ORDER_BITS(type, word, suffix, positive_nan, negative_nan, negative_zero, infinity) do { \
+        word original[] = {positive_nan, negative_zero, 0, negative_nan, infinity}; \
+        type values[5]; \
+        size_t indices[5]; \
+        const size_t expected[] = {3, 1, 2, 4, 0}; \
+        memcpy(values, original, sizeof values); \
+        assert(ciglet_rs_sort_##suffix(values, 5, values, 5, indices, 5) == 0); \
+        for (size_t index = 0; index < 5; ++index) { \
+            word actual; \
+            memcpy(&actual, &values[index], sizeof actual); \
+            assert(indices[index] == expected[index] && actual == original[expected[index]]); \
+        } \
+        type selected; \
+        word actual; \
+        assert(ciglet_rs_select_nth_##suffix(values, 5, 0, &selected) == 0); \
+        memcpy(&actual, &selected, sizeof actual); \
+        assert(actual == negative_nan); \
+    } while (0)
+    CHECK_ORDER_BITS(float, uint32_t, f32, UINT32_C(0x7fc12345), UINT32_C(0xffc01234), UINT32_C(0x80000000), UINT32_C(0x7f800000));
+    CHECK_ORDER_BITS(double, uint64_t, f64, UINT64_C(0x7ff8123456789abc), UINT64_C(0xfff80123456789ab), UINT64_C(0x8000000000000000), UINT64_C(0x7ff0000000000000));
+    #undef CHECK_ORDER_BITS
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

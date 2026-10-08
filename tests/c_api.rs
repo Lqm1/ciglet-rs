@@ -4,6 +4,104 @@ use ciglet_rs::c_api::*;
 use std::mem::MaybeUninit;
 
 #[test]
+fn ordering_preserves_total_order_payloads_and_original_indices() {
+    let negative_nan = f64::from_bits(0xfff8_1234_5678_9abc);
+    let positive_nan = f64::from_bits(0x7ff8_0123_4567_89ab);
+    let original = [
+        3.0_f64,
+        -0.0,
+        0.0,
+        3.0,
+        positive_nan,
+        f64::NEG_INFINITY,
+        negative_nan,
+    ];
+    let mut sorted = original;
+    let mut positions = [usize::MAX; 7];
+    let pointer = sorted.as_mut_ptr();
+    // SAFETY: In-place sorted output is supported; indices are a disjoint buffer.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_sort_f64(pointer, 7, pointer, 7, positions.as_mut_ptr(), 7),
+            0
+        )
+    };
+    assert_eq!(positions, [6, 5, 1, 2, 0, 3, 4]);
+    for (value, index) in sorted.iter().zip(positions) {
+        assert_eq!(value.to_bits(), original[index].to_bits());
+    }
+    let mut partitioned = original;
+    let mut selected = 71.0_f64;
+    // SAFETY: Partition and scalar result storage are initialized and disjoint.
+    unsafe {
+        assert_eq!(
+            ciglet_rs_select_nth_f64(partitioned.as_mut_ptr(), 7, 3, &mut selected),
+            0
+        )
+    };
+    assert_eq!(selected.to_bits(), 0);
+    assert!(
+        partitioned[..3]
+            .iter()
+            .all(|value| value.total_cmp(&selected).is_le())
+    );
+    assert!(
+        partitioned[4..]
+            .iter()
+            .all(|value| value.total_cmp(&selected).is_ge())
+    );
+    let mut before = original.map(f64::to_bits);
+    let mut after = partitioned.map(f64::to_bits);
+    before.sort();
+    after.sort();
+    assert_eq!(before, after);
+}
+
+#[test]
+fn ordering_rejects_overlapping_outputs_without_partial_writes() {
+    let mut values = [3.0_f32, 1.0, 2.0];
+    let original = values;
+    let pointer = values.as_mut_ptr();
+    let mut selected = -71.0_f32;
+    let mut storage = [91_usize; 4];
+    // SAFETY: Null or overlapping outputs are supplied only for rejection; all
+    // other ranges are valid and no concurrent accesses occur.
+    unsafe {
+        assert_eq!(ciglet_rs_select_nth_f32(pointer, 3, 3, &mut selected), 3);
+        assert_eq!(ciglet_rs_select_nth_f32(pointer, 3, 1, pointer.add(1)), 2);
+        assert_eq!(
+            ciglet_rs_sort_f32(
+                pointer,
+                3,
+                storage.as_mut_ptr().cast(),
+                3,
+                storage.as_mut_ptr(),
+                3
+            ),
+            2
+        );
+        assert_eq!(
+            ciglet_rs_sort_f32(pointer, 3, pointer, 2, storage.as_mut_ptr(), 3),
+            2
+        );
+        assert_eq!(
+            ciglet_rs_sort_f32(
+                std::ptr::null(),
+                0,
+                std::ptr::null_mut(),
+                0,
+                std::ptr::null_mut(),
+                0
+            ),
+            0
+        );
+    }
+    assert_eq!(values, original);
+    assert_eq!(selected, -71.0);
+    assert_eq!(storage, [91; 4]);
+}
+
+#[test]
 fn paired_statistics_preserve_scaled_moments_and_overlap() {
     let extreme = [-1e300_f64, 0.0, 1e300];
     let mut result = -71.0_f64;

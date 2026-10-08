@@ -99,6 +99,33 @@ def main():
         assert list(output) == [28.0, 16.0, 6.0, 0.0]
         assert cross(None, 0, None, 0, output, 4) == 0
         assert list(output) == [0.0] * 4
+        sorting = getattr(library, f"ciglet_rs_sort_{suffix}")
+        sorting.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t,
+                            ctypes.POINTER(scalar), ctypes.c_size_t,
+                            ctypes.POINTER(ctypes.c_size_t), ctypes.c_size_t]
+        sorting.restype = ctypes.c_uint32
+        values = (scalar * 5)(3.0, -0.0, 0.0, 3.0, 1.0)
+        positions = (ctypes.c_size_t * 5)()
+        assert sorting(values, 5, values, 5, positions, 5) == 0
+        assert list(positions) == [1, 2, 4, 0, 3]
+        assert list(values) == [-0.0, 0.0, 1.0, 3.0, 3.0]
+        assert struct.pack(encoding, values[0]) == struct.pack(encoding, -0.0)
+        assert struct.pack(encoding, values[1]) == struct.pack(encoding, 0.0)
+        assert sorting(None, 0, None, 0, None, 0) == 0
+        selection = getattr(library, f"ciglet_rs_select_nth_{suffix}")
+        selection.argtypes = [ctypes.POINTER(scalar), ctypes.c_size_t,
+                              ctypes.c_size_t, ctypes.POINTER(scalar)]
+        selection.restype = ctypes.c_uint32
+        values = (scalar * 5)(3.0, 1.0, 5.0, 2.0, 4.0)
+        selected = scalar(-71.0)
+        assert selection(values, 5, 2, ctypes.byref(selected)) == 0
+        assert selected.value == 3.0 and values[2] == 3.0
+        assert all(value <= 3.0 for value in values[:2])
+        assert all(value >= 3.0 for value in values[3:])
+        before = list(values)
+        selected = scalar(-71.0)
+        assert selection(values, 5, 5, ctypes.byref(selected)) == 3
+        assert selected.value == -71.0 and list(values) == before
         grid = getattr(library, f"ciglet_rs_linear_grid_{suffix}")
         grid.argtypes = [scalar, scalar, ctypes.POINTER(scalar), ctypes.c_size_t]
         grid.restype = ctypes.c_uint32
