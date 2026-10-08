@@ -2245,3 +2245,65 @@ Rust documentation, formatting and generated-header verification passed.
 Native kernels, Cargo manifest/lock and original fixture files remain unchanged.
 This checkpoint validates Debug shared-library boundaries; Release, 32bit Python
 and static linkage are not claimed here. Full combined acceptance remains required.
+
+### Owned WAVE decoding and borrowed reader callbacks
+
+The binary32/binary64 `ciglet_rs_wave_decode`, `read_stream` and `read_file`
+functions publish immutable owned waveforms only on successful decoding. Memory
+decoding accepts an explicit u64 byte position; stream decoding begins at the
+caller's current stream position. Each entry point accepts a frame budget checked
+by the native decoder before allocating samples. Clone retains all metadata and
+samples in an independent owner; release clears its slot. Info exposes source
+rate, sample width, channel count, encoding and decoded mono count. Copy requires
+the exact sample count and retains caller output on error. Stereo retains the left
+channel without downmixing. All native decoding corrections are preserved.
+
+`CigletRsReadStream` contains context and synchronous read/seek function pointers.
+Callbacks return zero for success and any nonzero status for I/O error. Read may
+return fewer bytes than requested, must initialize the reported bytes, and must
+report a count no larger than capacity. Count zero indicates EOF. An oversized
+count is rejected before native code can use it. Seek origins are Start=0,
+Current=1 and End=2. Start uses the unsigned 64bit absolute argument; Current/End
+use the signed 64bit relative argument. The unused argument is zero. A successful
+seek must report the new absolute position. This keeps the complete native
+`SeekFrom` offset domains. Callbacks/context remain valid for the call, must not
+unwind or modify the independent output slot, and are neither retained nor closed.
+Stream position may change before a decoding/I/O failure. Output pointer validation
+precedes callback invocation.
+
+`CigletRsPath` contains counted bytes and an encoding code. UTF8=0 expects UTF-8;
+Native=1 accepts lossless Unix OS bytes or Windows UTF-16 little-endian code units,
+including potentially ill-formed native Unicode. Paths omit the terminator and
+embedded NUL is rejected. Native Windows byte count must be even. Byte copying
+avoids alignment requirements for wide code units. Unsupported platforms reject
+Native and can use UTF8. Native file opening and buffered reading are delegated to
+`wave::read_file`.
+
+Primary adapter and path contracts:
+https://doc.rust-lang.org/std/io/trait.Read.html#tymethod.read
+https://doc.rust-lang.org/std/io/enum.SeekFrom.html
+https://doc.rust-lang.org/std/os/windows/ffi/trait.OsStringExt.html
+https://doc.rust-lang.org/std/os/unix/ffi/trait.OsStringExt.html
+
+Boundary tests retain both unchanged 36-record WAV1 corpora and their documented
+C decoding corrections, independently verify metadata/standard sample values,
+clone/release and copy errors, frame budget/truncation, current-position decoding,
+short reads/EOF/oversized count/callback errors and invalid-output noninvocation.
+Actual files use both path encodings, including a non-UTF8 Unix filename and a
+Windows supplementary Unicode filename. New independent C/Python callers exercise
+all 14 decoding/ownership exports, real files and synchronous short-read callbacks.
+PCM encoding/file/borrowed-writer interfaces remain pending and are required for
+complete WAVE I/O binding coverage.
+Validation checkpoint: all five native targets passed all 63 selected suites:
+240 boundary and 74 focused native tests, with no failures or ignored tests.
+Four independent optimized assert-enabled C callers passed per target; four Python
+callers passed per64bit target. The header contains 612 functions; all 14 new
+reader exports are invoked in the independent C caller. Header inventories are
+29 opaque types, 28 concrete descriptors and 26 numeric policy/origin codes.
+Clippy, Rust documentation generation, formatting and header verification passed.
+The Windows C caller emits the SDK's standard fopen deprecation warning; its
+portable fixed-name fixture setup and all assertions execute successfully.
+Native kernels, manifests/lock and original fixtures remain unchanged. This
+checkpoint covers Debug shared-library boundaries; Release, 32bit Python and
+static linkage are not claimed here. WAVE writing remains required, along with
+the final combined project/binding acceptance.

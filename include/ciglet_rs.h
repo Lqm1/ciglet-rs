@@ -84,6 +84,41 @@
 #define CIGLET_RS_RANDOM_LEGACY 1
 
 /**
+ * Path byte encoding is UTF-8, without a terminating NUL.
+ */
+#define CIGLET_RS_PATH_UTF8 0
+
+/**
+ * Unix OS bytes or Windows UTF-16 little-endian code units, without a terminator.
+ */
+#define CIGLET_RS_PATH_NATIVE 1
+
+/**
+ * Absolute seek origin; absolute is used and relative is ignored.
+ */
+#define CIGLET_RS_SEEK_START 0
+
+/**
+ * Relative seek origin from current position; absolute is ignored.
+ */
+#define CIGLET_RS_SEEK_CURRENT 1
+
+/**
+ * Relative seek origin from stream end; absolute is ignored.
+ */
+#define CIGLET_RS_SEEK_END 2
+
+/**
+ * Decoded PCM encoding; source sample width is reported separately.
+ */
+#define CIGLET_RS_WAVE_PCM 0
+
+/**
+ * Decoded IEEE float encoding; source sample width is reported separately.
+ */
+#define CIGLET_RS_WAVE_FLOAT 1
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -237,6 +272,16 @@ typedef struct CigletRsStftF32 CigletRsStftF32;
  * Opaque binary64 STFT plan with serialized FFT/window scratch.
  */
 typedef struct CigletRsStftF64 CigletRsStftF64;
+
+/**
+ * Opaque immutable decoded binary32 waveform.
+ */
+typedef struct CigletRsWaveF32 CigletRsWaveF32;
+
+/**
+ * Opaque immutable decoded binary64 waveform.
+ */
+typedef struct CigletRsWaveF64 CigletRsWaveF64;
 
 /**
  * Binary32 envelope options passed by value with the platform C layout.
@@ -523,6 +568,39 @@ typedef struct CigletRsMathConstants {
    */
   double half_pi;
 } CigletRsMathConstants;
+
+/**
+ * Borrowed synchronous reader. Callback status zero means success; otherwise I/O error.
+ * Read writes at most capacity bytes, reports count <= capacity, and uses zero count
+ * for EOF. Seek reports a new absolute position and must support all three origins.
+ * Callbacks and context remain valid for the entire decode, must not unwind and
+ * must not modify the decode output slot. They may modify their independent context.
+ */
+typedef struct CigletRsReadStream {
+  void *context;
+  uint32_t (*read)(void*, uint8_t*, uintptr_t, uintptr_t*);
+  uint32_t (*seek)(void*, uint32_t, uint64_t, int64_t, uint64_t*);
+} CigletRsReadStream;
+
+/**
+ * Borrowed counted path bytes. Encoding one preserves native OS filename values.
+ */
+typedef struct CigletRsPath {
+  const uint8_t *bytes;
+  uintptr_t byte_count;
+  uint32_t encoding;
+} CigletRsPath;
+
+/**
+ * Complete source metadata; decoded output is mono, retaining the left channel.
+ */
+typedef struct CigletRsWaveInfo {
+  uint32_t sample_rate;
+  uint16_t bits_per_sample;
+  uint16_t channels;
+  uint32_t encoding;
+  uintptr_t sample_count;
+} CigletRsWaveInfo;
 
 /**
  * Compute difference into equally sized caller storage.
@@ -9293,6 +9371,156 @@ uint32_t ciglet_rs_random_white_from_draws_f64(double amplitude,
                                                uintptr_t count,
                                                uint32_t maximum,
                                                double *output);
+
+/**
+ * Decode one bounded WAVE at the selected byte position.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Bytes are initialized stable single-allocation storage for count bytes. Output is an independent aligned exclusively writable pointer slot for a new owner.
+ */
+uint32_t ciglet_rs_wave_decode_f32(const uint8_t *bytes,
+                                   uintptr_t count,
+                                   uint64_t start,
+                                   uintptr_t max_frames,
+                                   struct CigletRsWaveF32 **output);
+
+/**
+ * Decode from the current position of a synchronous caller-owned stream. Stream position may change on error; callbacks are not retained or closed.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Both callbacks/context must remain callable and valid without unwinding or conflicting access for this entire call. Read reports initialized bytes <= capacity; seek reports its new absolute position. Output is an independent aligned exclusively writable ownership slot, untouched by callbacks.
+ */
+uint32_t ciglet_rs_wave_read_stream_f32(struct CigletRsReadStream stream,
+                                        uintptr_t max_frames,
+                                        struct CigletRsWaveF32 **output);
+
+/**
+ * Decode a file using UTF-8 or lossless native path bytes.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Path bytes are initialized stable storage for byte_count bytes with no terminating NUL. Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_wave_read_file_f32(struct CigletRsPath path,
+                                      uintptr_t max_frames,
+                                      struct CigletRsWaveF32 **output);
+
+/**
+ * Clone complete waveform metadata and samples into an independent owner.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Handle is live and retained; output is an aligned independent exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_wave_clone_f32(const struct CigletRsWaveF32 *handle,
+                                  struct CigletRsWaveF32 **output);
+
+/**
+ * Release an owner and clear its pointer slot; null owner is already released.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Slot is initialized aligned exclusively writable pointer storage. Its nonnull owner was created here and transfers exclusive ownership with no outstanding users.
+ */
+uint32_t ciglet_rs_wave_release_f32(struct CigletRsWaveF32 **slot);
+
+/**
+ * Read all source metadata and mono sample count without modifying the owner.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Handle is live and retained; output is independently aligned exclusively writable storage for one metadata descriptor.
+ */
+uint32_t ciglet_rs_wave_info_f32(const struct CigletRsWaveF32 *handle,
+                                 struct CigletRsWaveInfo *output);
+
+/**
+ * Copy all decoded samples. Count must match exactly; empty output may be null.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Handle is live and retained; nonempty output is independently aligned exclusively writable single-allocation storage for count scalars.
+ */
+uint32_t ciglet_rs_wave_copy_samples_f32(const struct CigletRsWaveF32 *handle,
+                                         float *output,
+                                         uintptr_t count);
+
+/**
+ * Decode one bounded WAVE at the selected byte position.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Bytes are initialized stable single-allocation storage for count bytes. Output is an independent aligned exclusively writable pointer slot for a new owner.
+ */
+uint32_t ciglet_rs_wave_decode_f64(const uint8_t *bytes,
+                                   uintptr_t count,
+                                   uint64_t start,
+                                   uintptr_t max_frames,
+                                   struct CigletRsWaveF64 **output);
+
+/**
+ * Decode from the current position of a synchronous caller-owned stream. Stream position may change on error; callbacks are not retained or closed.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Both callbacks/context must remain callable and valid without unwinding or conflicting access for this entire call. Read reports initialized bytes <= capacity; seek reports its new absolute position. Output is an independent aligned exclusively writable ownership slot, untouched by callbacks.
+ */
+uint32_t ciglet_rs_wave_read_stream_f64(struct CigletRsReadStream stream,
+                                        uintptr_t max_frames,
+                                        struct CigletRsWaveF64 **output);
+
+/**
+ * Decode a file using UTF-8 or lossless native path bytes.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Path bytes are initialized stable storage for byte_count bytes with no terminating NUL. Output is an independent aligned exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_wave_read_file_f64(struct CigletRsPath path,
+                                      uintptr_t max_frames,
+                                      struct CigletRsWaveF64 **output);
+
+/**
+ * Clone complete waveform metadata and samples into an independent owner.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Handle is live and retained; output is an aligned independent exclusively writable ownership slot.
+ */
+uint32_t ciglet_rs_wave_clone_f64(const struct CigletRsWaveF64 *handle,
+                                  struct CigletRsWaveF64 **output);
+
+/**
+ * Release an owner and clear its pointer slot; null owner is already released.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Slot is initialized aligned exclusively writable pointer storage. Its nonnull owner was created here and transfers exclusive ownership with no outstanding users.
+ */
+uint32_t ciglet_rs_wave_release_f64(struct CigletRsWaveF64 **slot);
+
+/**
+ * Read all source metadata and mono sample count without modifying the owner.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Handle is live and retained; output is independently aligned exclusively writable storage for one metadata descriptor.
+ */
+uint32_t ciglet_rs_wave_info_f64(const struct CigletRsWaveF64 *handle,
+                                 struct CigletRsWaveInfo *output);
+
+/**
+ * Copy all decoded samples. Count must match exactly; empty output may be null.
+ * Errors retain caller output; decoded owners retain stereo left-channel semantics.
+ *
+ * # Safety
+ * Handle is live and retained; nonempty output is independently aligned exclusively writable single-allocation storage for count scalars.
+ */
+uint32_t ciglet_rs_wave_copy_samples_f64(const struct CigletRsWaveF64 *handle,
+                                         double *output,
+                                         uintptr_t count);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

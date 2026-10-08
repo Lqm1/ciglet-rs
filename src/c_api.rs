@@ -147,6 +147,16 @@ mod random_sampling;
 pub use random_sampling::*;
 mod random_draws;
 pub use random_draws::*;
+mod wave_path;
+pub use wave_path::*;
+mod wave_stream;
+pub use wave_stream::*;
+mod wave_owner;
+pub use wave_owner::{
+    CIGLET_RS_WAVE_FLOAT, CIGLET_RS_WAVE_PCM, CigletRsWaveF32, CigletRsWaveF64, CigletRsWaveInfo,
+};
+mod wave_read_functions;
+pub use wave_read_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;
