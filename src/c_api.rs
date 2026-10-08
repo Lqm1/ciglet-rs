@@ -170,6 +170,22 @@ mod plot_commands;
 pub use plot_commands::{ciglet_rs_plot_configuration_bytes, ciglet_rs_plot_configuration_stream};
 mod plot_command_functions;
 pub use plot_command_functions::*;
+#[cfg(not(target_family = "wasm"))]
+mod plot_process_options;
+#[cfg(not(target_family = "wasm"))]
+pub use plot_process_options::*;
+#[cfg(not(target_family = "wasm"))]
+mod plot_figure;
+#[cfg(not(target_family = "wasm"))]
+pub use plot_figure::*;
+#[cfg(not(target_family = "wasm"))]
+mod plot_figure_commands;
+#[cfg(not(target_family = "wasm"))]
+pub use plot_figure_commands::ciglet_rs_figure_configuration;
+#[cfg(not(target_family = "wasm"))]
+mod plot_figure_functions;
+#[cfg(not(target_family = "wasm"))]
+pub use plot_figure_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

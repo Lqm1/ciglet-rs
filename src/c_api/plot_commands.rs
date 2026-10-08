@@ -23,7 +23,12 @@ pub(super) fn writer_valid(stream: CigletRsWriteStream) -> Result<(), u32> {
         Ok(())
     }
 }
-fn line_valid<T>(x: *const T, x_count: usize, y: *const T, count: usize) -> Result<(), u32> {
+pub(super) fn line_valid<T>(
+    x: *const T,
+    x_count: usize,
+    y: *const T,
+    count: usize,
+) -> Result<(), u32> {
     range(y, count)?;
     if x.is_null() {
         if x_count != 0 {
@@ -38,7 +43,7 @@ fn line_valid<T>(x: *const T, x_count: usize, y: *const T, count: usize) -> Resu
     }
     Ok(())
 }
-unsafe fn line<T: Scalar, W: Write>(
+pub(super) unsafe fn line<T: Scalar, W: Write>(
     writer: W,
     x: *const T,
     y: *const T,

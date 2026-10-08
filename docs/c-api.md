@@ -6,10 +6,9 @@ calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
 modules under `src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
-exports 634 status-returning functions, 30 opaque types, 30 concrete descriptors
-and 28 constants. The checkpoints below record implementation and verification
-evidence. Of 332 public upstream mappings, 327 have verified C bindings and five
-remain pending. All bundled approximation functions have verified C bindings. Liblrhsmm and SHIRO
+exports 646 status-returning functions, 31 opaque types, 33 concrete descriptors
+and 33 constants. The checkpoints below record implementation and verification
+evidence. Of 332 public upstream mappings, 332 have verified C bindings; none remain pending. All bundled approximation functions have verified C bindings. Liblrhsmm and SHIRO
 bindings and all browser/Node WebAssembly bindings remain required work.
 
 Build with `cargo build --locked --features c-api --lib`. Cargo emits the Rust
@@ -2417,3 +2416,88 @@ captured output/exit status and drop/reaping semantics. Actual Gnuplot rendering
 must be verified with those bindings. All five original plotting source rows
 therefore remain pending in the binding inventory. Other-crate C interfaces, all
 three browser/Node WASM interfaces and final combined acceptance remain required.
+
+
+## Native Figure lifecycle and complete ciglet C source coverage
+
+Twelve additional exports expose native Figure ownership in this same package.
+`figure_open` selects the native platform default executable; `figure_open_with`
+accepts a counted executable name. Both preserve the native -p argument.
+`figure_spawn` accepts literal arguments, environment and stream routing without
+adding a shell or persistence arguments. Program, argument, environment and
+working-directory strings retain the existing UTF-8 or lossless native OS byte
+encodings; empty arguments remain valid. Child stdin is always the Figure pipe.
+
+`CigletRsPlotProcessOptions` supports an optional working directory, inherited or
+cleared environment, ordered variable set/removal entries, and independent stdout
+and stderr routing. Output modes are inherit (0), null (1), concurrent capture (2),
+create/truncate file (3) and create/append file (4). File modes require their counted
+file descriptors; other modes require null file descriptors. Environment keys are
+nonempty and contain neither NUL nor '='. All pointers, counts, encoding, policies
+and nested configuration are validated before redirected files open. A subsequent
+file or spawn error can still leave files created/truncated. No caller pointers
+are retained after creation.
+
+The opaque owner serializes native stream operations through a mutex. Process id,
+arbitrary counted configuration and both precisions' line/image operations remain
+available. Drawing and configuration delegate to the same native kernels and flush
+the pipe; no numerical or command-formatting code is duplicated. Caller input and
+array storage must remain independent and stable throughout each call. Concurrent
+close/release conflicts are forbidden by the ownership contract.
+
+`figure_close` flushes, closes stdin and waits; `figure_close_output` also transfers
+independent immutable stdout/stderr byte owners. The native worker drains captured
+streams while stdin is written, avoiding full-pipe deadlocks. Child exit is reported
+separately from I/O failures. `CigletRsPlotExitStatus` retains success, code presence,
+signed code and the full raw state: format zero is the Unix wait status; format one
+is the complete Windows 32-bit exit code. Signal termination therefore remains
+observable without inventing an exit code, and Windows high bits are preserved.
+
+Invalid result pointers do not consume the figure. Once explicit closing starts,
+the owner slot is cleared even on flush/wait failure, and result outputs remain
+unchanged on failure. Status and both byte owners are published only after all
+results are ready. Every output slot must be independent and exclusively writable.
+The selected child can keep an explicit close blocked after EOF.
+
+`figure_release` clears its slot and delegates to native Drop. It closes the pipe
+without killing persistent windows or synchronously waiting for the child; the
+background worker continues reaping. A null owner is a successful no-op. Buffered
+flushing may perform I/O; explicit close observes flush and exit errors.
+
+Current process and stream reference contracts were checked through Context7 and
+Mintlify against the primary standard-library documentation:
+
+- https://doc.rust-lang.org/std/process/struct.Command.html
+- https://doc.rust-lang.org/std/process/struct.Child.html
+- https://doc.rust-lang.org/std/process/struct.Stdio.html
+- https://doc.rust-lang.org/std/process/struct.ExitStatus.html
+- https://doc.rust-lang.org/std/os/unix/process/trait.ExitStatusExt.html
+- https://doc.rust-lang.org/std/os/windows/process/trait.ExitStatusExt.html
+- https://doc.rust-lang.org/std/io/trait.Write.html
+
+Boundary tests exercise full original C transcripts through a real child pipe,
+both precisions, arbitrary configuration, id/close/release, broken pipes,
+nonzero/high-bit Windows and Unix signal statuses, simultaneous 1 MiB stdin/stdout/
+stderr, environment clearing/removal, working directory, file truncation/append,
+null routing and invalid-input output/file retention. Actual Gnuplot is required
+in the matrix, and native, C and Python tests verify generated SVG data rather
+than returning early without a tool. C/Python callers invoke all twelve new
+exports and verify line/image rendering in both precisions through all three
+constructors. The C header is valid even when standard stdio macros are defined.
+
+All five targets passed 68 selected suites: 345 tests on each Windows target and
+346 on each Linux target, including the eight native plotting tests. Additional
+unit gates verify literal empty/Unicode arguments on all targets and full Windows
+exit-code bits on all three Windows targets. Seven independent optimized
+assert-enabled C callers passed per target; seven Python callers passed on each
+64bit target. Clippy, Rust documentation, formatting and generated-header
+verification passed. The complete header has 646 functions, 31 opaque types,
+33 concrete descriptors and 33 numeric codes. Native kernels, manifests/lock and
+original fixtures remain unchanged.
+
+The final five original plotting source rows are now implemented. All 332 public
+upstream mappings have verified C exports; the inventory's two macro formals are
+not public API entries. All 332 public WASM rows remain pending. This checkpoint
+covers Debug shared libraries; Release, Python32 and static-link verification are
+not claimed here. Liblrhsmm/SHIRO C interfaces, all three browser/Node WASM interfaces
+and final combined acceptance remain required. Full public scope is unchanged.

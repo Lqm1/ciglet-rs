@@ -129,6 +129,31 @@
 #define CIGLET_RS_PCM8_LEGACY 1
 
 /**
+ * Child output inherits the corresponding parent stream.
+ */
+#define CIGLET_RS_PLOT_INHERIT 0
+
+/**
+ * Child output is discarded.
+ */
+#define CIGLET_RS_PLOT_NULL 1
+
+/**
+ * Child output is drained concurrently and returned by close_output.
+ */
+#define CIGLET_RS_PLOT_CAPTURE 2
+
+/**
+ * Child output creates or truncates the specified file.
+ */
+#define CIGLET_RS_PLOT_FILE 3
+
+/**
+ * Child output creates or appends to the specified file.
+ */
+#define CIGLET_RS_PLOT_APPEND 4
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -192,6 +217,12 @@ typedef struct CigletRsFftF32 CigletRsFftF32;
  * Opaque reusable binary64 FFT plan, with serialized scratch access.
  */
 typedef struct CigletRsFftF64 CigletRsFftF64;
+
+/**
+ * Opaque native process/stream owner. Operations serialize through its mutex.
+ * Release/close require exclusive ownership and invalidate every alias.
+ */
+typedef struct CigletRsFigure CigletRsFigure;
 
 /**
  * Opaque binary32 filterbank. Release through its matching typed function.
@@ -639,6 +670,48 @@ typedef struct CigletRsWriteStream {
    */
   uint32_t (*flush)(void*);
 } CigletRsWriteStream;
+
+/**
+ * Counted OS strings use CigletRsPath encodings; null value removes a variable.
+ */
+typedef struct CigletRsPlotEnvironment {
+  struct CigletRsPath key;
+  const struct CigletRsPath *value;
+} CigletRsPlotEnvironment;
+
+/**
+ * Custom child configuration. Stdin is always the native Figure pipe.
+ * Arguments are literal OS strings; no shell or implicit -p argument is added.
+ * Null directory retains the parent directory. Environment is inherited unless
+ * clear_environment is one; entries then set or remove individual variables.
+ * Output mode 3/4 requires a file path; other modes require null file paths.
+ */
+typedef struct CigletRsPlotProcessOptions {
+  struct CigletRsPath program;
+  const struct CigletRsPath *arguments;
+  uintptr_t argument_count;
+  const struct CigletRsPlotEnvironment *environment;
+  uintptr_t environment_count;
+  uint32_t clear_environment;
+  const struct CigletRsPath *directory;
+  uint32_t stdout_mode;
+  const struct CigletRsPath *stdout_file;
+  uint32_t stderr_mode;
+  const struct CigletRsPath *stderr_file;
+} CigletRsPlotProcessOptions;
+
+/**
+ * Complete process exit state. code is meaningful only when has_code is one.
+ * raw_format zero means Unix wait status; one means Windows exit code bits.
+ * Nonzero child exit is an ordinary successful close, not an ABI error.
+ */
+typedef struct CigletRsPlotExitStatus {
+  uint32_t success;
+  uint32_t has_code;
+  int32_t code;
+  uint32_t raw_status;
+  uint32_t raw_format;
+} CigletRsPlotExitStatus;
 
 /**
  * Compute difference into equally sized caller storage.
@@ -9820,6 +9893,138 @@ uint32_t ciglet_rs_plot_image_bytes_f64(const struct CigletRsArrayF64 *array,
  */
 uint32_t ciglet_rs_plot_image_stream_f64(struct CigletRsWriteStream stream,
                                          const struct CigletRsArrayF64 *array);
+
+/**
+ * Launch the native platform default Gnuplot with -p. Output is unchanged on error.
+ *
+ * # Safety
+ * Output is independent aligned exclusively writable owner-slot storage. Release old owners first.
+ */
+uint32_t ciglet_rs_figure_open(struct CigletRsFigure **output);
+
+/**
+ * Launch a counted executable directly with -p, preserving native OS names.
+ *
+ * # Safety
+ * Program bytes are stable initialized counted storage; output is an independent exclusive owner slot.
+ */
+uint32_t ciglet_rs_figure_open_with(struct CigletRsPath program,
+                                    struct CigletRsFigure **output);
+
+/**
+ * Launch custom arguments/environment/output routing. All configuration is validated before files open.
+ * Spawn/I/O failures can leave redirected files created/truncated; output owner is unchanged on error.
+ *
+ * # Safety
+ * Options, nested descriptor tables and bytes are stable readable independent storage;
+ * output is an independent aligned exclusive owner slot. No pointers are retained.
+ */
+uint32_t ciglet_rs_figure_spawn(struct CigletRsPlotProcessOptions options,
+                                struct CigletRsFigure **output);
+
+/**
+ * Obtain the native child process id; owner remains retained.
+ *
+ * # Safety
+ * Figure is a live retained owner; output is independent aligned exclusive u32 storage.
+ */
+uint32_t ciglet_rs_figure_id(const struct CigletRsFigure *figure, uint32_t *output);
+
+/**
+ * Flush, close stdin and wait. Consumes/clears the owner even on I/O failure.
+ * Invalid output pointers do not consume the figure. Exit status is published only on success.
+ * The selected child can keep this call blocked after EOF.
+ *
+ * # Safety
+ * Slot exclusively contains a live owner; status is independent aligned exclusive storage.
+ * No concurrent operations or retained handle use after consumption are permitted.
+ */
+uint32_t ciglet_rs_figure_close(struct CigletRsFigure **slot,
+                                struct CigletRsPlotExitStatus *output);
+
+/**
+ * Close with complete captured stdout/stderr byte owners and exit status.
+ * Noncaptured streams yield empty owners. All outputs are published together on success;
+ * I/O failure still consumes the figure but leaves every result output unchanged.
+ *
+ * # Safety
+ * Slot exclusively contains a live owner. Status and both owner outputs are aligned,
+ * exclusively writable independent storage and must not overlap each other or slot.
+ * Existing byte owners must be released first. No figure aliases may be used after close.
+ */
+uint32_t ciglet_rs_figure_close_output(struct CigletRsFigure **slot,
+                                       struct CigletRsPlotExitStatus *output,
+                                       struct CigletRsBytes **stdout_output,
+                                       struct CigletRsBytes **stderr_output);
+
+/**
+ * Drop the figure pipe without killing the child or waiting for completion.
+ * Native background reaping continues. An already null slot is a successful no-op.
+ * Buffer flushing may perform I/O; use explicit close to observe I/O and exit errors.
+ *
+ * # Safety
+ * Slot is initialized exclusive owner storage. Live handle has no concurrent users;
+ * release invalidates every alias, clears the slot and does not retain caller pointers.
+ */
+uint32_t ciglet_rs_figure_release(struct CigletRsFigure **slot);
+
+/**
+ * Write arbitrary counted native configuration and flush the figure pipe.
+ * Empty input permits null bytes and still flushes. Errors may leave a written prefix.
+ *
+ * # Safety
+ * Figure is a live owner with no concurrent close/release. Input is stable initialized
+ * counted storage and independent of the figure; no caller pointers are retained.
+ */
+uint32_t ciglet_rs_figure_configuration(const struct CigletRsFigure *figure,
+                                        const uint8_t *bytes,
+                                        uintptr_t count);
+
+/**
+ * Draw a native line and flush. Optional/extra x and color fallback match Commands::line.
+ * # Safety
+ * Figure is retained with no concurrent close/release. Y and present x are stable
+ * initialized aligned independent allocations for count scalars. Present x requires
+ * x_count >= count; null x requires zero x_count. No caller pointers are retained.
+ */
+uint32_t ciglet_rs_figure_line_f32(const struct CigletRsFigure *figure,
+                                   const float *x,
+                                   uintptr_t x_count,
+                                   const float *y,
+                                   uintptr_t count,
+                                   uint8_t color);
+
+/**
+ * Draw a native matrix image and flush, preserving nonfinite samples and empty shapes.
+ * # Safety
+ * Figure and typed immutable array are live independent owners retained throughout;
+ * no conflicting mutations, close or release are permitted.
+ */
+uint32_t ciglet_rs_figure_image_f32(const struct CigletRsFigure *figure,
+                                    const struct CigletRsArrayF32 *array);
+
+/**
+ * Draw a native line and flush. Optional/extra x and color fallback match Commands::line.
+ * # Safety
+ * Figure is retained with no concurrent close/release. Y and present x are stable
+ * initialized aligned independent allocations for count scalars. Present x requires
+ * x_count >= count; null x requires zero x_count. No caller pointers are retained.
+ */
+uint32_t ciglet_rs_figure_line_f64(const struct CigletRsFigure *figure,
+                                   const double *x,
+                                   uintptr_t x_count,
+                                   const double *y,
+                                   uintptr_t count,
+                                   uint8_t color);
+
+/**
+ * Draw a native matrix image and flush, preserving nonfinite samples and empty shapes.
+ * # Safety
+ * Figure and typed immutable array are live independent owners retained throughout;
+ * no conflicting mutations, close or release are permitted.
+ */
+uint32_t ciglet_rs_figure_image_f64(const struct CigletRsFigure *figure,
+                                    const struct CigletRsArrayF64 *array);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.
