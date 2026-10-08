@@ -5074,6 +5074,136 @@ uint32_t ciglet_rs_median_filter_f64(const double *signal,
                                      uintptr_t output_count);
 
 /**
+ * Kalman filtering with the first measurement as initial mean.
+ * Inputs share count; output_count must equal count. Native scalar likelihood
+ * arithmetic is retained. Empty estimates produce zero likelihood. Complete
+ * staging preserves all three outputs on failure and allows input/output overlap.
+ * Output buffers and the likelihood slot must be pairwise disjoint.
+ * Native validation, allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Inputs are aligned initialized stable readable allocations for count scalars;
+ * means/variances are exclusive writable allocations for output_count scalars.
+ * Likelihood is an aligned exclusive writable scalar, including for empty input.
+ * Null arrays are accepted only for zero counts; input arrays may overlap.
+ */
+uint32_t ciglet_rs_kalman_filter_f32(const float *measurements,
+                                     const float *process,
+                                     const float *noise,
+                                     uintptr_t count,
+                                     float *means,
+                                     float *variances,
+                                     uintptr_t output_count,
+                                     float *likelihood);
+
+/**
+ * Kalman filtering with an explicit initial mean.
+ * Inputs share count; output_count must equal count. Native scalar likelihood
+ * arithmetic is retained. Empty estimates produce zero likelihood. Complete
+ * staging preserves all three outputs on failure and allows input/output overlap.
+ * Output buffers and the likelihood slot must be pairwise disjoint.
+ * Native validation, allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Inputs are aligned initialized stable readable allocations for count scalars;
+ * means/variances are exclusive writable allocations for output_count scalars.
+ * Likelihood is an aligned exclusive writable scalar, including for empty input.
+ * Null arrays are accepted only for zero counts; input arrays may overlap.
+ */
+uint32_t ciglet_rs_kalman_filter_with_initial_f32(const float *measurements,
+                                                  const float *process,
+                                                  const float *noise,
+                                                  uintptr_t count,
+                                                  float initial,
+                                                  float *means,
+                                                  float *variances,
+                                                  uintptr_t output_count,
+                                                  float *likelihood);
+
+/**
+ * Smooth filtered means backward with native posterior and process variances.
+ * Inputs share count; output_count equals count. Full staging preserves output
+ * on failure and permits input/output overlap. Empty inputs return an empty result.
+ * Native variance validation, allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Inputs are aligned initialized stable readable allocations for count scalars;
+ * output is exclusive writable single-allocation storage for output_count scalars.
+ * Null buffers are accepted only for zero associated counts. Inputs may overlap.
+ */
+uint32_t ciglet_rs_kalman_smooth_f32(const float *means,
+                                     const float *posterior,
+                                     const float *process,
+                                     uintptr_t count,
+                                     float *output,
+                                     uintptr_t output_count);
+
+/**
+ * Kalman filtering with the first measurement as initial mean.
+ * Inputs share count; output_count must equal count. Native scalar likelihood
+ * arithmetic is retained. Empty estimates produce zero likelihood. Complete
+ * staging preserves all three outputs on failure and allows input/output overlap.
+ * Output buffers and the likelihood slot must be pairwise disjoint.
+ * Native validation, allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Inputs are aligned initialized stable readable allocations for count scalars;
+ * means/variances are exclusive writable allocations for output_count scalars.
+ * Likelihood is an aligned exclusive writable scalar, including for empty input.
+ * Null arrays are accepted only for zero counts; input arrays may overlap.
+ */
+uint32_t ciglet_rs_kalman_filter_f64(const double *measurements,
+                                     const double *process,
+                                     const double *noise,
+                                     uintptr_t count,
+                                     double *means,
+                                     double *variances,
+                                     uintptr_t output_count,
+                                     double *likelihood);
+
+/**
+ * Kalman filtering with an explicit initial mean.
+ * Inputs share count; output_count must equal count. Native scalar likelihood
+ * arithmetic is retained. Empty estimates produce zero likelihood. Complete
+ * staging preserves all three outputs on failure and allows input/output overlap.
+ * Output buffers and the likelihood slot must be pairwise disjoint.
+ * Native validation, allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Inputs are aligned initialized stable readable allocations for count scalars;
+ * means/variances are exclusive writable allocations for output_count scalars.
+ * Likelihood is an aligned exclusive writable scalar, including for empty input.
+ * Null arrays are accepted only for zero counts; input arrays may overlap.
+ */
+uint32_t ciglet_rs_kalman_filter_with_initial_f64(const double *measurements,
+                                                  const double *process,
+                                                  const double *noise,
+                                                  uintptr_t count,
+                                                  double initial,
+                                                  double *means,
+                                                  double *variances,
+                                                  uintptr_t output_count,
+                                                  double *likelihood);
+
+/**
+ * Smooth filtered means backward with native posterior and process variances.
+ * Inputs share count; output_count equals count. Full staging preserves output
+ * on failure and permits input/output overlap. Empty inputs return an empty result.
+ * Native variance validation, allocation and panic limitations remain unchanged.
+ *
+ * # Safety
+ * Inputs are aligned initialized stable readable allocations for count scalars;
+ * output is exclusive writable single-allocation storage for output_count scalars.
+ * Null buffers are accepted only for zero associated counts. Inputs may overlap.
+ */
+uint32_t ciglet_rs_kalman_smooth_f64(const double *means,
+                                     const double *posterior,
+                                     const double *process,
+                                     uintptr_t count,
+                                     double *output,
+                                     uintptr_t output_count);
+
+/**
  * Synthesize one sinusoid with phase centered at floor(length / 2).
  * Frequencies and amplitudes may be negative. Native amplitude and short-length
  * corrections apply. Output count must equal length. Native failures preserve

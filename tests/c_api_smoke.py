@@ -1089,6 +1089,36 @@ def main():
         assert synthesize_many(None,None,None,0,16000,0,None,0) == 0
         shared = (scalar*3)(0,0,0)
         assert synthesize_many(shared,amplitudes,phases,1,16000,3,shared,3) == 0 and list(shared) == [0.25]*3
+        kalman_filter = getattr(library, f"ciglet_rs_kalman_filter_{suffix}")
+        kalman_filter.argtypes = [pointer,pointer,pointer,size,pointer,pointer,size,pointer]
+        kalman_filter.restype = ctypes.c_uint32
+        kalman_initial = getattr(library, f"ciglet_rs_kalman_filter_with_initial_{suffix}")
+        kalman_initial.argtypes = [pointer,pointer,pointer,size,scalar,pointer,pointer,size,pointer]
+        kalman_initial.restype = ctypes.c_uint32
+        kalman_smooth = getattr(library, f"ciglet_rs_kalman_smooth_{suffix}")
+        kalman_smooth.argtypes = [pointer,pointer,pointer,size,pointer,size]
+        kalman_smooth.restype = ctypes.c_uint32
+        measurement,process,noise,means,variances,likelihood = (scalar*1)(1),(scalar*1)(1),(scalar*1)(1),(scalar*2)(71,71),(scalar*2)(71,71),scalar(71)
+        assert kalman_filter(measurement,process,noise,1,means,variances,1,ctypes.byref(likelihood)) == 0
+        assert means[0] == 1 and variances[0] == 0.5 and math.isfinite(likelihood.value)
+        assert kalman_initial(measurement,process,noise,1,0,means,variances,1,ctypes.byref(likelihood)) == 0
+        assert means[0] == 0.5 and variances[0] == 0.5 and math.isfinite(likelihood.value)
+        posterior_means,posterior_variances,steps = (scalar*2)(0.5,0.2),(scalar*2)(0.5,0.6),(scalar*2)(1,1)
+        assert kalman_smooth(posterior_means,posterior_variances,steps,2,means,2) == 0
+        assert abs(means[0]-0.4) < (1e-7 if suffix == "f32" else 1e-15) and means[1] == posterior_means[1]
+        for index in range(2):
+            means[index] = variances[index] = 71
+        likelihood.value = 71
+        assert kalman_filter(measurement,process,noise,1,means,means,1,ctypes.byref(likelihood)) == 2
+        assert kalman_filter(measurement,process,noise,1,means,variances,1,means) == 2
+        assert kalman_initial(measurement,process,noise,1,math.nan,means,variances,1,ctypes.byref(likelihood)) == 3
+        assert kalman_smooth(measurement,(scalar*1)(-1),process,1,means,1) == 3
+        assert list(means) == list(variances) == [71,71] and likelihood.value == 71
+        assert kalman_filter(None,None,None,0,None,None,0,ctypes.byref(likelihood)) == 0 and likelihood.value == 0
+        assert kalman_initial(None,None,None,0,0,None,None,0,ctypes.byref(likelihood)) == 0 and likelihood.value == 0
+        assert kalman_smooth(None,None,None,0,None,0) == 0
+        assert kalman_filter(None,None,None,0,None,None,0,None) == 1
+        assert kalman_initial(measurement,process,noise,1,0,measurement,variances,1,ctypes.byref(likelihood)) == 0 and measurement[0] == 0.5
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

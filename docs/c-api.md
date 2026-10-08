@@ -1499,3 +1499,44 @@ exports exist in the header. Current family Release, Python32 and static-link
 callers remain unverified. This family evidence does not replace final combined
 native/bindings acceptance. All remaining public C interfaces and all three WASM
 bindings remain required.
+
+
+## Kalman filtering and backward smoothing
+
+Six typed f32/f64 entry points expose all three native Kalman functions. Filtering
+uses either the first measurement or an explicit initial mean. Three input arrays
+share the sample count. The mean and variance outputs require the same count;
+the likelihood output is always one scalar, including for empty estimates.
+Smoothing similarly uses a shared count for means, posterior/process variances
+and output. Native source-compatible scalar arithmetic and likelihood rounding
+are retained, including the disclosed wide-logarithm domain correction.
+
+Complete owned staging preserves all outputs on failure. Filtering's mean and
+variance buffers and likelihood slot must be pairwise disjoint. Inputs may overlap
+one another or the outputs because input borrowing ends before the commit. Empty
+array pointers may be null; the likelihood slot must remain valid. Array count
+mismatches, excessive counts and overlapping outputs return two; invalid pointer
+alignment/nullness returns one; native validation/arithmetic errors return three.
+The usual allocation/abort and caught-panic limitations apply.
+
+Host eight tests, warning-denied all-target Clippy and Rustdoc pass. Both KLM1
+corpora consume all 108 original C cases and 3,672 reference outputs per precision.
+Every reference mean, variance, smoothed mean and likelihood matches numerically
+exactly. Independent posterior/backward calculations, deterministic uncertainty,
+empty estimates, input/output overlap, nonfinite/negative/zero innovation errors,
+all three output-pair overlaps, partial overlap and each misaligned output are
+checked. Failures after a valid forward/backward step retain every caller output.
+No native kernel, fixture, dependency or tolerance changed. Header contains 360
+status-returning exports and eighteen opaque types; expanded optimized,
+assert-enabled MSVC C references every declaration. All five target runners
+terminate with exit zero. Exact 31 summary counts
+10,4,4,5,6,6,3,4,6,9,8,9,6,6,3,6,6,6,5,6,8,6,8,6,6,3,3,3,4,2,4 verify
+152 boundary plus 19 focused native tests per target, zero failed/ignored and no
+error diagnostics. Actual optimized assert-enabled C callers invoke all 360
+exports on every target; Python passes on MSVC64/GNU64/Linux64. Header verification,
+formatting and whitespace checks pass. The 334-row inventory has 166 implemented
+C source mappings, 166 pending public C rows, two nonpublic macro formals and 332
+pending public WASM rows; every mapped export exists in the header. Current family
+Release, Python32 and static-link callers remain unverified. This family evidence
+does not replace final combined native/bindings acceptance. All remaining public
+C interfaces and all three WASM bindings remain required.

@@ -830,6 +830,31 @@ int main(void) {
     CHECK_SYNTHESIS(float, f32);
     CHECK_SYNTHESIS(double, f64);
     #undef CHECK_SYNTHESIS
+    #define CHECK_KALMAN(type, suffix, tolerance) do { \
+        type measurement[] = {1}, process[] = {1}, noise[] = {1}, means[2] = {71,71}, variances[2] = {71,71}, likelihood = 71; \
+        assert(ciglet_rs_kalman_filter_##suffix(measurement,process,noise,1,means,variances,1,&likelihood) == 0); \
+        assert(means[0] == 1 && variances[0] == 0.5 && isfinite(likelihood)); \
+        assert(ciglet_rs_kalman_filter_with_initial_##suffix(measurement,process,noise,1,0,means,variances,1,&likelihood) == 0); \
+        assert(means[0] == 0.5 && variances[0] == 0.5 && isfinite(likelihood)); \
+        type posterior_means[] = {0.5,0.2}, posterior_variances[] = {0.5,0.6}, steps[] = {1,1}; \
+        assert(ciglet_rs_kalman_smooth_##suffix(posterior_means,posterior_variances,steps,2,means,2) == 0); \
+        assert(fabs((double)means[0] - 0.4) < tolerance && means[1] == posterior_means[1]); \
+        means[0] = means[1] = variances[0] = variances[1] = likelihood = 71; \
+        assert(ciglet_rs_kalman_filter_##suffix(measurement,process,noise,1,means,means,1,&likelihood) == 2); \
+        assert(ciglet_rs_kalman_filter_##suffix(measurement,process,noise,1,means,variances,1,means) == 2); \
+        assert(ciglet_rs_kalman_filter_with_initial_##suffix(measurement,process,noise,1,NAN,means,variances,1,&likelihood) == 3); \
+        type invalid[] = {-1}; \
+        assert(ciglet_rs_kalman_smooth_##suffix(measurement,invalid,process,1,means,1) == 3); \
+        assert(means[0] == 71 && means[1] == 71 && variances[0] == 71 && variances[1] == 71 && likelihood == 71); \
+        assert(ciglet_rs_kalman_filter_##suffix(NULL,NULL,NULL,0,NULL,NULL,0,&likelihood) == 0 && likelihood == 0); \
+        assert(ciglet_rs_kalman_filter_with_initial_##suffix(NULL,NULL,NULL,0,0,NULL,NULL,0,&likelihood) == 0 && likelihood == 0); \
+        assert(ciglet_rs_kalman_smooth_##suffix(NULL,NULL,NULL,0,NULL,0) == 0); \
+        assert(ciglet_rs_kalman_filter_##suffix(NULL,NULL,NULL,0,NULL,NULL,0,NULL) == 1); \
+        assert(ciglet_rs_kalman_filter_with_initial_##suffix(measurement,process,noise,1,0,measurement,variances,1,&likelihood) == 0 && measurement[0] == 0.5); \
+    } while (0)
+    CHECK_KALMAN(float, f32, 1e-7);
+    CHECK_KALMAN(double, f64, 1e-15);
+    #undef CHECK_KALMAN
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
