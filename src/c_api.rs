@@ -27,6 +27,11 @@ mod fourier_f32;
 pub use fourier_f32::*;
 mod fourier_f64;
 pub use fourier_f64::*;
+mod phase;
+mod phase_f32;
+pub use phase_f32::*;
+mod phase_f64;
+pub use phase_f64::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

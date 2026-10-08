@@ -336,3 +336,57 @@ Additional primary references:
 - https://doc.rust-lang.org/std/sync/struct.Mutex.html
 - https://doc.rust-lang.org/std/panic/trait.RefUnwindSafe.html
 - https://doc.rust-lang.org/std/panic/trait.UnwindSafe.html
+
+## DCT and phase checkpoint
+
+Eighteen binary32/binary64 functions expose the native orthonormal DCT-II,
+phase wrap/unwrap/directed difference, Cartesian magnitude/argument,
+polar real/imaginary components and spectrum completion. The generated header
+now declares 110 functions. Complex values use equally sized real/imaginary
+planes rather than a Rust complex struct layout. Scalar complex aliases use
+one-element planes. Polar functions retain the native f32 sine/cosine
+approximations in both precisions. DCT retains its original cosine convention
+and scaling; it rejects empty inputs. Empty phase arrays accept null pointers.
+
+Spectrum completion accepts checked symmetry codes zero symmetric and one
+antisymmetric, plus Nyquist codes zero Preserve and one Legacy. Other codes
+return status three. Legacy keeps the original positive substitution of the
+preceding bin even for antisymmetric completion. Preserve retains the supplied
+DC/Nyquist values. The adapter stages a complete owned result before writing
+caller storage. All vector outputs may overlap input, including in-place DCT
+and spectrum completion. Matching component/output lengths are explicit;
+length errors return status two. Native finite-value and integer-range checks
+remain in force. Scalar and vector outputs remain unchanged on failure.
+
+Six new integration tests compare all 24 original-C phase records per precision
+and all 32 original-C DCT records per precision through actual extern functions.
+Phase comparisons retain exact bits; DCT retains the established normalized
+2e-7 binary32 and 1e-15 binary64 bounds. Additional checks cover both Nyquist
+policies, odd/even fixture lengths, overlapping input/output, invalid option
+codes, NaN/infinite values, directed phase integer-range rejection, empty
+inputs and unchanged outputs after a later component fails validation.
+No numerical core, C reference fixture or tolerance changed.
+
+Windows MSVC x86_64/i686 and Windows GNU x86_64 Debug pass all 23 boundary
+integration tests across four suites and independently compiled C callers
+invoking all 110 exports. Both Windows x86_64 toolchains additionally pass
+Python ctypes callers. The initial MSVC C caller compile failed because the
+new NaN test lacked math.h; adding the standard header fixes compilation,
+without a Rust change or weakened assertion. Warning-denied all-target Clippy
+and Rustdoc, formatting, whitespace and generated-header verification pass.
+
+Linux GNU x86_64/i686 Debug also pass all 23 tests and independently compiled
+GCC C callers. Linux x86_64 passes Python ctypes calls. The runner completed
+with exit zero; each target log independently has exact ten, four, three and
+six passing summaries with zero failed/ignored tests. This verifies current
+Debug boundaries on all five required targets. Linux/GNU Release and static
+link callers remain pending.
+
+The binding ledger maps 51 upstream symbol rows including fifteen DCT/phase
+aliases. Every mapped export was checked against the generated header.
+There are 281 pending C public/configuration rows, two nonpublic macro formal
+parameters and 332 pending WASM rows. Remaining configuration/structure/ownership
+audits, ciglet interfaces, both other packages' C interfaces and all three
+WASM interfaces remain required. Current DCT/phase Release and Python32 caller
+execution has not been verified. This checkpoint does not refresh the complete
+native regression matrix or complete any package's bindings.

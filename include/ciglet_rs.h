@@ -1448,4 +1448,260 @@ uint32_t ciglet_rs_fft_shift_f64(const double *input,
                                  double *output,
                                  uintptr_t output_length);
 
+/**
+ * Compute the native orthonormal DCT-II with its legacy cosine approximation.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_dct_f32(const float *input,
+                           uintptr_t length,
+                           float *output,
+                           uintptr_t output_length);
+
+/**
+ * Unwrap phase using the native single-turn correction.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_phase_unwrap_f32(const float *input,
+                                    uintptr_t length,
+                                    float *output,
+                                    uintptr_t output_length);
+
+/**
+ * Wrap one finite angle using native turn rounding.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one value.
+ */
+uint32_t ciglet_rs_phase_wrap_f32(float angle, float *output);
+
+/**
+ * Compute the native directed circular phase difference.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one value.
+ */
+uint32_t ciglet_rs_phase_difference_f32(float first, float second, float *output);
+
+/**
+ * Compute complex magnitudes from equally sized real/imaginary planes.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_magnitude_f32(const float *first,
+                                 uintptr_t first_length,
+                                 const float *second,
+                                 uintptr_t second_length,
+                                 float *output,
+                                 uintptr_t output_length);
+
+/**
+ * Compute complex arguments from equally sized real/imaginary planes.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_argument_f32(const float *first,
+                                uintptr_t first_length,
+                                const float *second,
+                                uintptr_t second_length,
+                                float *output,
+                                uintptr_t output_length);
+
+/**
+ * Compute polar real components with the native cosine approximation.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_polar_real_f32(const float *first,
+                                  uintptr_t first_length,
+                                  const float *second,
+                                  uintptr_t second_length,
+                                  float *output,
+                                  uintptr_t output_length);
+
+/**
+ * Compute polar imaginary components with the native sine approximation.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_polar_imaginary_f32(const float *first,
+                                       uintptr_t first_length,
+                                       const float *second,
+                                       uintptr_t second_length,
+                                       float *output,
+                                       uintptr_t output_length);
+
+/**
+ * Complete a spectrum. Symmetry: zero symmetric, one antisymmetric.
+ * Nyquist: zero preserves the supplied bin, one retains legacy substitution.
+ * Other option codes return status three.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_complete_spectrum_f32(const float *input,
+                                         uintptr_t length,
+                                         uint32_t symmetry,
+                                         uint32_t nyquist,
+                                         float *output,
+                                         uintptr_t output_length);
+
+/**
+ * Compute the native orthonormal DCT-II with its legacy cosine approximation.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_dct_f64(const double *input,
+                           uintptr_t length,
+                           double *output,
+                           uintptr_t output_length);
+
+/**
+ * Unwrap phase using the native single-turn correction.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_phase_unwrap_f64(const double *input,
+                                    uintptr_t length,
+                                    double *output,
+                                    uintptr_t output_length);
+
+/**
+ * Wrap one finite angle using native turn rounding.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one value.
+ */
+uint32_t ciglet_rs_phase_wrap_f64(double angle, double *output);
+
+/**
+ * Compute the native directed circular phase difference.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one value.
+ */
+uint32_t ciglet_rs_phase_difference_f64(double first, double second, double *output);
+
+/**
+ * Compute complex magnitudes from equally sized real/imaginary planes.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_magnitude_f64(const double *first,
+                                 uintptr_t first_length,
+                                 const double *second,
+                                 uintptr_t second_length,
+                                 double *output,
+                                 uintptr_t output_length);
+
+/**
+ * Compute complex arguments from equally sized real/imaginary planes.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_argument_f64(const double *first,
+                                uintptr_t first_length,
+                                const double *second,
+                                uintptr_t second_length,
+                                double *output,
+                                uintptr_t output_length);
+
+/**
+ * Compute polar real components with the native cosine approximation.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_polar_real_f64(const double *first,
+                                  uintptr_t first_length,
+                                  const double *second,
+                                  uintptr_t second_length,
+                                  double *output,
+                                  uintptr_t output_length);
+
+/**
+ * Compute polar imaginary components with the native sine approximation.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_polar_imaginary_f64(const double *first,
+                                       uintptr_t first_length,
+                                       const double *second,
+                                       uintptr_t second_length,
+                                       double *output,
+                                       uintptr_t output_length);
+
+/**
+ * Complete a spectrum. Symmetry: zero symmetric, one antisymmetric.
+ * Nyquist: zero preserves the supplied bin, one retains legacy substitution.
+ * Other option codes return status three.
+ * Errors leave output unchanged.
+ *
+ * # Safety
+ * Nonempty inputs must be initialized, stable single-allocation ranges.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * values. Empty buffers accept null; input/output overlap is supported.
+ */
+uint32_t ciglet_rs_complete_spectrum_f64(const double *input,
+                                         uintptr_t length,
+                                         uint32_t symmetry,
+                                         uint32_t nyquist,
+                                         double *output,
+                                         uintptr_t output_length);
+
 #endif  /* CIGLET_RS_H */

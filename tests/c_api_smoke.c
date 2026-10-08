@@ -1,6 +1,7 @@
 /* Link this independent caller against the generated C interface. */
 #include "ciglet_rs.h"
 #include <assert.h>
+#include <math.h>
 #include <string.h>
 
 #define CHECK_STATISTICS(type, suffix) do { \
@@ -197,6 +198,38 @@ int main(void) {
     CHECK_FOURIER(float, CigletRsFftF32, f32);
     CHECK_FOURIER(double, CigletRsFftF64, f64);
     #undef CHECK_FOURIER
+    #define CHECK_PHASE(type, suffix) do { \
+        type real[] = {3, 0}, imaginary[] = {4, 0}, out[] = {71, 71}; \
+        assert(ciglet_rs_magnitude_##suffix(real, 2, imaginary, 2, real, 2) == 0); \
+        assert(real[0] == 5 && real[1] == 0); \
+        real[0] = 1; \
+        assert(ciglet_rs_argument_##suffix(real, 2, imaginary, 2, out, 2) == 0); \
+        assert(out[0] > 1 && out[0] < 2); \
+        type angle[] = {0, 0}; \
+        assert(ciglet_rs_polar_real_##suffix(real, 2, angle, 2, out, 2) == 0); \
+        assert(out[0] > (type)0.999 && out[0] < (type)1.001); \
+        assert(ciglet_rs_polar_imaginary_##suffix(real, 2, angle, 2, out, 2) == 0); \
+        assert(out[0] > (type)-0.001 && out[0] < (type)0.001); \
+        assert(ciglet_rs_phase_wrap_##suffix(7, out) == 0 && out[0] > 0 && out[0] < 1); \
+        assert(ciglet_rs_phase_difference_##suffix(1, 0, out) == 0 && out[0] > (type)0.999 && out[0] < (type)1.001); \
+        type jump[] = {3, -3}; \
+        assert(ciglet_rs_phase_unwrap_##suffix(jump, 2, jump, 2) == 0 && jump[1] > 3 && jump[1] < 4); \
+        type spectrum[] = {1, 2, 3, 4, 99, 99}; \
+        assert(ciglet_rs_complete_spectrum_##suffix(spectrum, 6, 1, 0, spectrum, 6) == 0); \
+        assert(spectrum[3] == 4 && spectrum[4] == -3 && spectrum[5] == -2); \
+        assert(ciglet_rs_complete_spectrum_##suffix(spectrum, 6, 1, 1, spectrum, 6) == 0 && spectrum[3] == 3); \
+        assert(ciglet_rs_complete_spectrum_##suffix(spectrum, 6, 2, 0, spectrum, 6) == 3 && spectrum[3] == 3); \
+        type singleton[] = {2}; \
+        assert(ciglet_rs_dct_##suffix(singleton, 1, singleton, 1) == 0 && singleton[0] > (type)1.999 && singleton[0] < (type)2.001); \
+        assert(ciglet_rs_dct_##suffix(NULL, 0, NULL, 0) == 3); \
+        assert(ciglet_rs_phase_unwrap_##suffix(NULL, 0, NULL, 0) == 0); \
+        out[0] = out[1] = 71; real[1] = NAN; \
+        assert(ciglet_rs_magnitude_##suffix(real, 2, imaginary, 2, out, 2) == 3 && out[0] == 71 && out[1] == 71); \
+        assert(ciglet_rs_magnitude_##suffix(real, 2, imaginary, 1, out, 2) == 2); \
+    } while (0)
+    CHECK_PHASE(float, f32);
+    CHECK_PHASE(double, f64);
+    #undef CHECK_PHASE
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

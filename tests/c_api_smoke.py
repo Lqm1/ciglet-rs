@@ -283,6 +283,56 @@ def main():
         finally:
             assert functions["release"](ctypes.byref(plan)) == 0 and plan.value is None
             assert functions["release"](ctypes.byref(plan)) == 0
+        phase_functions = {}
+        for operation in ["magnitude", "argument", "polar_real", "polar_imaginary"]:
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [pointer, size, pointer, size, pointer, size]
+            function.restype = ctypes.c_uint32
+            phase_functions[operation] = function
+        real = (scalar * 2)(3, 0)
+        imaginary = (scalar * 2)(4, 0)
+        out = (scalar * 2)(71, 71)
+        assert phase_functions["magnitude"](real, 2, imaginary, 2, real, 2) == 0
+        assert list(real) == [5, 0]
+        real[0] = 1
+        assert phase_functions["argument"](real, 2, imaginary, 2, out, 2) == 0
+        assert 1 < out[0] < 2
+        angles = (scalar * 2)(0, 0)
+        assert phase_functions["polar_real"](real, 2, angles, 2, out, 2) == 0
+        assert abs(out[0] - 1) < 0.001
+        assert phase_functions["polar_imaginary"](real, 2, angles, 2, out, 2) == 0
+        assert abs(out[0]) < 0.001
+        for operation, arguments in {
+            "phase_wrap": [scalar, pointer],
+            "phase_difference": [scalar, scalar, pointer],
+            "phase_unwrap": [pointer, size, pointer, size],
+            "complete_spectrum": [pointer, size, ctypes.c_uint32, ctypes.c_uint32, pointer, size],
+            "dct": [pointer, size, pointer, size],
+        }.items():
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            phase_functions[operation] = function
+        assert phase_functions["phase_wrap"](7, out) == 0 and 0 < out[0] < 1
+        assert phase_functions["phase_difference"](1, 0, out) == 0 and abs(out[0] - 1) < 0.001
+        jump = (scalar * 2)(3, -3)
+        assert phase_functions["phase_unwrap"](jump, 2, jump, 2) == 0 and 3 < jump[1] < 4
+        spectrum = (scalar * 6)(1, 2, 3, 4, 99, 99)
+        assert phase_functions["complete_spectrum"](spectrum, 6, 1, 0, spectrum, 6) == 0
+        assert list(spectrum) == [1, 2, 3, 4, -3, -2]
+        assert phase_functions["complete_spectrum"](spectrum, 6, 1, 1, spectrum, 6) == 0
+        assert spectrum[3] == 3
+        assert phase_functions["complete_spectrum"](spectrum, 6, 2, 0, spectrum, 6) == 3
+        singleton = (scalar * 1)(2)
+        assert phase_functions["dct"](singleton, 1, singleton, 1) == 0
+        assert abs(singleton[0] - 2) < 0.001
+        assert phase_functions["dct"](None, 0, None, 0) == 3
+        assert phase_functions["phase_unwrap"](None, 0, None, 0) == 0
+        out[0] = out[1] = 71
+        real[1] = float("nan")
+        assert phase_functions["magnitude"](real, 2, imaginary, 2, out, 2) == 3
+        assert list(out) == [71, 71]
+        assert phase_functions["magnitude"](real, 2, imaginary, 1, out, 2) == 2
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32
