@@ -1191,3 +1191,52 @@ Release, Python32 and static-link callers remain unverified. Reusable spectrum
 plans, full prediction spectra and complete resonance reports remain required,
 alongside all remaining binding work in the three crates. This boundary evidence
 does not replace final combined acceptance or reduce the complete public scope.
+
+
+## Owned column-major matrices and LU factors
+
+Forty f32/f64 functions expose typed matrix and LU owners. Matrix storage keeps
+row + column * rows indexing and the native multiplication accumulation order.
+Shape writes exactly three size_t elements: rows, columns, scalar count. Copy,
+vector multiplication and solve require exact output counts. Invalid shapes,
+counts, indices and dimensional overflow return two; nonfinite arithmetic,
+invalid swap partners, singular factors and unknown selectors return three.
+Dimensions and scalar counts are limited to INT32_MAX and addressable bytes.
+
+Matrices support construction, zeros, identity, clone, clearing release, shape,
+copy, indexed access, matrix/vector products, successive row swaps and source
+preliminary pivoting. LU policy zero selects partial pivoting during elimination;
+one selects source-compatible unpivoted factorization. Source preliminary pivoting
+requires separately applying its swap plan to the right-hand side before using
+policy one. Complete packed factors and ordered row swaps can be copied. LU
+owners can be cloned, queried, solved and independently released. A clone or
+factor owns its data and remains valid after the input owner is released.
+
+Mutating matrix calls require exclusive access. Read-only matrix and factor
+calls exclude mutation and release. Outputs and slots are independent of owner
+allocations. Constructors publish only on success. Mutations stage a cloned
+matrix before commit, retaining both matrix and output on failure. Vector
+operations stage complete results before writing, allowing input/output overlap.
+Zero-sized buffers may be null; no null slice or null zero-length copy is formed.
+Standalone vector swaps preserve NaN payloads and signed-zero bits. Native clone
+allocation and abort limitations still apply. Replacing a populated ownership
+slot does not release its previous owner; the caller must retain and release it.
+
+The generated header declares 298 functions and eighteen opaque types. Nine
+host tests and warning-denied all-target Clippy pass. Four original/corrected
+MAT1 corpora cover all matrix products, permutations, preliminary pivots, packed
+factors and source solves. Partial-pivot residual bounds remain 2e-6 for f32 and
+1e-13 for f64. Independent tests cover rectangular/empty matrices, late zero
+pivots with factor reconstruction, singular errors, ownership, atomic mutation
+errors and bit-preserving swaps. No native numerical kernel, reference fixture
+or tolerance changed. All five targets pass 101 boundary tests plus six focused frame/DSP tests,
+with twenty exact suite counts and no failed/ignored tests or error diagnostics.
+Actual optimized assert-enabled C callers invoke all 298 functions on every
+platform. Python ctypes callers pass on MSVC64, GNU64 and Linux64. GNU's initial
+runner omitted the new Rust suite; its corrected complete runner also exits zero.
+Expanded optimized MSVC C source independently references all declarations.
+Warning-denied Rustdoc initially rejected unquoted swaps[i] text; code formatting
+corrects the documentation link without changing executable code. The inventory
+now has 134 implemented C mappings, 198 pending public C rows, two nonpublic macro
+formals and 332 pending public WASM rows. This checkpoint does not replace final
+combined acceptance. Remaining bindings across all three crates stay in scope.

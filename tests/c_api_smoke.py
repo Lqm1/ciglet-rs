@@ -855,6 +855,66 @@ def main():
         constant = (scalar*1)(1)
         assert resonances(constant,1,None,None,None,0,ctypes.byref(count),ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
         assert (count.value,iterations.value,converged.value,residual.value) == (0,0,1,0)
+        matrix_signatures = {
+            "matrix_from_column_major": [size,size,pointer,size,ctypes.POINTER(handle_type)],
+            "matrix_zeros": [size,size,ctypes.POINTER(handle_type)],
+            "matrix_identity": [size,ctypes.POINTER(handle_type)],
+            "matrix_clone": [handle_type,ctypes.POINTER(handle_type)],
+            "matrix_release": [ctypes.POINTER(handle_type)],
+            "matrix_shape": [handle_type,ctypes.POINTER(size),size],
+            "matrix_copy_column_major": [handle_type,pointer,size],
+            "matrix_get": [handle_type,size,size,pointer],
+            "matrix_multiply": [handle_type,handle_type,ctypes.POINTER(handle_type)],
+            "matrix_multiply_vector": [handle_type,pointer,size,pointer,size],
+            "matrix_apply_row_swaps": [handle_type,ctypes.POINTER(size),size],
+            "matrix_pivot_rows": [handle_type,ctypes.POINTER(size),size],
+            "matrix_apply_swaps": [pointer,size,ctypes.POINTER(size),size,pointer,size],
+            "lu_factor": [handle_type,ctypes.c_uint32,ctypes.POINTER(handle_type)],
+            "lu_clone": [handle_type,ctypes.POINTER(handle_type)],
+            "lu_release": [ctypes.POINTER(handle_type)],
+            "lu_shape": [handle_type,ctypes.POINTER(size),size],
+            "lu_copy_packed": [handle_type,pointer,size],
+            "lu_copy_row_swaps": [handle_type,ctypes.POINTER(size),size],
+            "lu_solve": [handle_type,pointer,size,pointer,size],
+        }
+        matrices = {}
+        for operation, arguments in matrix_signatures.items():
+            function = getattr(library,f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = arguments
+            function.restype = ctypes.c_uint32
+            matrices[operation] = function
+        a,b,product,copy,factor,factor_copy = [handle_type() for _ in range(6)]
+        input_values = (scalar*9)(4,2,1,4,2,0,1,2,3)
+        values,right,solution,value = (scalar*9)(),(scalar*3)(15,12,10),(scalar*3)(),scalar(71)
+        shape,swaps = (size*3)(),(size*3)()
+        assert matrices["matrix_from_column_major"](3,3,input_values,9,ctypes.byref(a)) == 0
+        assert matrices["matrix_shape"](a,shape,3) == 0 and list(shape) == [3,3,9]
+        assert matrices["matrix_get"](a,2,2,ctypes.byref(value)) == 0 and value.value == 3
+        assert matrices["matrix_identity"](3,ctypes.byref(b)) == 0
+        assert matrices["matrix_multiply"](a,b,ctypes.byref(product)) == 0
+        assert matrices["matrix_copy_column_major"](product,values,9) == 0 and list(values) == list(input_values)
+        assert matrices["matrix_clone"](a,ctypes.byref(copy)) == 0
+        assert matrices["matrix_pivot_rows"](copy,swaps,3) == 0 and list(swaps) == [0,1,2]
+        assert matrices["lu_factor"](copy,1,ctypes.byref(factor)) == 3 and factor.value is None
+        assert matrices["lu_factor"](a,0,ctypes.byref(factor)) == 0
+        assert matrices["lu_clone"](factor,ctypes.byref(factor_copy)) == 0
+        assert matrices["lu_release"](ctypes.byref(factor)) == 0 and factor.value is None
+        assert matrices["lu_shape"](factor_copy,shape,3) == 0 and list(shape) == [3,3,9]
+        assert matrices["lu_copy_packed"](factor_copy,values,9) == 0
+        assert matrices["lu_copy_row_swaps"](factor_copy,swaps,3) == 0
+        assert matrices["matrix_apply_row_swaps"](copy,swaps,3) == 0
+        assert matrices["matrix_apply_swaps"](right,3,swaps,3,solution,3) == 0
+        assert matrices["lu_solve"](factor_copy,right,3,solution,3) == 0
+        assert all(abs(solution[i]-(i+1)) < 2e-6 for i in range(3))
+        assert matrices["matrix_multiply_vector"](a,solution,3,solution,3) == 0
+        assert all(abs(solution[i]-right[i]) < 2e-6 for i in range(3))
+        assert matrices["lu_release"](ctypes.byref(factor_copy)) == 0 and factor_copy.value is None
+        for owner in (a,b,product,copy):
+            assert matrices["matrix_release"](ctypes.byref(owner)) == 0 and owner.value is None
+        assert matrices["matrix_zeros"](2,0,ctypes.byref(a)) == 0
+        assert matrices["matrix_multiply_vector"](a,None,0,solution,2) == 0 and list(solution)[:2] == [0,0]
+        assert matrices["matrix_release"](ctypes.byref(a)) == 0 and a.value is None
+        assert matrices["matrix_release"](ctypes.byref(a)) == 0
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

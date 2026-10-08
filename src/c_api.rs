@@ -77,6 +77,12 @@ pub use prediction_spectrum_functions::*;
 mod prediction_resonance;
 mod prediction_resonance_functions;
 pub use prediction_resonance_functions::*;
+mod matrices;
+pub use matrices::{CigletRsMatrixF32, CigletRsMatrixF64};
+mod matrix_lu;
+pub use matrix_lu::{CigletRsLuF32, CigletRsLuF64};
+mod matrix_functions;
+pub use matrix_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

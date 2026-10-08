@@ -49,6 +49,26 @@ typedef struct CigletRsFilterBankF32 CigletRsFilterBankF32;
 typedef struct CigletRsFilterBankF64 CigletRsFilterBankF64;
 
 /**
+ * Opaque owned binary32 packed LU factors with row swaps.
+ */
+typedef struct CigletRsLuF32 CigletRsLuF32;
+
+/**
+ * Opaque owned binary64 packed LU factors with row swaps.
+ */
+typedef struct CigletRsLuF64 CigletRsLuF64;
+
+/**
+ * Opaque owned binary32 column-major matrix.
+ */
+typedef struct CigletRsMatrixF32 CigletRsMatrixF32;
+
+/**
+ * Opaque owned binary64 column-major matrix.
+ */
+typedef struct CigletRsMatrixF64 CigletRsMatrixF64;
+
+/**
  * Opaque reusable binary32 prediction spectrum plan.
  */
 typedef struct CigletRsPredictionSpectrumF32 CigletRsPredictionSpectrumF32;
@@ -4248,5 +4268,667 @@ uint32_t ciglet_rs_prediction_resonances_f64(const double *input,
                                              uintptr_t *iterations,
                                              uint32_t *converged,
                                              double *maximum_residual);
+
+/**
+ * Own initialized finite column-major values, index row + column * rows.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_from_column_major_f32(uintptr_t rows,
+                                                uintptr_t columns,
+                                                const float *input,
+                                                uintptr_t count,
+                                                struct CigletRsMatrixF32 **output);
+
+/**
+ * Create an owned zero matrix, retaining native empty/rectangular shapes.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_zeros_f32(uintptr_t rows,
+                                    uintptr_t columns,
+                                    struct CigletRsMatrixF32 **output);
+
+/**
+ * Create an owned square identity matrix.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_identity_f32(uintptr_t size, struct CigletRsMatrixF32 **output);
+
+/**
+ * Clone into an independent owned matrix without changing the input.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_clone_f32(const struct CigletRsMatrixF32 *input,
+                                    struct CigletRsMatrixF32 **output);
+
+/**
+ * Release an owned matrix and clear its slot; initialized null slots succeed.
+ *
+ * # Safety
+ * Slot is initialized aligned exclusively writable storage owning exactly one
+ * correctly typed handle from this API. Exclude every outstanding call and alias;
+ * do not reuse released owners.
+ */
+uint32_t ciglet_rs_matrix_release_f32(struct CigletRsMatrixF32 **slot);
+
+/**
+ * Copy rows, columns and element count into exactly three usize values.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_shape_f32(const struct CigletRsMatrixF32 *input,
+                                    uintptr_t *output,
+                                    uintptr_t count);
+
+/**
+ * Copy all column-major values; count equals rows * columns.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_copy_column_major_f32(const struct CigletRsMatrixF32 *input,
+                                                float *output,
+                                                uintptr_t count);
+
+/**
+ * Read a zero-based matrix element; out-of-bounds indices return two.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_get_f32(const struct CigletRsMatrixF32 *input,
+                                  uintptr_t row,
+                                  uintptr_t column,
+                                  float *output);
+
+/**
+ * Return an independent owned product using native accumulation order.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_multiply_f32(const struct CigletRsMatrixF32 *left,
+                                       const struct CigletRsMatrixF32 *right,
+                                       struct CigletRsMatrixF32 **output);
+
+/**
+ * Return the full rectangular matrix-vector product; output count equals rows.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_multiply_vector_f32(const struct CigletRsMatrixF32 *handle,
+                                              const float *input,
+                                              uintptr_t input_count,
+                                              float *output,
+                                              uintptr_t output_count);
+
+/**
+ * Apply successive `(i, swaps[i])` row exchanges with the corrected rectangular stride.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_apply_row_swaps_f32(struct CigletRsMatrixF32 *handle,
+                                              const uintptr_t *swaps,
+                                              uintptr_t count);
+
+/**
+ * Commit source preliminary square-matrix pivoting and its complete ordered row-swap plan.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_pivot_rows_f32(struct CigletRsMatrixF32 *handle,
+                                         uintptr_t *output,
+                                         uintptr_t count);
+
+/**
+ * Apply ordered swaps to scalar values, preserving all bits including NaNs.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_apply_swaps_f32(const float *input,
+                                          uintptr_t count,
+                                          const uintptr_t *swaps,
+                                          uintptr_t swap_count,
+                                          float *output,
+                                          uintptr_t output_count);
+
+/**
+ * Factor an immutable matrix clone: zero partial pivoting, one source-compatible unpivoted.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_factor_f32(const struct CigletRsMatrixF32 *input,
+                                 uint32_t policy,
+                                 struct CigletRsLuF32 **output);
+
+/**
+ * Clone an independent owner of complete packed factors and ordered row swaps.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_clone_f32(const struct CigletRsLuF32 *input, struct CigletRsLuF32 **output);
+
+/**
+ * Release owned factors and clear the slot; initialized null slots succeed.
+ *
+ * # Safety
+ * Slot is initialized aligned exclusively writable storage owning exactly one
+ * correctly typed handle from this API. Exclude every outstanding call and alias;
+ * do not reuse released owners.
+ */
+uint32_t ciglet_rs_lu_release_f32(struct CigletRsLuF32 **slot);
+
+/**
+ * Copy packed-factor rows, columns and element count into three usize values.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_shape_f32(const struct CigletRsLuF32 *input,
+                                uintptr_t *output,
+                                uintptr_t count);
+
+/**
+ * Copy every column-major packed factor; L has an implicit unit diagonal.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_copy_packed_f32(const struct CigletRsLuF32 *input,
+                                      float *output,
+                                      uintptr_t count);
+
+/**
+ * Copy the complete ordered row-swap plan; count equals packed rows.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_copy_row_swaps_f32(const struct CigletRsLuF32 *input,
+                                         uintptr_t *output,
+                                         uintptr_t count);
+
+/**
+ * Solve with all native row swaps and substitution order, retaining the right-hand side.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_solve_f32(const struct CigletRsLuF32 *handle,
+                                const float *input,
+                                uintptr_t input_count,
+                                float *output,
+                                uintptr_t output_count);
+
+/**
+ * Own initialized finite column-major values, index row + column * rows.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_from_column_major_f64(uintptr_t rows,
+                                                uintptr_t columns,
+                                                const double *input,
+                                                uintptr_t count,
+                                                struct CigletRsMatrixF64 **output);
+
+/**
+ * Create an owned zero matrix, retaining native empty/rectangular shapes.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_zeros_f64(uintptr_t rows,
+                                    uintptr_t columns,
+                                    struct CigletRsMatrixF64 **output);
+
+/**
+ * Create an owned square identity matrix.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_identity_f64(uintptr_t size, struct CigletRsMatrixF64 **output);
+
+/**
+ * Clone into an independent owned matrix without changing the input.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_clone_f64(const struct CigletRsMatrixF64 *input,
+                                    struct CigletRsMatrixF64 **output);
+
+/**
+ * Release an owned matrix and clear its slot; initialized null slots succeed.
+ *
+ * # Safety
+ * Slot is initialized aligned exclusively writable storage owning exactly one
+ * correctly typed handle from this API. Exclude every outstanding call and alias;
+ * do not reuse released owners.
+ */
+uint32_t ciglet_rs_matrix_release_f64(struct CigletRsMatrixF64 **slot);
+
+/**
+ * Copy rows, columns and element count into exactly three usize values.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_shape_f64(const struct CigletRsMatrixF64 *input,
+                                    uintptr_t *output,
+                                    uintptr_t count);
+
+/**
+ * Copy all column-major values; count equals rows * columns.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_copy_column_major_f64(const struct CigletRsMatrixF64 *input,
+                                                double *output,
+                                                uintptr_t count);
+
+/**
+ * Read a zero-based matrix element; out-of-bounds indices return two.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_get_f64(const struct CigletRsMatrixF64 *input,
+                                  uintptr_t row,
+                                  uintptr_t column,
+                                  double *output);
+
+/**
+ * Return an independent owned product using native accumulation order.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_multiply_f64(const struct CigletRsMatrixF64 *left,
+                                       const struct CigletRsMatrixF64 *right,
+                                       struct CigletRsMatrixF64 **output);
+
+/**
+ * Return the full rectangular matrix-vector product; output count equals rows.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_multiply_vector_f64(const struct CigletRsMatrixF64 *handle,
+                                              const double *input,
+                                              uintptr_t input_count,
+                                              double *output,
+                                              uintptr_t output_count);
+
+/**
+ * Apply successive `(i, swaps[i])` row exchanges with the corrected rectangular stride.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_apply_row_swaps_f64(struct CigletRsMatrixF64 *handle,
+                                              const uintptr_t *swaps,
+                                              uintptr_t count);
+
+/**
+ * Commit source preliminary square-matrix pivoting and its complete ordered row-swap plan.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_pivot_rows_f64(struct CigletRsMatrixF64 *handle,
+                                         uintptr_t *output,
+                                         uintptr_t count);
+
+/**
+ * Apply ordered swaps to scalar values, preserving all bits including NaNs.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_matrix_apply_swaps_f64(const double *input,
+                                          uintptr_t count,
+                                          const uintptr_t *swaps,
+                                          uintptr_t swap_count,
+                                          double *output,
+                                          uintptr_t output_count);
+
+/**
+ * Factor an immutable matrix clone: zero partial pivoting, one source-compatible unpivoted.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_factor_f64(const struct CigletRsMatrixF64 *input,
+                                 uint32_t policy,
+                                 struct CigletRsLuF64 **output);
+
+/**
+ * Clone an independent owner of complete packed factors and ordered row swaps.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_clone_f64(const struct CigletRsLuF64 *input, struct CigletRsLuF64 **output);
+
+/**
+ * Release owned factors and clear the slot; initialized null slots succeed.
+ *
+ * # Safety
+ * Slot is initialized aligned exclusively writable storage owning exactly one
+ * correctly typed handle from this API. Exclude every outstanding call and alias;
+ * do not reuse released owners.
+ */
+uint32_t ciglet_rs_lu_release_f64(struct CigletRsLuF64 **slot);
+
+/**
+ * Copy packed-factor rows, columns and element count into three usize values.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_shape_f64(const struct CigletRsLuF64 *input,
+                                uintptr_t *output,
+                                uintptr_t count);
+
+/**
+ * Copy every column-major packed factor; L has an implicit unit diagonal.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_copy_packed_f64(const struct CigletRsLuF64 *input,
+                                      double *output,
+                                      uintptr_t count);
+
+/**
+ * Copy the complete ordered row-swap plan; count equals packed rows.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_copy_row_swaps_f64(const struct CigletRsLuF64 *input,
+                                         uintptr_t *output,
+                                         uintptr_t count);
+
+/**
+ * Solve with all native row swaps and substitution order, retaining the right-hand side.
+ *
+ * # Safety
+ * Retain correctly typed live owners from this API through every call, excluding
+ * release and concurrent mutation. Mutable owner pointers require exclusive access.
+ * Nonempty inputs are initialized stable single-allocation readable storage. Outputs
+ * are aligned exclusively writable storage independent of owner allocations.
+ * Complete staged vector results permit input/output overlap after borrowing ends.
+ * Ownership slots are initialized; retain older ownership before successful
+ * replacement, which does not implicitly release it. Failures retain outputs
+ * and matrix owners. Native clone allocation/abort limitations still apply.
+ */
+uint32_t ciglet_rs_lu_solve_f64(const struct CigletRsLuF64 *handle,
+                                const double *input,
+                                uintptr_t input_count,
+                                double *output,
+                                uintptr_t output_count);
 
 #endif  /* CIGLET_RS_H */

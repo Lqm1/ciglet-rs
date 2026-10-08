@@ -626,6 +626,48 @@ int main(void) {
     CHECK_RESONANCES(float, f32);
     CHECK_RESONANCES(double, f64);
     #undef CHECK_RESONANCES
+
+    #define CHECK_MATRIX(type, suffix, matrix_type, lu_type) do { \
+        matrix_type *a = NULL, *b = NULL, *product = NULL, *copy = NULL; \
+        lu_type *factor = NULL, *factor_copy = NULL; \
+        type input[] = {4,2,1,4,2,0,1,2,3}, values[9], right[] = {15,12,10}, solution[3], value = 71; \
+        size_t shape[3], swaps[3]; \
+        assert(ciglet_rs_matrix_from_column_major_##suffix(3,3,input,9,&a) == 0); \
+        assert(ciglet_rs_matrix_shape_##suffix(a,shape,3) == 0 && shape[0] == 3 && shape[1] == 3 && shape[2] == 9); \
+        assert(ciglet_rs_matrix_get_##suffix(a,2,2,&value) == 0 && value == 3); \
+        assert(ciglet_rs_matrix_identity_##suffix(3,&b) == 0); \
+        assert(ciglet_rs_matrix_multiply_##suffix(a,b,&product) == 0); \
+        assert(ciglet_rs_matrix_copy_column_major_##suffix(product,values,9) == 0); \
+        for(size_t i=0;i<9;++i) assert(values[i] == input[i]); \
+        assert(ciglet_rs_matrix_clone_##suffix(a,&copy) == 0); \
+        assert(ciglet_rs_matrix_pivot_rows_##suffix(copy,swaps,3) == 0); \
+        assert(swaps[0] == 0 && swaps[1] == 1 && swaps[2] == 2); \
+        assert(ciglet_rs_lu_factor_##suffix(copy,1,&factor) == 3 && factor == NULL); \
+        assert(ciglet_rs_lu_factor_##suffix(a,0,&factor) == 0); \
+        assert(ciglet_rs_lu_clone_##suffix(factor,&factor_copy) == 0); \
+        assert(ciglet_rs_lu_release_##suffix(&factor) == 0 && factor == NULL); \
+        assert(ciglet_rs_lu_shape_##suffix(factor_copy,shape,3) == 0 && shape[0] == 3 && shape[1] == 3 && shape[2] == 9); \
+        assert(ciglet_rs_lu_copy_packed_##suffix(factor_copy,values,9) == 0); \
+        assert(ciglet_rs_lu_copy_row_swaps_##suffix(factor_copy,swaps,3) == 0); \
+        assert(ciglet_rs_matrix_apply_row_swaps_##suffix(copy,swaps,3) == 0); \
+        assert(ciglet_rs_matrix_apply_swaps_##suffix(right,3,swaps,3,solution,3) == 0); \
+        assert(ciglet_rs_lu_solve_##suffix(factor_copy,right,3,solution,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(fabs((double)solution[i]-(double)(i+1)) < 2e-6); \
+        assert(ciglet_rs_matrix_multiply_vector_##suffix(a,solution,3,solution,3) == 0); \
+        for(size_t i=0;i<3;++i) assert(fabs((double)solution[i]-(double)right[i]) < 2e-6); \
+        assert(ciglet_rs_lu_release_##suffix(&factor_copy) == 0 && factor_copy == NULL); \
+        assert(ciglet_rs_matrix_release_##suffix(&a) == 0 && a == NULL); \
+        assert(ciglet_rs_matrix_release_##suffix(&b) == 0 && b == NULL); \
+        assert(ciglet_rs_matrix_release_##suffix(&copy) == 0 && copy == NULL); \
+        assert(ciglet_rs_matrix_release_##suffix(&product) == 0 && product == NULL); \
+        assert(ciglet_rs_matrix_zeros_##suffix(2,0,&a) == 0); \
+        assert(ciglet_rs_matrix_multiply_vector_##suffix(a,NULL,0,solution,2) == 0 && solution[0] == 0 && solution[1] == 0); \
+        assert(ciglet_rs_matrix_release_##suffix(&a) == 0 && a == NULL); \
+        assert(ciglet_rs_matrix_release_##suffix(&a) == 0); \
+    } while (0)
+    CHECK_MATRIX(float, f32, CigletRsMatrixF32, CigletRsLuF32);
+    CHECK_MATRIX(double, f64, CigletRsMatrixF64, CigletRsLuF64);
+    #undef CHECK_MATRIX
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
