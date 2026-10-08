@@ -2037,4 +2037,236 @@ uint32_t ciglet_rs_czt_plan_transform_f64(const struct CigletRsCztF64 *handle,
  */
 uint32_t ciglet_rs_czt_plan_release_f64(struct CigletRsCztF64 **slot);
 
+/**
+ * Compute native frequency to mel; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_frequency_to_mel_f32(float value, float *output);
+
+/**
+ * Compute native mel to frequency; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_mel_to_frequency_f32(float value, float *output);
+
+/**
+ * Compute native frequency to bark; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_frequency_to_bark_f32(float value, float *output);
+
+/**
+ * Compute native bark to frequency; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_bark_to_frequency_f32(float value, float *output);
+
+/**
+ * Compute native equal loudness; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_equal_loudness_f32(float value, float *output);
+
+/**
+ * Generate intervals+1 native mel-spaced points, retaining approximate conversions.
+ * Output length must equal intervals+1. Invalid counts/ranges leave output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for output_length scalars.
+ */
+uint32_t ciglet_rs_mel_space_f32(float minimum,
+                                 float maximum,
+                                 uintptr_t intervals,
+                                 float *output,
+                                 uintptr_t output_length);
+
+/**
+ * Compute stable mean divergence for matching nonempty spectra.
+ * Uses the native Stable policy.
+ * Stable identical positive spectra give zero; a single zero against a
+ * positive bin gives infinity. Paired zero bins are undefined in Stable mode.
+ * Legacy retains the source approximate logarithms and selected-scalar grouping.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Inputs must be initialized, readable single-allocation ranges, stable through
+ * computation. Output must be aligned and exclusively writable for one scalar.
+ * Input and output may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_itakura_saito_f32(const float *source,
+                                     uintptr_t source_length,
+                                     const float *reference,
+                                     uintptr_t reference_length,
+                                     float *output);
+
+/**
+ * Compute natural log of mean divergence for matching nonempty spectra.
+ * Uses the native Stable policy.
+ * Stable identical positive spectra give negative infinity; a single zero against a
+ * positive bin gives infinity. Paired zero bins are undefined in Stable mode.
+ * Legacy retains the source approximate logarithms and selected-scalar grouping.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Inputs must be initialized, readable single-allocation ranges, stable through
+ * computation. Output must be aligned and exclusively writable for one scalar.
+ * Input and output may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_log_itakura_saito_f32(const float *source,
+                                         uintptr_t source_length,
+                                         const float *reference,
+                                         uintptr_t reference_length,
+                                         float *output);
+
+/**
+ * Compute natural log of mean divergence for matching nonempty spectra.
+ * Policy zero is Stable, one Legacy; other codes return status three.
+ * Stable identical positive spectra give negative infinity; a single zero against a
+ * positive bin gives infinity. Paired zero bins are undefined in Stable mode.
+ * Legacy retains the source approximate logarithms and selected-scalar grouping.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Inputs must be initialized, readable single-allocation ranges, stable through
+ * computation. Output must be aligned and exclusively writable for one scalar.
+ * Input and output may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_log_itakura_saito_with_f32(const float *source,
+                                              uintptr_t source_length,
+                                              const float *reference,
+                                              uintptr_t reference_length,
+                                              uint32_t policy,
+                                              float *output);
+
+/**
+ * Compute native frequency to mel; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_frequency_to_mel_f64(double value, double *output);
+
+/**
+ * Compute native mel to frequency; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_mel_to_frequency_f64(double value, double *output);
+
+/**
+ * Compute native frequency to bark; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_frequency_to_bark_f64(double value, double *output);
+
+/**
+ * Compute native bark to frequency; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_bark_to_frequency_f64(double value, double *output);
+
+/**
+ * Compute native equal loudness; finite/domain checks remain native.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for one scalar.
+ */
+uint32_t ciglet_rs_equal_loudness_f64(double value, double *output);
+
+/**
+ * Generate intervals+1 native mel-spaced points, retaining approximate conversions.
+ * Output length must equal intervals+1. Invalid counts/ranges leave output unchanged.
+ *
+ * # Safety
+ * Output must be aligned and exclusively writable for output_length scalars.
+ */
+uint32_t ciglet_rs_mel_space_f64(double minimum,
+                                 double maximum,
+                                 uintptr_t intervals,
+                                 double *output,
+                                 uintptr_t output_length);
+
+/**
+ * Compute stable mean divergence for matching nonempty spectra.
+ * Uses the native Stable policy.
+ * Stable identical positive spectra give zero; a single zero against a
+ * positive bin gives infinity. Paired zero bins are undefined in Stable mode.
+ * Legacy retains the source approximate logarithms and selected-scalar grouping.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Inputs must be initialized, readable single-allocation ranges, stable through
+ * computation. Output must be aligned and exclusively writable for one scalar.
+ * Input and output may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_itakura_saito_f64(const double *source,
+                                     uintptr_t source_length,
+                                     const double *reference,
+                                     uintptr_t reference_length,
+                                     double *output);
+
+/**
+ * Compute natural log of mean divergence for matching nonempty spectra.
+ * Uses the native Stable policy.
+ * Stable identical positive spectra give negative infinity; a single zero against a
+ * positive bin gives infinity. Paired zero bins are undefined in Stable mode.
+ * Legacy retains the source approximate logarithms and selected-scalar grouping.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Inputs must be initialized, readable single-allocation ranges, stable through
+ * computation. Output must be aligned and exclusively writable for one scalar.
+ * Input and output may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_log_itakura_saito_f64(const double *source,
+                                         uintptr_t source_length,
+                                         const double *reference,
+                                         uintptr_t reference_length,
+                                         double *output);
+
+/**
+ * Compute natural log of mean divergence for matching nonempty spectra.
+ * Policy zero is Stable, one Legacy; other codes return status three.
+ * Stable identical positive spectra give negative infinity; a single zero against a
+ * positive bin gives infinity. Paired zero bins are undefined in Stable mode.
+ * Legacy retains the source approximate logarithms and selected-scalar grouping.
+ * Failure leaves output unchanged.
+ *
+ * # Safety
+ * Inputs must be initialized, readable single-allocation ranges, stable through
+ * computation. Output must be aligned and exclusively writable for one scalar.
+ * Input and output may overlap after input borrowing ends.
+ */
+uint32_t ciglet_rs_log_itakura_saito_with_f64(const double *source,
+                                              uintptr_t source_length,
+                                              const double *reference,
+                                              uintptr_t reference_length,
+                                              uint32_t policy,
+                                              double *output);
+
 #endif  /* CIGLET_RS_H */

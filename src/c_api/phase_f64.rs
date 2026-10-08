@@ -1,5 +1,5 @@
 //! Typed DCT and phase entry points.
-use super::{phase, vector_result};
+use super::{phase, scalar_value_result, vector_result};
 
 /// Compute the native orthonormal DCT-II with its legacy cosine approximation.
 /// Errors leave output unchanged.
@@ -45,7 +45,7 @@ pub unsafe extern "C" fn ciglet_rs_phase_unwrap_f64(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn ciglet_rs_phase_wrap_f64(angle: f64, output: *mut f64) -> u32 {
     // SAFETY: Forward the documented caller storage contracts.
-    unsafe { phase::scalar(output, || crate::phase::wrap(angle)) }
+    unsafe { scalar_value_result(output, || crate::phase::wrap(angle)) }
 }
 
 /// Compute the native directed circular phase difference.
@@ -60,7 +60,7 @@ pub unsafe extern "C" fn ciglet_rs_phase_difference_f64(
     output: *mut f64,
 ) -> u32 {
     // SAFETY: Forward the documented caller storage contracts.
-    unsafe { phase::scalar(output, || crate::phase::difference(first, second)) }
+    unsafe { scalar_value_result(output, || crate::phase::difference(first, second)) }
 }
 
 /// Compute complex magnitudes from equally sized real/imaginary planes.

@@ -41,6 +41,8 @@ mod chirp_z_f32;
 pub use chirp_z_f32::*;
 mod chirp_z_f64;
 pub use chirp_z_f64::*;
+mod frequency_distance;
+pub use frequency_distance::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,
@@ -199,6 +201,23 @@ fn boundary<T>(
             std::mem::forget(payload);
             Err(4)
         }
+    }
+}
+
+unsafe fn scalar_value_result<T: Copy>(
+    output: *mut T,
+    compute: impl FnOnce() -> Result<T, crate::Error> + std::panic::UnwindSafe,
+) -> u32 {
+    if let Err(status) = range(output.cast_const(), 1) {
+        return status;
+    }
+    match boundary(compute) {
+        Ok(value) => {
+            // SAFETY: Caller supplies an aligned, exclusively writable scalar.
+            unsafe { output.write(value) };
+            0
+        }
+        Err(status) => status,
     }
 }
 

@@ -530,3 +530,63 @@ remain unverified. Remaining ciglet interfaces, all liblrhsmm/SHIRO C interfaces
 and all three browser/Node WASM interfaces remain required. Symbol counts do
 not replace structure/configuration/ownership audits. This is current boundary
 execution, not a refreshed complete native regression matrix or finished bindings.
+
+## Frequency and spectral-distance checkpoint
+
+Eighteen f32/f64 exports add frequency-to/from-Mel and Bark, equal-loudness
+weighting, Mel-spaced grids, stable Itakura-Saito mean divergence and natural
+log divergence with default or explicit Stable/Legacy policy. The header now
+declares 144 functions. Scalar output pointers retain the existing i686 return
+convention protection. Native conversion domains, scalar interpolation and
+approximate Mel logarithm/exponential calculations remain unchanged; the adapter
+does not substitute exact conversions or force mathematically exact endpoints.
+Grids contain intervals+1 scalars. Counts must match explicitly; overflow or
+count mismatch returns status two before writing. Native invalid bounds/domains
+or zero intervals return status three. Output remains unchanged on failure.
+
+Distance inputs must be matching nonempty finite nonnegative spectra. Stable
+identical positive spectra return zero mean or negative-infinite log divergence.
+A zero versus a positive bin returns positive infinity successfully; paired zeros
+are undefined in Stable mode and return status three. Finite mean divergence
+outside scalar range may also return positive infinity. Stable log divergence
+retains finite extreme-ratio results. Policy code zero is Stable, one Legacy;
+other codes return status three. Legacy retains the original selected-scalar
+accumulation and approximate logarithm bits, including its source edge behavior.
+The upstream itakura_saito symbol returns log divergence; its compatible binding
+is log_itakura_saito_with with Legacy policy. The separately named mean function
+follows the native Rust API. No output finite-value filter changes these semantics.
+
+Distance buffers use the existing paired-scalar adapter. Input/output overlap
+is permitted after input borrowing ends; shape, pointer and calculation errors
+retain output. The private scalar-value adapter previously used by phase moves
+to the shared C boundary without behavior changes. Existing phase callers use
+that helper, avoiding a dependency from frequency conversion to phase internals.
+
+Six new tests compare all twelve original C frequency records and five spacing
+records per precision. Conversion bounds remain normalized 1e-7/1e-15, and grid
+bits remain exact. All 53 original C distance records per precision retain exact
+Legacy bits. Independent Stable checks cover analytic ratios, successful zero/
+infinite outcomes, paired-zero rejection, extreme finite log divergence and
+input/output overlap. Additional tests cover invalid modes/domains/lengths,
+interval overflow, empty distance buffers, and retained output after rejection.
+No native numerical source, reference fixture or acceptance bound changed.
+
+Windows MSVC x86_64 Debug passes all forty boundary tests across seven suites
+and independently compiled optimized C/Python callers invoking all 144 exports.
+Warning-denied Clippy/Rustdoc, formatting, whitespace and generated-header
+verification pass. The ledger has eighty implemented upstream rows, 252 pending
+public/configuration C rows, two nonpublic macro formals and 332 pending WASM rows.
+Every implemented mapping was checked against the generated declarations.
+Current family Release, Python32 and static-link callers remain unverified.
+Remaining ciglet interfaces, all liblrhsmm/SHIRO C interfaces and all three
+browser/Node WASM interfaces remain required; symbol counts do not replace
+structure/configuration/ownership audits. This checkpoint is current boundary
+execution rather than a refreshed complete native regression matrix.
+
+Windows MSVC i686, Windows GNU x86_64 and Linux GNU x86_64/i686 Debug also
+pass all forty integration tests and actual independently compiled C callers
+invoking every export. Windows GNU x86_64 and Linux x86_64 additionally pass
+Python ctypes calls. All runners completed with exit zero. Each Linux log
+independently contains exact ten, four, five, three, six, six and six passing
+summaries with zero failed/ignored tests. Current C boundaries therefore pass
+on all five required native targets.

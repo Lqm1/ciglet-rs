@@ -1,25 +1,8 @@
 //! DCT and phase adapters with checked options and staged caller outputs.
-use super::{boundary, generated_result, pair_result, range};
+use super::{generated_result, pair_result, range};
 use crate::{Error, phase, statistics::Scalar};
 
 type PairTransform<T> = fn(&[T], &[T]) -> Result<Vec<T>, Error>;
-
-pub(super) unsafe fn scalar<T: Copy>(
-    output: *mut T,
-    compute: impl FnOnce() -> Result<T, Error> + std::panic::UnwindSafe,
-) -> u32 {
-    if let Err(status) = range(output.cast_const(), 1) {
-        return status;
-    }
-    match boundary(compute) {
-        Ok(value) => {
-            // SAFETY: Caller output is exclusively writable for one value.
-            unsafe { output.write(value) };
-            0
-        }
-        Err(status) => status,
-    }
-}
 
 pub(super) unsafe fn paired<T: Scalar + std::panic::RefUnwindSafe>(
     first: *const T,

@@ -437,6 +437,61 @@ def main():
             assert czt_functions["release"](ctypes.byref(plan)) == 0
         assert czt(3, 0, 0, None, None, real, None) == 0
         assert list(real) == [0, 0, 0]
+        frequency_functions = {}
+        for operation in ["frequency_to_mel", "mel_to_frequency", "frequency_to_bark", "bark_to_frequency", "equal_loudness"]:
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [scalar, pointer]
+            function.restype = ctypes.c_uint32
+            frequency_functions[operation] = function
+        mel = scalar()
+        frequency = scalar()
+        bark = scalar()
+        loudness = scalar()
+        output = scalar(71)
+        assert frequency_functions["frequency_to_mel"](1000, ctypes.byref(mel)) == 0 and mel.value > 0
+        assert frequency_functions["mel_to_frequency"](mel, ctypes.byref(frequency)) == 0
+        assert abs(frequency.value - 1000) < 1
+        assert frequency_functions["frequency_to_bark"](1000, ctypes.byref(bark)) == 0 and bark.value > 0
+        assert frequency_functions["bark_to_frequency"](bark, ctypes.byref(frequency)) == 0
+        assert abs(frequency.value - 1000) < 0.001
+        assert frequency_functions["equal_loudness"](1000, ctypes.byref(loudness)) == 0 and 0 < loudness.value < 1
+        assert frequency_functions["frequency_to_mel"](-700, ctypes.byref(output)) == 3 and output.value == 71
+        spacing = getattr(library, f"ciglet_rs_mel_space_{suffix}")
+        spacing.argtypes = [scalar, scalar, size, pointer, size]
+        spacing.restype = ctypes.c_uint32
+        grid = (scalar * 3)(71, 71, 71)
+        assert spacing(50, 8000, 2, grid, 2) == 2 and list(grid) == [71, 71, 71]
+        assert spacing(8000, 50, 2, grid, 3) == 3 and list(grid) == [71, 71, 71]
+        assert spacing(50, 8000, 2, grid, 3) == 0 and 0 < grid[0] < grid[1] < grid[2]
+        distance_functions = {}
+        for operation in ["itakura_saito", "log_itakura_saito", "log_itakura_saito_with"]:
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [pointer, size, pointer, size] + ([ctypes.c_uint32] if operation.endswith("_with") else []) + [pointer]
+            function.restype = ctypes.c_uint32
+            distance_functions[operation] = function
+        source = (scalar * 3)(2, 2, 2)
+        reference = (scalar * 3)(1, 1, 1)
+        tolerance = 1e-6 if suffix == "f32" else 1e-14
+        expected = 1 - math.log(2)
+        assert distance_functions["itakura_saito"](source, 3, reference, 3, ctypes.byref(output)) == 0
+        assert abs(output.value - expected) < tolerance
+        assert distance_functions["log_itakura_saito"](source, 3, reference, 3, ctypes.byref(output)) == 0
+        assert abs(output.value - math.log(expected)) < tolerance
+        explicit = scalar(71)
+        assert distance_functions["log_itakura_saito_with"](source, 3, reference, 3, 0, ctypes.byref(explicit)) == 0
+        assert explicit.value == output.value
+        assert distance_functions["log_itakura_saito_with"](source, 3, reference, 3, 1, ctypes.byref(output)) == 0
+        assert math.isfinite(output.value)
+        assert distance_functions["itakura_saito"](reference, 3, reference, 3, ctypes.byref(output)) == 0 and output.value == 0
+        assert distance_functions["log_itakura_saito"](reference, 3, reference, 3, ctypes.byref(output)) == 0
+        assert output.value == float("-inf")
+        zero = (scalar * 1)(0)
+        assert distance_functions["itakura_saito"](zero, 1, reference, 1, ctypes.byref(output)) == 0
+        assert output.value == float("inf")
+        output.value = 71
+        assert distance_functions["itakura_saito"](zero, 1, zero, 1, ctypes.byref(output)) == 3 and output.value == 71
+        assert distance_functions["log_itakura_saito_with"](source, 3, reference, 3, 2, ctypes.byref(output)) == 3 and output.value == 71
+        assert distance_functions["itakura_saito"](source, 3, reference, 2, ctypes.byref(output)) == 2 and output.value == 71
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

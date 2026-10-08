@@ -322,6 +322,35 @@ int main(void) {
     CHECK_CZT(float, CigletRsCztF32, f32, 1e-5);
     CHECK_CZT(double, CigletRsCztF64, f64, 1e-12);
     #undef CHECK_CZT
+    #define CHECK_FREQUENCY_DISTANCE(type, suffix, tolerance) do { \
+        type mel, frequency, bark, loudness, output = 71, grid[3] = {71, 71, 71}; \
+        assert(ciglet_rs_frequency_to_mel_##suffix(1000, &mel) == 0 && mel > 0); \
+        assert(ciglet_rs_mel_to_frequency_##suffix(mel, &frequency) == 0 && fabs((double)frequency - 1000) < 1); \
+        assert(ciglet_rs_frequency_to_bark_##suffix(1000, &bark) == 0 && bark > 0); \
+        assert(ciglet_rs_bark_to_frequency_##suffix(bark, &frequency) == 0 && fabs((double)frequency - 1000) < 0.001); \
+        assert(ciglet_rs_equal_loudness_##suffix(1000, &loudness) == 0 && loudness > 0 && loudness < 1); \
+        assert(ciglet_rs_frequency_to_mel_##suffix(-700, &output) == 3 && output == 71); \
+        assert(ciglet_rs_mel_space_##suffix(50, 8000, 2, grid, 2) == 2 && grid[0] == 71); \
+        assert(ciglet_rs_mel_space_##suffix(8000, 50, 2, grid, 3) == 3 && grid[0] == 71); \
+        assert(ciglet_rs_mel_space_##suffix(50, 8000, 2, grid, 3) == 0 && grid[0] > 0 && grid[1] > grid[0] && grid[2] > grid[1]); \
+        type source[] = {2, 2, 2}, reference[] = {1, 1, 1}; \
+        assert(ciglet_rs_itakura_saito_##suffix(source, 3, reference, 3, &output) == 0 && fabs((double)output - (1 - log(2.0))) < tolerance); \
+        assert(ciglet_rs_log_itakura_saito_##suffix(source, 3, reference, 3, &output) == 0 && fabs((double)output - log(1 - log(2.0))) < tolerance); \
+        type explicit_output = 71; \
+        assert(ciglet_rs_log_itakura_saito_with_##suffix(source, 3, reference, 3, 0, &explicit_output) == 0 && explicit_output == output); \
+        assert(ciglet_rs_log_itakura_saito_with_##suffix(source, 3, reference, 3, 1, &output) == 0 && isfinite(output)); \
+        assert(ciglet_rs_itakura_saito_##suffix(reference, 3, reference, 3, &output) == 0 && output == 0); \
+        assert(ciglet_rs_log_itakura_saito_##suffix(reference, 3, reference, 3, &output) == 0 && isinf(output) && output < 0); \
+        type zero[] = {0}; \
+        assert(ciglet_rs_itakura_saito_##suffix(zero, 1, reference, 1, &output) == 0 && isinf(output) && output > 0); \
+        output = 71; \
+        assert(ciglet_rs_itakura_saito_##suffix(zero, 1, zero, 1, &output) == 3 && output == 71); \
+        assert(ciglet_rs_log_itakura_saito_with_##suffix(source, 3, reference, 3, 2, &output) == 3 && output == 71); \
+        assert(ciglet_rs_itakura_saito_##suffix(source, 3, reference, 2, &output) == 2 && output == 71); \
+    } while (0)
+    CHECK_FREQUENCY_DISTANCE(float, f32, 1e-6);
+    CHECK_FREQUENCY_DISTANCE(double, f64, 1e-14);
+    #undef CHECK_FREQUENCY_DISTANCE
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);
