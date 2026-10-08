@@ -1,4 +1,8 @@
 /* Link this independent caller against the generated C interface. */
+#ifdef NDEBUG
+/* Zig's optimized modes define NDEBUG. Always execute this caller's checks. */
+#undef NDEBUG
+#endif
 #include "ciglet_rs.h"
 #include <assert.h>
 #include <math.h>
@@ -374,6 +378,31 @@ int main(void) {
     CHECK_FRAME_EXTREMA(float, f32);
     CHECK_FRAME_EXTREMA(double, f64);
     #undef CHECK_FRAME_EXTREMA
+    #define CHECK_BAND_CEPSTRA(type, suffix, tolerance) do { \
+        type input[] = {1, 2, 3, 4}, full[4], selected[2]; \
+        assert(ciglet_rs_band_to_cepstrum_legacy_##suffix(input, 4, 1, 1, full, 4) == 0); \
+        assert(ciglet_rs_band_to_cepstrum_##suffix(input, 4, 1, 1, selected, 2) == 0); \
+        assert(selected[0] == full[0] && selected[1] == full[1]); \
+        /* Strict original cos_2(0) is 0.99998641014099121, not exact one. */ \
+        assert(fabs((double)selected[1] - 4.999932050704956) < tolerance); \
+        type matrix[] = {1, 2, 3, 4, 1, 2, 3, 4}, cepstra[4]; \
+        assert(ciglet_rs_band_spectrogram_to_cepstra_##suffix(matrix, 8, 4, 1, 1, cepstra, 4) == 0); \
+        assert(cepstra[0] == selected[0] && cepstra[1] == selected[1]); \
+        assert(cepstra[2] == selected[0] && cepstra[3] == selected[1]); \
+        assert(ciglet_rs_band_to_cepstrum_##suffix(input, 4, 1, 1, input, 2) == 0); \
+        assert(input[0] == selected[0] && input[1] == selected[1] && input[2] == 3 && input[3] == 4); \
+        type sentinel[] = {71, 71, 71, 71}; matrix[6] = NAN; \
+        assert(ciglet_rs_band_spectrogram_to_cepstra_##suffix(matrix, 8, 4, 1, 1, sentinel, 4) == 3); \
+        assert(sentinel[0] == 71 && sentinel[1] == 71 && sentinel[2] == 71 && sentinel[3] == 71); \
+        assert(ciglet_rs_band_to_cepstrum_##suffix(input, 4, 1, 2, sentinel, 2) == 3 && sentinel[0] == 71); \
+        assert(ciglet_rs_band_to_cepstrum_legacy_##suffix(input, 4, 1, 1, sentinel, 2) == 2 && sentinel[0] == 71); \
+        assert(ciglet_rs_band_to_cepstrum_##suffix(input, 4, 0, 0, NULL, 0) == 0); \
+        assert(ciglet_rs_band_spectrogram_to_cepstra_##suffix(NULL, 0, 4, 1, 1, NULL, 0) == 0); \
+    } while (0)
+    CHECK_BAND_CEPSTRA(float, f32, 5e-7);
+    CHECK_BAND_CEPSTRA(double, f64, 1e-14);
+    #undef CHECK_BAND_CEPSTRA
+
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

@@ -46,6 +46,9 @@ pub use frequency_distance::*;
 mod frame_extrema;
 mod frame_extrema_functions;
 pub use frame_extrema_functions::*;
+mod band_cepstra;
+mod band_cepstra_functions;
+pub use band_cepstra_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

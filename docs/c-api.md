@@ -659,3 +659,76 @@ frame precisions. Symbol counts do not replace configuration/ownership auditing.
 Reservation reference:
 
 - https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.try_reserve_exact
+
+## Refreshed native regression after frame precision correction
+
+The complete default-feature Debug matrix at ciglet 70ac0fc, liblrhsmm f9bf303
+and SHIRO 842e479 passes on all five agreed targets. Each target has 198, 120
+and 58 passing tests respectively, with zero failed or ignored tests and all
+ignored tests explicitly included. All three runner processes exit zero.
+Both compile-fail liblrhsmm doctests succeed with expected E0502 diagnostics;
+these intentionally printed errors are not build failures. Exact package
+totals and summary counts are checked in all fifteen logs. This refresh includes
+the generic/fallible native frame change, while C boundary execution remains
+the separate feature-enabled evidence above. It does not prove later bindings
+or Release execution of the frame correction.
+
+## Band cepstrum interfaces
+
+Six f32/f64 functions expose selected band-to-cepstrum coefficients, the complete
+legacy band-sized buffer and flattened frame-major band spectrograms. The header
+now declares 156 functions and retains six opaque types. Inputs are already
+band features, including signed log-band values; these calls apply no extra log.
+Order clamps to band count minus one. include_dc accepts only zero or one;
+requested non-DC coefficients precede the appended DC coefficient.
+
+The selected output count is min(order, bands-1)+include_dc. Legacy output count
+equals the full band count, preserving the original untouched DCT suffix. Matrix
+output count is rows times selected count; input must divide exactly into positive
+bounded bands. Empty matrices accept null buffers but still require valid bands.
+A zero selected count still executes native validation, rejecting nonfinite
+features rather than silently succeeding. Unknown options, invalid native shapes
+or nonfinite data return status three. Output count mismatch returns status two.
+Complete staged results preserve output after every failure, including errors
+in a later matrix frame, and allow supported input/output overlap.
+
+The adapter calls the existing generic native cepstrum functions without changing
+their numerical kernels. Four new boundary tests compare all 48 original CEP1
+records per precision, each with three frames, and consume the complete duplicated
+original matrix. Full buffers, selected prefixes and matrix results retain the
+existing normalized bounds 1e-7 and 1e-15. Extra cases cover in-place output,
+clamped order, zero coefficients, invalid selectors/shapes, empty matrices and
+nonfinite rejection with atomic output retention. MSVC x86_64 Debug passes these
+four tests. Warning-denied all-target Clippy and Rustdoc, formatting, whitespace
+and generated-header verification pass. All five required targets pass 48 C
+boundary integration tests across nine suites and six existing frame/DSP tests
+with c-api enabled. Actual optimized, assert-enabled C callers invoke all 156
+exports on each target; MSVC x86_64, Windows GNU x86_64 and Linux x86_64 also pass
+Python ctypes calls. All corrected runners terminate with exit zero. Each log
+independently has exact 10,4,4,5,3,4,6,6,6,3,3 passing counts and zero failed or
+ignored tests. No old fixture or tolerance changed.
+
+The initial C/Python caller incorrectly expected exact DC value five for bands
+1,2,3,4. Strict unchanged original cos_2(0), with contraction disabled as in
+the reference fixtures, is 0.99998641014099121; the binary64 DC value is
+4.999932050704956. Only that caller expectation was corrected. The four original
+fixture boundary tests and their numerical bounds already passed unchanged.
+
+The investigation also found optimized Zig defines NDEBUG. Earlier optimized
+Windows C smoke runs therefore did not establish their asserted function calls
+or checks, despite successful process exits. Those historical Windows C caller
+coverage claims must not be counted as execution evidence. Rust boundary tests
+and Python ctypes evidence are unaffected. The C caller now undefines NDEBUG
+before including assert.h, so optimized builds execute all checks. Current
+five-target caller reruns pass and cover all 156 exports, including earlier
+families, establishing current execution proof with assertions enabled.
+
+The ledger retains 334 rows: 89 implemented C mappings, 243 pending public or
+configuration C rows, two nonpublic macro formals and all 332 public WASM rows
+pending. Both be2cc variants and be2ccgm now map the typed interfaces. Every
+implemented mapping was checked against the generated header. Current family
+Release, Python32 and static-link callers remain unverified. Remaining ciglet
+C interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM interfaces
+remain required. The complete native matrix above predates only these opt-in
+boundary changes, which modify no native numerical source. Symbol counts do
+not replace configuration, ownership or full functionality auditing.

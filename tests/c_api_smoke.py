@@ -520,6 +520,35 @@ def main():
         assert search["peak"](signal, 7, 5, 3, 0, ctypes.byref(index)) == 3 and index.value == 71
         assert search["extremum"](signal, 7, 0, 7, 0, ctypes.byref(index)) == 3 and index.value == 71
         assert search["peak"](signal, 7, 0, 6, 2, ctypes.byref(index)) == 3 and index.value == 71
+        band_cepstra = {}
+        for operation in ["band_to_cepstrum", "band_to_cepstrum_legacy", "band_spectrogram_to_cepstra"]:
+            function = getattr(library, f"ciglet_rs_{operation}_{suffix}")
+            function.argtypes = [pointer, size] + ([size] if operation == "band_spectrogram_to_cepstra" else []) + [size, ctypes.c_uint32, pointer, size]
+            function.restype = ctypes.c_uint32
+            band_cepstra[operation] = function
+        bands = (scalar * 4)(1, 2, 3, 4)
+        full = (scalar * 4)()
+        selected = (scalar * 2)()
+        assert band_cepstra["band_to_cepstrum_legacy"](bands, 4, 1, 1, full, 4) == 0
+        assert band_cepstra["band_to_cepstrum"](bands, 4, 1, 1, selected, 2) == 0
+        assert list(selected) == list(full)[:2]
+        # Strict original cos_2(0) retains its f32 approximation in both modes.
+        assert abs(selected[1] - 4.999932050704956) < (5e-7 if suffix == "f32" else 1e-14)
+        matrix = (scalar * 8)(1, 2, 3, 4, 1, 2, 3, 4)
+        cepstra = (scalar * 4)()
+        assert band_cepstra["band_spectrogram_to_cepstra"](matrix, 8, 4, 1, 1, cepstra, 4) == 0
+        assert list(cepstra) == list(selected) * 2
+        assert band_cepstra["band_to_cepstrum"](bands, 4, 1, 1, bands, 2) == 0
+        assert list(bands) == list(selected) + [3, 4]
+        sentinel = (scalar * 4)(71, 71, 71, 71)
+        matrix[6] = float("nan")
+        assert band_cepstra["band_spectrogram_to_cepstra"](matrix, 8, 4, 1, 1, sentinel, 4) == 3
+        assert list(sentinel) == [71] * 4
+        assert band_cepstra["band_to_cepstrum"](bands, 4, 1, 2, sentinel, 2) == 3 and sentinel[0] == 71
+        assert band_cepstra["band_to_cepstrum_legacy"](bands, 4, 1, 1, sentinel, 2) == 2 and sentinel[0] == 71
+        assert band_cepstra["band_to_cepstrum"](bands, 4, 0, 0, None, 0) == 0
+        assert band_cepstra["band_spectrogram_to_cepstra"](None, 0, 4, 1, 1, None, 0) == 0
+
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

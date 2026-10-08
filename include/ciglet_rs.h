@@ -2371,4 +2371,108 @@ uint32_t ciglet_rs_peak_f64(const double *input,
                             uint32_t direction,
                             uintptr_t *output);
 
+/**
+ * Return the selected non-DC coefficients, optionally followed by DC.
+ * Order clamps to band count minus one; include_dc accepts only zero or one.
+ * Explicit output length must match the native shape. Errors retain output.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * scalars. Input/output may overlap; input borrowing ends before output commit.
+ */
+uint32_t ciglet_rs_band_to_cepstrum_f32(const float *input,
+                                        uintptr_t input_length,
+                                        uintptr_t order,
+                                        uint32_t include_dc,
+                                        float *output,
+                                        uintptr_t output_length);
+
+/**
+ * Preserve the complete legacy band-sized buffer, including its DCT suffix.
+ * Order clamps to band count minus one; include_dc accepts only zero or one.
+ * Explicit output length must match the native shape. Errors retain output.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * scalars. Input/output may overlap; input borrowing ends before output commit.
+ */
+uint32_t ciglet_rs_band_to_cepstrum_legacy_f32(const float *input,
+                                               uintptr_t input_length,
+                                               uintptr_t order,
+                                               uint32_t include_dc,
+                                               float *output,
+                                               uintptr_t output_length);
+
+/**
+ * Transform a flattened frame-major matrix into selected cepstra.
+ * Order clamps to band count minus one; include_dc accepts only zero or one.
+ * Explicit output length must match the native shape. Errors retain output.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * scalars. Input/output may overlap; input borrowing ends before output commit.
+ */
+uint32_t ciglet_rs_band_spectrogram_to_cepstra_f32(const float *input,
+                                                   uintptr_t input_length,
+                                                   uintptr_t bands,
+                                                   uintptr_t order,
+                                                   uint32_t include_dc,
+                                                   float *output,
+                                                   uintptr_t output_length);
+
+/**
+ * Return the selected non-DC coefficients, optionally followed by DC.
+ * Order clamps to band count minus one; include_dc accepts only zero or one.
+ * Explicit output length must match the native shape. Errors retain output.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * scalars. Input/output may overlap; input borrowing ends before output commit.
+ */
+uint32_t ciglet_rs_band_to_cepstrum_f64(const double *input,
+                                        uintptr_t input_length,
+                                        uintptr_t order,
+                                        uint32_t include_dc,
+                                        double *output,
+                                        uintptr_t output_length);
+
+/**
+ * Preserve the complete legacy band-sized buffer, including its DCT suffix.
+ * Order clamps to band count minus one; include_dc accepts only zero or one.
+ * Explicit output length must match the native shape. Errors retain output.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * scalars. Input/output may overlap; input borrowing ends before output commit.
+ */
+uint32_t ciglet_rs_band_to_cepstrum_legacy_f64(const double *input,
+                                               uintptr_t input_length,
+                                               uintptr_t order,
+                                               uint32_t include_dc,
+                                               double *output,
+                                               uintptr_t output_length);
+
+/**
+ * Transform a flattened frame-major matrix into selected cepstra.
+ * Order clamps to band count minus one; include_dc accepts only zero or one.
+ * Explicit output length must match the native shape. Errors retain output.
+ *
+ * # Safety
+ * Nonempty input must be an initialized, stable single-allocation range.
+ * Nonempty output must be aligned and exclusively writable for output_length
+ * scalars. Input/output may overlap; input borrowing ends before output commit.
+ */
+uint32_t ciglet_rs_band_spectrogram_to_cepstra_f64(const double *input,
+                                                   uintptr_t input_length,
+                                                   uintptr_t bands,
+                                                   uintptr_t order,
+                                                   uint32_t include_dc,
+                                                   double *output,
+                                                   uintptr_t output_length);
+
 #endif  /* CIGLET_RS_H */
