@@ -109,6 +109,15 @@ pub use spectral_envelope::{
 };
 mod spectral_envelope_functions;
 pub use spectral_envelope_functions::*;
+mod stft;
+pub use stft::{
+    CIGLET_RS_STFT_MAGNITUDE, CIGLET_RS_STFT_NORMALIZATION, CIGLET_RS_STFT_PHASE,
+    CIGLET_RS_STFT_WINDOW_WEIGHT, CigletRsStftF32, CigletRsStftF64,
+};
+mod stft_types;
+pub use stft_types::*;
+mod stft_functions;
+pub use stft_functions::*;
 mod root_functions;
 pub use root_functions::*;
 mod correlogram_functions;

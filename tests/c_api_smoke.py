@@ -1370,6 +1370,108 @@ def main():
         assert detector["release"](ctypes.byref(copy)) == 0
         assert detector["release"](ctypes.byref(custom)) == 0 and custom.value is None
         assert detector["release"](ctypes.byref(owner)) == 0 and owner.value is None
+    class StftOptions(ctypes.Structure):
+        _fields_ = [("subtract_mean", ctypes.c_uint32), ("magnitude", ctypes.c_uint32), ("phase", ctypes.c_uint32), ("normalization_hop", ctypes.c_size_t)]
+
+    class StftGrid(ctypes.Structure):
+        _fields_ = [(name, ctypes.c_size_t) for name in ("hop", "frames", "window_factor", "zero_padding_factor")]
+
+    default_options = library.ciglet_rs_stft_analysis_options_default
+    default_options.argtypes = [ctypes.POINTER(StftOptions)]
+    default_options.restype = ctypes.c_uint32
+    defaults = StftOptions(71, 71, 71, 71)
+    assert default_options(ctypes.byref(defaults)) == 0
+    assert (defaults.subtract_mean, defaults.magnitude, defaults.phase, defaults.normalization_hop) == (0, 1, 1, 0)
+    assert default_options(None) == 1
+    for suffix, scalar in [("f32", ctypes.c_float), ("f64", ctypes.c_double)]:
+        pointer = ctypes.POINTER(scalar)
+
+        class Info(ctypes.Structure):
+            _fields_ = [("frames", ctypes.c_size_t), ("bins", ctypes.c_size_t), ("available", ctypes.c_uint32), ("window_weight", scalar), ("normalization", scalar)]
+
+        class AnalysisInput(ctypes.Structure):
+            _fields_ = [("signal", pointer), ("signal_count", ctypes.c_size_t), ("centers", ctypes.POINTER(ctypes.c_int32)), ("window_lengths", ctypes.POINTER(ctypes.c_size_t)), ("frames", ctypes.c_size_t)]
+
+        class AnalysisOutput(ctypes.Structure):
+            _fields_ = [("magnitude", pointer), ("magnitude_count", ctypes.c_size_t), ("phase", pointer), ("phase_count", ctypes.c_size_t), ("info", ctypes.POINTER(Info))]
+
+        class Spectrum(ctypes.Structure):
+            _fields_ = [("magnitude", pointer), ("phase", pointer), ("count", ctypes.c_size_t)]
+
+        class SynthesisOptions(ctypes.Structure):
+            _fields_ = [("hop", ctypes.c_size_t), ("offset", ctypes.c_int32), ("fade_samples", ctypes.c_size_t), ("normalization", scalar), ("nyquist", ctypes.c_uint32)]
+
+        class Samples(ctypes.Structure):
+            _fields_ = [("samples", pointer), ("count", ctypes.c_size_t)]
+
+        signatures = {
+            "create": [ctypes.c_size_t, ctypes.c_uint32, ctypes.c_uint32, ctypes.POINTER(ctypes.c_void_p)],
+            "release": [ctypes.POINTER(ctypes.c_void_p)],
+            "analyze": [ctypes.c_void_p, AnalysisInput, StftOptions, AnalysisOutput],
+            "synthesize": [ctypes.c_void_p, Spectrum, SynthesisOptions, Samples],
+            "analyze_regular": [pointer, ctypes.c_size_t, StftGrid, ctypes.c_uint32, StftOptions, AnalysisOutput],
+            "analyze_regular_legacy": [pointer, ctypes.c_size_t, StftGrid, ctypes.c_int32, StftOptions, AnalysisOutput],
+            "synthesize_regular": [Spectrum, StftGrid, scalar, ctypes.c_uint32, Samples],
+        }
+        stft = {}
+        for name, signature in signatures.items():
+            operation = getattr(library, f"ciglet_rs_stft_{name}_{suffix}")
+            operation.argtypes = signature
+            operation.restype = ctypes.c_uint32
+            stft[name] = operation
+        owner = ctypes.c_void_p()
+        signal = (scalar * 32)()
+        signal[8] = 1
+        centers = (ctypes.c_int32 * 4)(0, 8, 16, 24)
+        lengths = (ctypes.c_size_t * 4)(16, 16, 16, 16)
+        magnitude, phase = (scalar * 68)(), (scalar * 68)()
+        regular_magnitude, regular_phase = (scalar * 68)(), (scalar * 68)()
+        info, regular_info = Info(), Info()
+        source = AnalysisInput(signal, 32, centers, lengths, 4)
+        output = AnalysisOutput(magnitude, 68, phase, 68, ctypes.pointer(info))
+        regular_output = AnalysisOutput(regular_magnitude, 68, regular_phase, 68, ctypes.pointer(regular_info))
+        options, grid = StftOptions(0, 1, 1, 8), StftGrid(8, 4, 2, 2)
+        assert stft["create"](32, 3, 0, ctypes.byref(owner)) == 0 and owner.value
+        assert stft["analyze"](owner, source, options, output) == 0
+        assert (info.frames, info.bins, info.available) == (4, 17, 15) and info.normalization != 0
+        for level in [0, 1]:
+            assert stft["analyze_regular"](signal, 32, grid, level, options, regular_output) == 0
+            assert stft["analyze_regular_legacy"](signal, 32, grid, 3 if level == 0 else 2, options, output) == 0
+            assert list(magnitude) == list(regular_magnitude) and list(phase) == list(regular_phase)
+            assert (info.window_weight, info.normalization) == (regular_info.window_weight, regular_info.normalization)
+        wave, regular_wave = (scalar * 32)(), (scalar * 32)()
+        spectra = Spectrum(magnitude, phase, 68)
+        for policy in [0, 1]:
+            synthesis = SynthesisOptions(8, 0, 32, info.normalization, policy)
+            assert stft["synthesize"](owner, spectra, synthesis, Samples(wave, 32)) == 0
+            assert stft["synthesize_regular"](spectra, grid, info.normalization, policy, Samples(regular_wave, 32)) == 0
+            assert list(wave) == list(regular_wave) and all(math.isfinite(value) for value in wave)
+        for mask in range(4):
+            options = StftOptions(0, mask & 1, (mask >> 1) & 1, 8)
+            optional = AnalysisOutput(magnitude if options.magnitude else None, 68 if options.magnitude else 0, phase if options.phase else None, 68 if options.phase else 0, ctypes.pointer(info))
+            assert stft["analyze"](owner, source, options, optional) == 0 and info.available == mask | 12
+        for index in range(68):
+            magnitude[index] = phase[index] = 71
+        info.frames = info.bins = info.available = 71
+        info.window_weight = info.normalization = 71
+        signal[31] = float("nan")
+        assert stft["analyze"](owner, source, defaults, output) == 3
+        assert list(magnitude) == [71] * 68 and list(phase) == [71] * 68
+        assert (info.frames, info.bins, info.available, info.window_weight, info.normalization) == (71, 71, 71, 71, 71)
+        signal[31] = 0
+        overlap = AnalysisOutput(magnitude, 68, magnitude, 68, ctypes.pointer(info))
+        assert stft["analyze"](owner, source, defaults, overlap) == 2
+        assert stft["release"](ctypes.byref(owner)) == 0 and owner.value is None
+        assert stft["release"](ctypes.byref(owner)) == 0
+        assert stft["create"](8, 0, 0, ctypes.byref(owner)) == 0
+        odd = (scalar * 3)(1, 2, 3)
+        center, length = ctypes.c_int32(1), ctypes.c_size_t(3)
+        odd_magnitude, odd_phase = (scalar * 5)(), (scalar * 5)()
+        odd_source = AnalysisInput(odd, 3, ctypes.pointer(center), ctypes.pointer(length), 1)
+        odd_output = AnalysisOutput(odd_magnitude, 5, odd_phase, 5, ctypes.pointer(info))
+        assert stft["analyze"](owner, odd_source, defaults, odd_output) == 0 and odd_magnitude[0] == 6
+        assert (info.frames, info.bins, info.available, info.window_weight, info.normalization) == (1, 5, 7, 3, 0)
+        assert stft["release"](ctypes.byref(owner)) == 0 and owner.value is None
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

@@ -24,6 +24,26 @@
 #define CIGLET_RS_GLOTTAL_EXACT 2
 
 /**
+ * Magnitude is present in STFT analysis metadata.
+ */
+#define CIGLET_RS_STFT_MAGNITUDE 1
+
+/**
+ * Phase is present in STFT analysis metadata.
+ */
+#define CIGLET_RS_STFT_PHASE 2
+
+/**
+ * Window weight is present in STFT analysis metadata.
+ */
+#define CIGLET_RS_STFT_WINDOW_WEIGHT 4
+
+/**
+ * Normalization is present in STFT analysis metadata.
+ */
+#define CIGLET_RS_STFT_NORMALIZATION 8
+
+/**
  * Autocorrelation correlogram method code.
  */
 #define CIGLET_RS_CORRELOGRAM_AUTOCORRELATION 0
@@ -164,6 +184,16 @@ typedef struct CigletRsScaledPredictionF32 CigletRsScaledPredictionF32;
 typedef struct CigletRsScaledPredictionF64 CigletRsScaledPredictionF64;
 
 /**
+ * Opaque binary32 STFT plan with serialized FFT/window scratch.
+ */
+typedef struct CigletRsStftF32 CigletRsStftF32;
+
+/**
+ * Opaque binary64 STFT plan with serialized FFT/window scratch.
+ */
+typedef struct CigletRsStftF64 CigletRsStftF64;
+
+/**
  * Binary32 envelope options passed by value with the platform C layout.
  */
 typedef struct CigletRsEnvelopeOptionsF32 {
@@ -222,6 +252,166 @@ typedef struct CigletRsEnvelopeOutputF64 {
    */
   uintptr_t cepstrum_count;
 } CigletRsEnvelopeOutputF64;
+
+/**
+ * Independent analysis requests; zero normalization_hop selects None.
+ */
+typedef struct CigletRsStftAnalysisOptions {
+  uint32_t subtract_mean;
+  uint32_t magnitude;
+  uint32_t phase;
+  uintptr_t normalization_hop;
+} CigletRsStftAnalysisOptions;
+
+/**
+ * F32 STFT AnalysisInput descriptor with platform C layout.
+ */
+typedef struct CigletRsStftAnalysisInputF32 {
+  const float *signal;
+  uintptr_t signal_count;
+  const int32_t *centers;
+  const uintptr_t *window_lengths;
+  uintptr_t frames;
+} CigletRsStftAnalysisInputF32;
+
+/**
+ * F32 STFT Info descriptor with platform C layout.
+ */
+typedef struct CigletRsStftInfoF32 {
+  uintptr_t frames;
+  uintptr_t bins;
+  /**
+   * Presence bits use CIGLET_RS_STFT_*; absent scalar values are zero.
+   */
+  uint32_t available;
+  float window_weight;
+  float normalization;
+} CigletRsStftInfoF32;
+
+/**
+ * F32 STFT AnalysisOutput descriptor with platform C layout.
+ */
+typedef struct CigletRsStftAnalysisOutputF32 {
+  float *magnitude;
+  /**
+   * frames*bins when requested, otherwise zero.
+   */
+  uintptr_t magnitude_count;
+  float *phase;
+  /**
+   * frames*bins when requested, otherwise zero.
+   */
+  uintptr_t phase_count;
+  struct CigletRsStftInfoF32 *info;
+} CigletRsStftAnalysisOutputF32;
+
+/**
+ * F32 STFT Spectrum descriptor with platform C layout.
+ */
+typedef struct CigletRsStftSpectrumF32 {
+  const float *magnitude;
+  const float *phase;
+  uintptr_t count;
+} CigletRsStftSpectrumF32;
+
+/**
+ * F32 STFT SynthesisOptions descriptor with platform C layout.
+ */
+typedef struct CigletRsStftSynthesisOptionsF32 {
+  uintptr_t hop;
+  int32_t offset;
+  uintptr_t fade_samples;
+  float normalization;
+  uint32_t nyquist;
+} CigletRsStftSynthesisOptionsF32;
+
+/**
+ * F32 STFT Samples descriptor with platform C layout.
+ */
+typedef struct CigletRsStftSamplesF32 {
+  float *samples;
+  uintptr_t count;
+} CigletRsStftSamplesF32;
+
+/**
+ * Original regular frame grid with checked multiplication and signed centers.
+ */
+typedef struct CigletRsStftGrid {
+  uintptr_t hop;
+  uintptr_t frames;
+  uintptr_t window_factor;
+  uintptr_t zero_padding_factor;
+} CigletRsStftGrid;
+
+/**
+ * F64 STFT AnalysisInput descriptor with platform C layout.
+ */
+typedef struct CigletRsStftAnalysisInputF64 {
+  const double *signal;
+  uintptr_t signal_count;
+  const int32_t *centers;
+  const uintptr_t *window_lengths;
+  uintptr_t frames;
+} CigletRsStftAnalysisInputF64;
+
+/**
+ * F64 STFT Info descriptor with platform C layout.
+ */
+typedef struct CigletRsStftInfoF64 {
+  uintptr_t frames;
+  uintptr_t bins;
+  /**
+   * Presence bits use CIGLET_RS_STFT_*; absent scalar values are zero.
+   */
+  uint32_t available;
+  double window_weight;
+  double normalization;
+} CigletRsStftInfoF64;
+
+/**
+ * F64 STFT AnalysisOutput descriptor with platform C layout.
+ */
+typedef struct CigletRsStftAnalysisOutputF64 {
+  double *magnitude;
+  /**
+   * frames*bins when requested, otherwise zero.
+   */
+  uintptr_t magnitude_count;
+  double *phase;
+  /**
+   * frames*bins when requested, otherwise zero.
+   */
+  uintptr_t phase_count;
+  struct CigletRsStftInfoF64 *info;
+} CigletRsStftAnalysisOutputF64;
+
+/**
+ * F64 STFT Spectrum descriptor with platform C layout.
+ */
+typedef struct CigletRsStftSpectrumF64 {
+  const double *magnitude;
+  const double *phase;
+  uintptr_t count;
+} CigletRsStftSpectrumF64;
+
+/**
+ * F64 STFT SynthesisOptions descriptor with platform C layout.
+ */
+typedef struct CigletRsStftSynthesisOptionsF64 {
+  uintptr_t hop;
+  int32_t offset;
+  uintptr_t fade_samples;
+  double normalization;
+  uint32_t nyquist;
+} CigletRsStftSynthesisOptionsF64;
+
+/**
+ * F64 STFT Samples descriptor with platform C layout.
+ */
+typedef struct CigletRsStftSamplesF64 {
+  double *samples;
+  uintptr_t count;
+} CigletRsStftSamplesF64;
 
 /**
  * Compute difference into equally sized caller storage.
@@ -6751,6 +6941,427 @@ uint32_t ciglet_rs_envelope_one_shot_f64(uintptr_t length,
                                          uintptr_t count,
                                          struct CigletRsEnvelopeOptionsF64 options,
                                          struct CigletRsEnvelopeOutputF64 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analysis_options_default(struct CigletRsStftAnalysisOptions *output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_create_f32(uintptr_t length,
+                                   uint32_t window,
+                                   uint32_t precision,
+                                   struct CigletRsStftF32 **output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_release_f32(struct CigletRsStftF32 **handle);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analyze_f32(const struct CigletRsStftF32 *handle,
+                                    struct CigletRsStftAnalysisInputF32 input,
+                                    struct CigletRsStftAnalysisOptions options,
+                                    struct CigletRsStftAnalysisOutputF32 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_synthesize_f32(const struct CigletRsStftF32 *handle,
+                                       struct CigletRsStftSpectrumF32 input,
+                                       struct CigletRsStftSynthesisOptionsF32 options,
+                                       struct CigletRsStftSamplesF32 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analyze_regular_f32(const float *signal,
+                                            uintptr_t count,
+                                            struct CigletRsStftGrid grid,
+                                            uint32_t precision,
+                                            struct CigletRsStftAnalysisOptions options,
+                                            struct CigletRsStftAnalysisOutputF32 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analyze_regular_legacy_f32(const float *signal,
+                                                   uintptr_t count,
+                                                   struct CigletRsStftGrid grid,
+                                                   int32_t level,
+                                                   struct CigletRsStftAnalysisOptions options,
+                                                   struct CigletRsStftAnalysisOutputF32 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_synthesize_regular_f32(struct CigletRsStftSpectrumF32 input,
+                                               struct CigletRsStftGrid grid,
+                                               float normalization,
+                                               uint32_t nyquist,
+                                               struct CigletRsStftSamplesF32 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_create_f64(uintptr_t length,
+                                   uint32_t window,
+                                   uint32_t precision,
+                                   struct CigletRsStftF64 **output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_release_f64(struct CigletRsStftF64 **handle);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analyze_f64(const struct CigletRsStftF64 *handle,
+                                    struct CigletRsStftAnalysisInputF64 input,
+                                    struct CigletRsStftAnalysisOptions options,
+                                    struct CigletRsStftAnalysisOutputF64 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_synthesize_f64(const struct CigletRsStftF64 *handle,
+                                       struct CigletRsStftSpectrumF64 input,
+                                       struct CigletRsStftSynthesisOptionsF64 options,
+                                       struct CigletRsStftSamplesF64 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analyze_regular_f64(const double *signal,
+                                            uintptr_t count,
+                                            struct CigletRsStftGrid grid,
+                                            uint32_t precision,
+                                            struct CigletRsStftAnalysisOptions options,
+                                            struct CigletRsStftAnalysisOutputF64 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_analyze_regular_legacy_f64(const double *signal,
+                                                   uintptr_t count,
+                                                   struct CigletRsStftGrid grid,
+                                                   int32_t level,
+                                                   struct CigletRsStftAnalysisOptions options,
+                                                   struct CigletRsStftAnalysisOutputF64 output);
+
+/**
+ * Checked STFT operation retaining native window and reconstruction arithmetic.
+ * Window selectors match the window API (0..6); precision zero Accurate, one
+ * Approximate. Nyquist zero Preserve, one Legacy. Boolean selectors must be 0/1.
+ * Disabled magnitude/phase outputs have count zero; enabled counts are frames*bins.
+ * Metadata is required and reports availability of all optional results. Missing
+ * scalar results are zero with their presence bit cleared. Regular analysis uses
+ * Blackman and grid.hop normalization; regular synthesis uses Accurate, zero offset
+ * and a 32-sample fade. Legacy analysis levels use the native level mapping.
+ * Every output is retained on error; metadata commits with both spectral planes.
+ *
+ * # Safety
+ * Handles are live matching-precision constructor owners; release is excluded
+ * during calls. Scratch is serialized. Release requires exclusive owner access,
+ * clears its initialized slot and invalidates aliases. Constructor destinations
+ * must not already own an unreleased object. All descriptors use platform C layout.
+ * Nonempty inputs are aligned initialized stable readable single allocations;
+ * outputs are aligned exclusively writable for their declared types/counts.
+ * All spectral planes and metadata are pairwise disjoint and independent of
+ * private owner storage. Input/output overlap is allowed after calculation ends.
+ * Null arrays are allowed only for zero counts; metadata slots are always required.
+ * Caller retains allocation validity; native panic/allocation/poison limits apply.
+ */
+uint32_t ciglet_rs_stft_synthesize_regular_f64(struct CigletRsStftSpectrumF64 input,
+                                               struct CigletRsStftGrid grid,
+                                               double normalization,
+                                               uint32_t nyquist,
+                                               struct CigletRsStftSamplesF64 output);
 
 /**
  * Find a root using native tolerance, interpolation and midpoint fallback.

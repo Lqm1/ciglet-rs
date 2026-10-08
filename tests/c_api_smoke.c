@@ -1050,6 +1050,67 @@ int main(void) {
     CHECK_IF_DETECTOR(float, f32, CigletRsIfDetectorF32, 1e-7);
     CHECK_IF_DETECTOR(double, f64, CigletRsIfDetectorF64, 2e-16);
     #undef CHECK_IF_DETECTOR
+    assert(CIGLET_RS_STFT_MAGNITUDE == 1 && CIGLET_RS_STFT_PHASE == 2);
+    assert(CIGLET_RS_STFT_WINDOW_WEIGHT == 4 && CIGLET_RS_STFT_NORMALIZATION == 8);
+    CigletRsStftAnalysisOptions stft_defaults = {71,71,71,71};
+    assert(ciglet_rs_stft_analysis_options_default(&stft_defaults) == 0);
+    assert(stft_defaults.subtract_mean == 0 && stft_defaults.magnitude == 1 && stft_defaults.phase == 1 && stft_defaults.normalization_hop == 0);
+    assert(ciglet_rs_stft_analysis_options_default(NULL) == 1);
+    #define CHECK_STFT(type, suffix, tag) do { \
+        CigletRsStft##tag *owner = NULL; \
+        type signal[32] = {0}, magnitude[68], phase[68], regular_magnitude[68], regular_phase[68], wave[32], regular_wave[32]; \
+        signal[8] = 1; int32_t centers[] = {0,8,16,24}; size_t lengths[] = {16,16,16,16}; \
+        CigletRsStftAnalysisInput##tag input = {signal,32,centers,lengths,4}; \
+        CigletRsStftInfo##tag info = {0}, regular_info = {0}; \
+        CigletRsStftAnalysisOutput##tag output = {magnitude,68,phase,68,&info}, regular_output = {regular_magnitude,68,regular_phase,68,&regular_info}; \
+        CigletRsStftAnalysisOptions options = {0,1,1,8}; \
+        CigletRsStftGrid grid = {8,4,2,2}; \
+        assert(ciglet_rs_stft_create_##suffix(32,3,0,&owner) == 0 && owner); \
+        assert(ciglet_rs_stft_analyze_##suffix(owner,input,options,output) == 0); \
+        assert(info.frames == 4 && info.bins == 17 && info.available == 15 && info.normalization != 0); \
+        assert(ciglet_rs_stft_analyze_regular_##suffix(signal,32,grid,0,options,regular_output) == 0); \
+        for(size_t i=0;i<68;++i) assert(magnitude[i] == regular_magnitude[i] && phase[i] == regular_phase[i]); \
+        assert(info.window_weight == regular_info.window_weight && info.normalization == regular_info.normalization); \
+        assert(ciglet_rs_stft_analyze_regular_legacy_##suffix(signal,32,grid,3,options,regular_output) == 0); \
+        for(size_t i=0;i<68;++i) assert(magnitude[i] == regular_magnitude[i] && phase[i] == regular_phase[i]); \
+        assert(ciglet_rs_stft_analyze_regular_##suffix(signal,32,grid,1,options,regular_output) == 0); \
+        assert(ciglet_rs_stft_analyze_regular_legacy_##suffix(signal,32,grid,2,options,output) == 0); \
+        for(size_t i=0;i<68;++i) assert(magnitude[i] == regular_magnitude[i] && phase[i] == regular_phase[i]); \
+        CigletRsStftSpectrum##tag spectra = {magnitude,phase,68}; \
+        CigletRsStftSamples##tag samples = {wave,32}, regular_samples = {regular_wave,32}; \
+        for(uint32_t policy=0;policy<2;++policy) { \
+            CigletRsStftSynthesisOptions##tag synthesis = {8,0,32,info.normalization,policy}; \
+            assert(ciglet_rs_stft_synthesize_##suffix(owner,spectra,synthesis,samples) == 0); \
+            assert(ciglet_rs_stft_synthesize_regular_##suffix(spectra,grid,info.normalization,policy,regular_samples) == 0); \
+            for(size_t i=0;i<32;++i) assert(isfinite(wave[i]) && wave[i] == regular_wave[i]); \
+        } \
+        for(uint32_t mask=0;mask<4;++mask) { \
+            options.magnitude = mask&1; options.phase = (mask>>1)&1; \
+            CigletRsStftAnalysisOutput##tag optional = {options.magnitude ? magnitude : NULL,options.magnitude ? 68 : 0,options.phase ? phase : NULL,options.phase ? 68 : 0,&info}; \
+            assert(ciglet_rs_stft_analyze_##suffix(owner,input,options,optional) == 0 && info.available == (mask|12)); \
+        } \
+        options = stft_defaults; \
+        for(size_t i=0;i<68;++i) magnitude[i] = phase[i] = 71; \
+        info = (CigletRsStftInfo##tag){71,71,71,71,71}; \
+        signal[31] = NAN; \
+        assert(ciglet_rs_stft_analyze_##suffix(owner,input,options,output) == 3); \
+        for(size_t i=0;i<68;++i) assert(magnitude[i] == 71 && phase[i] == 71); \
+        assert(info.frames == 71 && info.bins == 71 && info.available == 71 && info.window_weight == 71 && info.normalization == 71); \
+        signal[31] = 0; output.phase = magnitude; \
+        assert(ciglet_rs_stft_analyze_##suffix(owner,input,options,output) == 2); \
+        assert(ciglet_rs_stft_release_##suffix(&owner) == 0 && !owner); \
+        assert(ciglet_rs_stft_release_##suffix(&owner) == 0); \
+        assert(ciglet_rs_stft_create_##suffix(8,0,0,&owner) == 0 && owner); \
+        type odd_signal[] = {1,2,3}, odd_magnitude[5], odd_phase[5]; int32_t odd_center = 1; size_t odd_length = 3; \
+        input = (CigletRsStftAnalysisInput##tag){odd_signal,3,&odd_center,&odd_length,1}; \
+        output = (CigletRsStftAnalysisOutput##tag){odd_magnitude,5,odd_phase,5,&info}; \
+        assert(ciglet_rs_stft_analyze_##suffix(owner,input,options,output) == 0 && odd_magnitude[0] == 6); \
+        assert(info.frames == 1 && info.bins == 5 && info.available == 7 && info.window_weight == 3 && info.normalization == 0); \
+        assert(ciglet_rs_stft_release_##suffix(&owner) == 0 && !owner); \
+    } while (0)
+    CHECK_STFT(float, f32, F32);
+    CHECK_STFT(double, f64, F64);
+    #undef CHECK_STFT
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

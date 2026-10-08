@@ -2,17 +2,15 @@
 
 The optional `c-api` feature exports a C interface from this existing package.
 It does not create another crate. The native Rust implementation remains the
-calculation backend; unsafe code is allowed only in `src/c_api.rs`.
+calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
+modules under `src/c_api/`.
 
-This is the first binding checkpoint, not complete binding coverage. Currently
-the ABI version and binary32/binary64 minimum/maximum operations are exported.
-Binary32/binary64 first difference, cumulative sum and reverse are also exported.
-Statistics and array generation exports are listed in the checkpoint below.
-Selection/partition and stable sort with original indices are also exported.
-Typed opaque binary32/binary64 Array2 objects are now available as described below.
-All remaining public ciglet operations, including the bundled approximation
-functions, still require bindings. Liblrhsmm and SHIRO bindings and all browser/
-Node WebAssembly bindings remain required work.
+Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
+exports 445 status-returning functions, 26 opaque types, 18 concrete descriptors
+and eleven constants. The checkpoints below record implementation and verification
+evidence. Of 332 public upstream mappings, 196 have verified C bindings and 136
+remain pending, including the bundled approximation functions. Liblrhsmm and SHIRO
+bindings and all browser/Node WebAssembly bindings remain required work.
 
 Build with `cargo build --locked --features c-api --lib`. Cargo emits the Rust
 library, shared library and static library. Regenerate the checked-in header
@@ -25,8 +23,8 @@ cbindgen --config cbindgen.toml --crate ciglet-rs --output include/ciglet_rs.h
 The generated header is specifically for a `c-api` build. Cbindgen currently
 reports unmapped feature conditions and unrelated private/generic Rust items;
 the generated declarations are checked by compiling an independent C caller.
-The header exports functions and referenced opaque object types, without unrelated
-Rust constants or the private Rust object layout.
+The header exports functions, referenced opaque objects, C-layout descriptors and
+named binding constants without exposing private Rust object layouts.
 
 ## Pointer and numerical contract
 
@@ -1871,3 +1869,79 @@ rows; every mapped function or constant exists in the header. Current family
 Release, Python32 and static-link callers remain unverified. This evidence does
 not replace final combined native/bindings acceptance. All remaining public C
 interfaces and all three WASM bindings remain required.
+
+## STFT analysis and synthesis bindings
+
+Fifteen status-returning exports expose reusable analysis/synthesis owners and
+regular-grid helpers in binary32/binary64, plus shared default analysis options.
+Six upstream mappings retain arbitrary frame centers/window lengths, independent
+magnitude and phase requests, mean subtraction, first-window weight, optional
+normalization, signed output offset, endpoint fades and both Nyquist policies.
+The signed legacy optimization-level helper preserves every level equivalence
+class used by CIG_DEF_STFT; stft/stft_2 select Accurate/Approximate respectively.
+Regular analysis uses Blackman and grid.hop normalization. Regular synthesis keeps
+zero offset, Accurate polar conversion and the original 32-sample fade.
+
+Fourteen unpacked repr(C) descriptors pass configurations and buffer descriptions
+by value with natural platform layout. Six descriptors per precision describe
+analysis inputs/outputs, metadata, spectra, synthesis options and sample outputs;
+analysis options and frame grids are shared. Selectors use checked integers:
+window codes match the existing window API, precision 0 Accurate/1 Approximate,
+Nyquist 0 Preserve/1 Legacy and booleans 0/1. A zero normalization_hop denotes
+None for explicit analysis. Metadata reports frames, bins and four availability
+bits: magnitude 1, phase 2, window weight 4 and normalization 8. Missing scalar
+values are zero with their bit cleared. Empty requested spectral arrays remain
+present, while an empty frame sequence has neither weight nor normalization.
+Disabled spectral output counts are zero; enabled counts equal frames*bins.
+Metadata is required even when neither spectral plane is requested.
+
+Reusable opaque owners serialize mutable scratch with a Mutex. Every operation
+requires a retained live matching-precision owner; release is excluded during
+calls. Release clears the exclusive ownership slot and is idempotent for null
+slots. Constructors require a slot without an unreleased owner. Analysis validates
+all output lengths/ranges and pairwise byte disjointness, computes owned native
+results, checks every returned shape and commits both planes and metadata together.
+Synthesis stages an owned sample vector. Errors retain all caller outputs.
+Input/output alias is supported because input borrows end before the first write.
+Pointer/alignment errors return one, range/count/overlap errors two and native
+calculation/selector/poison errors three. Existing panic/allocation limits apply.
+Finite extreme inputs can produce nonfinite intermediate/results in native STFT;
+the C wrapper preserves that behavior rather than silently changing its arithmetic.
+Nonfinite input signal values are rejected by native validation.
+
+Twelve host tests and warning-denied all-target Clippy pass. Both original 480-case
+STF1 and 288-case IST1 corpora are read completely per precision. Analysis keeps
+normalized magnitude bounds 2e-6 binary32/2e-14 binary64 and the existing
+magnitude-weighted phase comparison excluding near-zero bins. Synthesis keeps
+2e-7 binary32/2e-15 binary64 normalized bounds. Independent odd-window DC/mean,
+all optional planes and metadata states, empty frames, explicit/regular equality,
+signed legacy levels, both Nyquist policies, repeated reuse, invalid selectors/
+counts/data, null/misaligned/overlapping outputs and retained outputs are checked.
+Finite-overflow results match native bit patterns or NaN classifications.
+Analysis and synthesis input/output alias are compared with independent buffers.
+Four scoped workers run fifty analyses each on one owner with private outputs;
+all finish before release. No native arithmetic, fixture, dependency or existing
+numerical tolerance changed.
+
+Descriptor layout follows the [Rust Reference](https://doc.rust-lang.org/reference/type-layout.html#the-c-representation)
+and [Nomicon](https://doc.rust-lang.org/nomicon/other-reprs.html#reprc).
+Python caller declarations use [ctypes Structure layout](https://docs.python.org/3/library/ctypes.html#structure-union-layout-alignment-and-byte-order).
+The concurrency check follows [std::thread::scope](https://doc.rust-lang.org/std/thread/fn.scope.html).
+
+
+All five runners terminate with exit zero. Named-suite verification confirms all
+46 expected suites and their individual counts: 202 boundary plus 43 focused
+native tests per target, with zero failed/ignored tests and no error diagnostics.
+Optimized assert-enabled C callers pass on MSVC64/MSVC32/GNU64/Linux64/Linux32;
+Python callers pass on MSVC64/GNU64/Linux64. All fifteen STFT functions and fourteen
+new descriptors are exercised through the generated header/ctypes declarations,
+including independent optional outputs, metadata availability, regular helpers,
+legacy precision levels, both reconstruction policies, odd-window DC and atomic
+error retention. Header verification proves 445 unique status-returning exports,
+26 opaque types, 18 concrete descriptors and eleven constants, with every export
+called from expanded optimized C main. Formatting, Rustdoc and whitespace checks
+pass. The 334-row inventory now records 196 implemented C mappings, 136 pending
+public C rows, two nonpublic formals and 332 pending public WASM rows. Every mapped
+function/constant exists in the generated header. Current-family Release,
+Python32 and static-link callers remain unverified. Final combined acceptance
+and all remaining ciglet, liblrhsmm and SHIRO bindings remain required.
