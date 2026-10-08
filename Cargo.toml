@@ -10,8 +10,13 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 
 [features]
 c-api = []
+wasm = ["dep:wasm-bindgen", "dep:js-sys"]
 
 [dependencies]
 rand = { version = "0.10.3", default-features = false }
 rand_chacha = { version = "0.10.0", default-features = false, features = ["std"] }
 rustfft = "6.4.1"
+
+[target.wasm32-unknown-unknown.dependencies]
+wasm-bindgen = { version = "=0.2.129", optional = true }
+js-sys = { version = "=0.3.106", optional = true }

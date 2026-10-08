@@ -43,6 +43,8 @@ pub mod statistics;
 pub mod stft;
 pub mod synthesis;
 pub mod vector;
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
+pub mod wasm_api;
 pub mod wave;
 pub mod wave_write;
 pub mod window;
