@@ -47,19 +47,55 @@ WASM Clippy and Rustdoc with warnings denied pass. The six existing native
 window regression tests and host all-target/all-feature Clippy also pass.
 An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
-added. The inventory records nineteen complete window mappings and leaves all
-other WASM mappings pending. Other DSP families and both remaining crates still
+added. The inventory records nineteen complete window mappings. The Fourier
+coverage below adds six more. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
 abort is not recovered by these interfaces. No native filesystem, process or
 plotting operation is implicitly emulated in the browser.
 
+## Fourier operations
+
+`FftPlanF32` and `FftPlanF64` retain both native plans and reusable scratch
+storage. Constructors require a positive power-of-two length within the native
+legacy range. `length` and `is_empty()` expose the complete native plan queries.
+`transform(real, imaginary, direction)` accepts optional typed-array planes.
+`null` or `undefined` means a zero plane; a present empty array is checked as
+a present mismatched input. `process(interleaved, direction)` accepts alternating
+real/imaginary input. Boundary copies keep every input array unchanged; the
+native calculation reuses the plan and scratch. Inverse FFTs divide by length.
+
+`fft_f32` and `fft_f64` provide equivalent one-shot transforms.
+`inverse_dft_f32` and `inverse_dft_f64` retain the native quadratic normalized
+inverse DFT for arbitrary positive legacy-range lengths. `fft_shift_f32` and
+`fft_shift_f64` retain odd/even/empty ordering. `FftDirection` is Forward or
+Inverse.
+
+`ComplexValuesF32` and `ComplexValuesF64` own complete complex results. Their
+constructors accept equal-length real and imaginary planes, including empty
+arrays and arbitrary nonfinite values. `length`, `real`, `imaginary` and
+`interleaved` expose all fields. Getters return independent typed arrays. Call
+`free()` on plans and result owners when finished; copied arrays remain valid.
+
+Actual Node.js and browser verification compares all 720 original C FFT/IDFT
+cases, including all missing-plane combinations and normalization modes.
+Each FFT case checks one-shot, reusable-plane and reusable-interleaved paths,
+for 559,776 scalar comparisons. Existing normalized bounds remain 2e-7 for f32
+and 1e-15 for f64. Tests also check repeated reuse, invalid shapes, immutable
+inputs, result/plan lifetimes, original frequency ordering, independent getters,
+and exact arbitrary scalar bits including quiet/signaling NaN payloads,
+infinities, signed zero and subnormals. Window checks pass on the new artifact.
+Eight native and three C-interface Fourier regression tests pass. WASM Clippy
+and Rustdoc with warnings denied pass; an actual feature-disabled module
+contains none of the six functions or four owner classes.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
 - [JavaScript callbacks](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/reference/receiving-js-closures-in-rust.md)
 - [Deployment targets](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html)
+- [Exported owner classes](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/exported-rust-types.html)
 - [Version-matched CLI installation](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/wasm-bindgen-test/usage.md)
 - [Release library manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/Cargo.toml)
 - [Release CLI manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/crates/cli/Cargo.toml)
