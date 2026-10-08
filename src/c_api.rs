@@ -60,6 +60,9 @@ pub use real_cepstrum_functions::*;
 mod polynomial;
 mod polynomial_functions;
 pub use polynomial_functions::*;
+mod prediction;
+mod prediction_functions;
+pub use prediction_functions::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

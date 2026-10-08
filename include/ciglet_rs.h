@@ -3559,4 +3559,68 @@ uint32_t ciglet_rs_polynomial_roots_real_f64(const double *real,
                                              uint32_t *converged,
                                              double *maximum_residual);
 
+/**
+ * Estimate coefficients from nonnegative-lag autocorrelation.
+ * Arithmetic zero Stable, one Legacy. Output count equals input count.
+ * Failures retain output; zero-energy handling remains native.
+ *
+ * # Safety
+ * Nonempty input must be initialized and stable in one allocation. Output
+ * must be aligned and exclusively writable. Input/output may overlap after
+ * input borrowing ends. Empty buffers accept null, but empty recursion fails.
+ */
+uint32_t ciglet_rs_prediction_levinson_f32(const float *input,
+                                           uintptr_t input_count,
+                                           uint32_t arithmetic,
+                                           float *output,
+                                           uintptr_t output_count);
+
+/**
+ * Compute prediction gain from matching nonempty coefficient/correlation arrays.
+ * Arithmetic zero Stable, one Legacy. Scalar overflow/invalid energy remain native errors.
+ *
+ * # Safety
+ * Inputs must be initialized readable single-allocation ranges, stable during
+ * computation. Output must be aligned and exclusively writable for one value.
+ * Input/output may overlap after input borrowing ends. Failures retain output.
+ */
+uint32_t ciglet_rs_prediction_gain_f32(const float *coefficients,
+                                       uintptr_t coefficient_count,
+                                       const float *correlation,
+                                       uintptr_t correlation_count,
+                                       uint32_t arithmetic,
+                                       float *output);
+
+/**
+ * Estimate coefficients from nonnegative-lag autocorrelation.
+ * Arithmetic zero Stable, one Legacy. Output count equals input count.
+ * Failures retain output; zero-energy handling remains native.
+ *
+ * # Safety
+ * Nonempty input must be initialized and stable in one allocation. Output
+ * must be aligned and exclusively writable. Input/output may overlap after
+ * input borrowing ends. Empty buffers accept null, but empty recursion fails.
+ */
+uint32_t ciglet_rs_prediction_levinson_f64(const double *input,
+                                           uintptr_t input_count,
+                                           uint32_t arithmetic,
+                                           double *output,
+                                           uintptr_t output_count);
+
+/**
+ * Compute prediction gain from matching nonempty coefficient/correlation arrays.
+ * Arithmetic zero Stable, one Legacy. Scalar overflow/invalid energy remain native errors.
+ *
+ * # Safety
+ * Inputs must be initialized readable single-allocation ranges, stable during
+ * computation. Output must be aligned and exclusively writable for one value.
+ * Input/output may overlap after input borrowing ends. Failures retain output.
+ */
+uint32_t ciglet_rs_prediction_gain_f64(const double *coefficients,
+                                       uintptr_t coefficient_count,
+                                       const double *correlation,
+                                       uintptr_t correlation_count,
+                                       uint32_t arithmetic,
+                                       double *output);
+
 #endif  /* CIGLET_RS_H */

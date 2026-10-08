@@ -710,6 +710,29 @@ def main():
             real,imaginary = (scalar*8)(),(scalar*8)()
             assert polynomial_functions["roots_real"](nonconvergent,9,real,imaginary,8,ctypes.byref(iterations),ctypes.byref(converged),ctypes.byref(residual)) == 0
             assert iterations.value == 50 and converged.value == 0 and residual.value > 1e-6
+        levinson = getattr(library, f"ciglet_rs_prediction_levinson_{suffix}")
+        levinson.argtypes = [pointer,size,ctypes.c_uint32,pointer,size]
+        levinson.restype = ctypes.c_uint32
+        prediction_gain = getattr(library, f"ciglet_rs_prediction_gain_{suffix}")
+        prediction_gain.argtypes = [pointer,size,pointer,size,ctypes.c_uint32,pointer]
+        prediction_gain.restype = ctypes.c_uint32
+        correlation = (scalar*2)(2,0.5)
+        coefficients = (scalar*2)()
+        gain = scalar(71)
+        for policy in (0,1):
+            assert levinson(correlation,2,policy,coefficients,2) == 0
+            assert coefficients[0] == 1 and -0.251 < coefficients[1] < -0.249
+            assert prediction_gain(coefficients,2,correlation,2,policy,ctypes.byref(gain)) == 0
+            assert 1 < gain.value < 2
+            silence,silent_coefficients = (scalar*3)(),(scalar*3)()
+            assert levinson(silence,3,policy,silent_coefficients,3) == 0
+            assert list(silent_coefficients) == [1,0,0]
+            assert prediction_gain(silent_coefficients,3,silence,3,policy,ctypes.byref(gain)) == 0 and gain.value == 0
+        coefficients[0] = coefficients[1] = gain.value = 71
+        assert levinson(correlation,2,2,coefficients,2) == 3 and list(coefficients) == [71,71]
+        assert prediction_gain(coefficients,2,correlation,1,0,ctypes.byref(gain)) == 2 and gain.value == 71
+        assert levinson(correlation,2,0,correlation,2) == 0
+        assert correlation[0] == 1 and -0.251 < correlation[1] < -0.249
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

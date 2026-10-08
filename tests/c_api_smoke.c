@@ -513,6 +513,28 @@ int main(void) {
     size_t roots_iterations = 71; uint32_t roots_converged = 71;
     assert(ciglet_rs_polynomial_roots_real_f64(nonconvergent,9,roots_real,roots_imaginary,8,&roots_iterations,&roots_converged,&roots_residual) == 0);
     assert(roots_iterations == 50 && roots_converged == 0 && roots_residual > 1e-6);
+    #define CHECK_PREDICTION(type, suffix) do { \
+        type correlation[] = {2,0.5}, coefficients[2], gain = 71; \
+        for(uint32_t policy=0;policy<2;++policy) { \
+            assert(ciglet_rs_prediction_levinson_##suffix(correlation,2,policy,coefficients,2) == 0); \
+            assert(coefficients[0] == 1 && coefficients[1] > -0.251 && coefficients[1] < -0.249); \
+            assert(ciglet_rs_prediction_gain_##suffix(coefficients,2,correlation,2,policy,&gain) == 0); \
+            assert(gain > 1 && gain < 2); \
+            type silence[3] = {0,0,0}, silent_coefficients[3]; \
+            assert(ciglet_rs_prediction_levinson_##suffix(silence,3,policy,silent_coefficients,3) == 0); \
+            assert(silent_coefficients[0] == 1 && silent_coefficients[1] == 0 && silent_coefficients[2] == 0); \
+            assert(ciglet_rs_prediction_gain_##suffix(silent_coefficients,3,silence,3,policy,&gain) == 0 && gain == 0); \
+        } \
+        coefficients[0] = coefficients[1] = gain = 71; \
+        assert(ciglet_rs_prediction_levinson_##suffix(correlation,2,2,coefficients,2) == 3); \
+        assert(coefficients[0] == 71 && coefficients[1] == 71); \
+        assert(ciglet_rs_prediction_gain_##suffix(coefficients,2,correlation,1,0,&gain) == 2 && gain == 71); \
+        assert(ciglet_rs_prediction_levinson_##suffix(correlation,2,0,correlation,2) == 0); \
+        assert(correlation[0] == 1 && correlation[1] > -0.251 && correlation[1] < -0.249); \
+    } while (0)
+    CHECK_PREDICTION(float, f32);
+    CHECK_PREDICTION(double, f64);
+    #undef CHECK_PREDICTION
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

@@ -929,3 +929,48 @@ ciglet C interfaces, all liblrhsmm/SHIRO C interfaces and all three WASM
 interfaces remain required. This opt-in boundary adds no native numerical
 changes and does not replace final combined acceptance. Symbol counts do not
 substitute for complete diagnostics, ownership or configuration auditing.
+
+## Standalone prediction recursion and gain
+
+Four f32/f64 entry points expose Levinson recursion and gain with explicit
+arithmetic selectors: zero selects Stable, one selects Legacy. Unknown selectors
+return three. Recursion requires equal input/output counts; gain requires matching
+coefficient/correlation counts. Count errors return two. Native domain and
+numerical errors return three, including empty recursion. Successful silence
+retains the native leading unit coefficient and zero gain. Scalar gain uses an
+output pointer rather than a floating return value across different C ABIs.
+
+Both operations stage owned results before committing. Failures preserve output,
+and input/output overlap is supported after input borrowing ends. Caller storage
+must remain initialized and stable for reads and exclusively writable for output;
+pointer/range checks cannot establish allocation validity or these lifetimes.
+
+Three host boundary tests pass, consuming all 64 original LPC1 records in each
+precision. Legacy recursion and gain match the original bits. Stable recursion
+uses independent normalized Toeplitz residual bounds of 2e-7 for f32 and 5e-15
+for f64. Additional cases cover extreme finite values, subnormal correlations,
+compensated gain products, silence, overlap, invalid policies and atomic errors.
+Warning-denied all-target Clippy passes. No native numerical kernel, original
+fixture or threshold changes. The generated header now declares 220 functions
+with ten opaque types. All five required targets pass 69 boundary integration
+tests across thirteen suites plus six focused frame/DSP tests, with c-api enabled.
+Each log independently verifies exact 10,4,4,5,6,3,4,6,6,6,3,6,6,3,3 passing counts
+and no failed/ignored tests or error diagnostics. Windows MSVC x86_64/i686,
+Windows GNU x86_64 and Linux GNU x86_64/i686 runners all terminate with exit zero.
+Actual optimized assert-enabled C callers invoke all 220 exports on every target;
+Python ctypes callers pass on MSVC x86_64, Windows GNU x86_64 and Linux x86_64.
+Expanded optimized MSVC C source independently references every declaration.
+Warning-denied Rustdoc, formatting, whitespace and generated-header verification
+also pass. Current family Release, Python32 and static-link callers remain
+unverified; this boundary checkpoint does not replace final combined acceptance.
+
+The ledger retains 334 rows: 115 implemented C source mappings, 217 pending
+public/configuration C rows, two nonpublic macro formals and 332 pending public
+WASM rows. The cig_levinson/levinson aliases and lpgain now map explicit typed
+policy entry points. Every implemented mapping was checked against the header.
+
+This section covers standalone recursion/gain only. Sample and magnitude
+estimation, scaled correlation/gain access, reusable spectrum plans, spectra and
+resonance reports remain required C interfaces. The corresponding native APIs
+already exist; no function is excluded from the accepted port scope. All three
+WASM interfaces and the remaining liblrhsmm/SHIRO C interfaces remain required.
