@@ -122,6 +122,51 @@ int main(void) {
     CHECK_ORDER_BITS(float, uint32_t, f32, UINT32_C(0x7fc12345), UINT32_C(0xffc01234), UINT32_C(0x80000000), UINT32_C(0x7f800000));
     CHECK_ORDER_BITS(double, uint64_t, f64, UINT64_C(0x7ff8123456789abc), UINT64_C(0xfff80123456789ab), UINT64_C(0x8000000000000000), UINT64_C(0x7ff0000000000000));
     #undef CHECK_ORDER_BITS
+    #define CHECK_ARRAYS(type, handle_type, suffix) do { \
+        handle_type *handle = NULL, *copy = NULL, *transposed = NULL, *from_rows = NULL, *filled = NULL; \
+        type source[] = {1, 2, 3, 4, 5, 6}; \
+        type output[6], result = -71; \
+        size_t shape[3]; \
+        assert(ciglet_rs_array_from_slice_##suffix(2, 3, source, 6, &handle) == 0); \
+        assert(ciglet_rs_array_shape_##suffix(handle, shape, 3) == 0); \
+        assert(shape[0] == 2 && shape[1] == 3 && shape[2] == 6); \
+        assert(ciglet_rs_array_clone_##suffix(handle, &copy) == 0 && copy != handle); \
+        assert(ciglet_rs_array_set_##suffix(copy, 0, 0, -1) == 0); \
+        assert(ciglet_rs_array_get_##suffix(handle, 0, 0, &result) == 0 && result == 1); \
+        assert(ciglet_rs_array_transposed_##suffix(handle, &transposed) == 0); \
+        assert(ciglet_rs_array_copy_flat_##suffix(transposed, output, 6) == 0); \
+        assert(output[0] == 1 && output[1] == 4 && output[2] == 2 && output[3] == 5 && output[4] == 3 && output[5] == 6); \
+        assert(ciglet_rs_array_reshape_##suffix(handle, 3, 2) == 0); \
+        assert(ciglet_rs_array_transpose_##suffix(handle) == 0); \
+        assert(ciglet_rs_array_copy_flat_##suffix(handle, output, 6) == 0); \
+        assert(output[0] == 1 && output[1] == 3 && output[2] == 5 && output[3] == 2 && output[4] == 4 && output[5] == 6); \
+        type row[] = {-2, -3, -4}; \
+        assert(ciglet_rs_array_write_row_##suffix(handle, 0, row, 3) == 0); \
+        assert(ciglet_rs_array_copy_row_##suffix(handle, 0, output, 3) == 0); \
+        assert(output[0] == -2 && output[1] == -3 && output[2] == -4); \
+        assert(ciglet_rs_array_write_flat_##suffix(handle, source, 6) == 0); \
+        assert(ciglet_rs_array_copy_flat_##suffix(handle, output, 6) == 0 && memcmp(source, output, sizeof source) == 0); \
+        assert(ciglet_rs_array_reshape_##suffix(handle, 4, 2) == 3); \
+        const type *rows[] = {source, source + 3}; \
+        size_t counts[] = {3, 2}; \
+        assert(ciglet_rs_array_from_rows_##suffix(rows, counts, 2, &from_rows) == 3 && from_rows == NULL); \
+        counts[1] = 3; \
+        assert(ciglet_rs_array_from_rows_##suffix(rows, counts, 2, &from_rows) == 0); \
+        assert(ciglet_rs_array_copy_flat_##suffix(from_rows, output, 6) == 0 && memcmp(source, output, sizeof source) == 0); \
+        assert(ciglet_rs_array_filled_##suffix(2, 2, -0.0, &filled) == 0); \
+        assert(ciglet_rs_array_copy_flat_##suffix(filled, output, 4) == 0); \
+        type negative_zero = -0.0; \
+        assert(memcmp(output, &negative_zero, sizeof negative_zero) == 0); \
+        assert(ciglet_rs_array_release_##suffix(&handle) == 0 && handle == NULL); \
+        assert(ciglet_rs_array_release_##suffix(&handle) == 0); \
+        assert(ciglet_rs_array_release_##suffix(&copy) == 0 && copy == NULL); \
+        assert(ciglet_rs_array_release_##suffix(&transposed) == 0 && transposed == NULL); \
+        assert(ciglet_rs_array_release_##suffix(&from_rows) == 0 && from_rows == NULL); \
+        assert(ciglet_rs_array_release_##suffix(&filled) == 0 && filled == NULL); \
+    } while (0)
+    CHECK_ARRAYS(float, CigletRsArrayF32, f32);
+    CHECK_ARRAYS(double, CigletRsArrayF64, f64);
+    #undef CHECK_ARRAYS
     int32_t sequence[] = {91, 91, 91};
     assert(ciglet_rs_integer_sequence(INT32_MAX, 1, sequence, 3) == 3);
     assert(sequence[0] == 91 && sequence[1] == 91 && sequence[2] == 91);

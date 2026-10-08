@@ -6,6 +6,102 @@ import struct
 import sys
 
 
+def check_owned_arrays(library, suffix, scalar):
+    pointer = ctypes.POINTER(scalar)
+    size = ctypes.c_size_t
+    handle_type = ctypes.c_void_p
+    slot = ctypes.POINTER(handle_type)
+    signatures = {
+        "filled": [size, size, scalar, slot],
+        "from_slice": [size, size, pointer, size, slot],
+        "from_rows": [ctypes.POINTER(pointer), ctypes.POINTER(size), size, slot],
+        "clone": [handle_type, slot],
+        "transposed": [handle_type, slot],
+        "release": [slot],
+        "shape": [handle_type, ctypes.POINTER(size), size],
+        "copy_flat": [handle_type, pointer, size],
+        "copy_row": [handle_type, size, pointer, size],
+        "get": [handle_type, size, size, pointer],
+        "set": [handle_type, size, size, scalar],
+        "write_flat": [handle_type, pointer, size],
+        "write_row": [handle_type, size, pointer, size],
+        "reshape": [handle_type, size, size],
+        "transpose": [handle_type],
+    }
+    functions = {}
+    for operation, arguments in signatures.items():
+        function = getattr(library, f"ciglet_rs_array_{operation}_{suffix}")
+        function.argtypes = arguments
+        function.restype = ctypes.c_uint32
+        functions[operation] = function
+    objects = [handle_type() for _ in range(5)]
+    handle, duplicate, transposed, row_array, filled = objects
+    values = (scalar * 6)(1, 2, 3, 4, 5, 6)
+    dimensions = (size * 3)()
+    result = scalar()
+    output = (scalar * 6)()
+    try:
+        assert functions["from_slice"](2, 3, values, 6, ctypes.byref(handle)) == 0
+        assert functions["shape"](handle, dimensions, 3) == 0
+        assert list(dimensions) == [2, 3, 6]
+        values[0] = -100
+        assert functions["get"](handle, 0, 0, ctypes.byref(result)) == 0
+        assert result.value == 1
+        assert functions["clone"](handle, ctypes.byref(duplicate)) == 0
+        assert handle.value != duplicate.value
+        assert functions["set"](duplicate, 0, 0, -1) == 0
+        assert functions["get"](handle, 0, 0, ctypes.byref(result)) == 0
+        assert result.value == 1
+        assert functions["transposed"](handle, ctypes.byref(transposed)) == 0
+        assert functions["copy_flat"](transposed, output, 6) == 0
+        assert list(output) == [1, 4, 2, 5, 3, 6]
+        assert functions["reshape"](handle, 3, 2) == 0
+        assert functions["transpose"](handle) == 0
+        assert functions["copy_flat"](handle, output, 6) == 0
+        assert list(output) == [1, 3, 5, 2, 4, 6]
+        row = (scalar * 3)(-2, -3, -4)
+        copied_row = (scalar * 3)()
+        assert functions["write_row"](handle, 0, row, 3) == 0
+        assert functions["copy_row"](handle, 0, copied_row, 3) == 0
+        assert list(copied_row) == [-2, -3, -4]
+        values[0] = 1
+        assert functions["write_flat"](handle, values, 6) == 0
+        assert functions["copy_flat"](handle, output, 6) == 0
+        assert list(output) == [1, 2, 3, 4, 5, 6]
+        assert functions["reshape"](handle, 4, 2) == 3
+        assert functions["shape"](handle, dimensions, 3) == 0
+        assert list(dimensions) == [2, 3, 6]
+        first = (scalar * 3)(1, 2, 3)
+        second = (scalar * 3)(4, 5, 6)
+        rows = (pointer * 2)(first, second)
+        counts = (size * 2)(3, 2)
+        assert functions["from_rows"](rows, counts, 2, ctypes.byref(row_array)) == 3
+        assert row_array.value is None
+        counts[1] = 3
+        assert functions["from_rows"](rows, counts, 2, ctypes.byref(row_array)) == 0
+        assert functions["copy_flat"](row_array, output, 6) == 0
+        assert list(output) == [1, 2, 3, 4, 5, 6]
+        assert functions["filled"](2, 2, -0.0, ctypes.byref(filled)) == 0
+        zeros = (scalar * 4)()
+        assert functions["copy_flat"](filled, zeros, 4) == 0
+        encoding = "f" if suffix == "f32" else "d"
+        assert all(struct.pack(encoding, value) == struct.pack(encoding, -0.0) for value in zeros)
+        address = filled.value
+        maximum_size = (1 << (ctypes.sizeof(size) * 8)) - 1
+        assert functions["filled"](maximum_size, 2, 0, ctypes.byref(filled)) == 2
+        assert filled.value == address
+        assert functions["release"](ctypes.byref(row_array)) == 0
+        assert row_array.value is None
+        assert functions["from_rows"](None, None, 0, ctypes.byref(row_array)) == 0
+        assert functions["shape"](row_array, dimensions, 3) == 0
+        assert list(dimensions) == [0, 0, 0]
+    finally:
+        for object_handle in objects:
+            assert functions["release"](ctypes.byref(object_handle)) == 0
+            assert object_handle.value is None
+            assert functions["release"](ctypes.byref(object_handle)) == 0
+
+
 def main():
     library = ctypes.CDLL(str(pathlib.Path(sys.argv[1]).resolve()))
     library.ciglet_rs_abi_version.argtypes = []
@@ -132,6 +228,7 @@ def main():
         values = (scalar * 3)()
         assert grid(-1.0, 1.0, values, 3) == 0
         assert list(values) == [-1.0, 0.0, 1.0]
+        check_owned_arrays(library, suffix, scalar)
     sequence = library.ciglet_rs_integer_sequence
     sequence.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.POINTER(ctypes.c_int32), ctypes.c_size_t]
     sequence.restype = ctypes.c_uint32

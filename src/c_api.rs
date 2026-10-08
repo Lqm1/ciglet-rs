@@ -15,6 +15,12 @@ mod pair_statistics;
 pub use pair_statistics::*;
 mod ordering;
 pub use ordering::*;
+mod arrays;
+pub use arrays::{CigletRsArrayF32, CigletRsArrayF64};
+mod array_f32;
+pub use array_f32::*;
+mod array_f64;
+pub use array_f64::*;
 
 fn disjoint_outputs<T, U>(
     first: *const T,

@@ -9,6 +9,7 @@ the ABI version and binary32/binary64 minimum/maximum operations are exported.
 Binary32/binary64 first difference, cumulative sum and reverse are also exported.
 Statistics and array generation exports are listed in the checkpoint below.
 Selection/partition and stable sort with original indices are also exported.
+Typed opaque binary32/binary64 Array2 objects are now available as described below.
 All remaining public ciglet operations, including the bundled approximation
 functions, still require bindings. Liblrhsmm and SHIRO bindings and all browser/
 Node WebAssembly bindings remain required work.
@@ -24,7 +25,8 @@ cbindgen --config cbindgen.toml --crate ciglet-rs --output include/ciglet_rs.h
 The generated header is specifically for a `c-api` build. Cbindgen currently
 reports unmapped feature conditions and unrelated private/generic Rust items;
 the generated declarations are checked by compiling an independent C caller.
-The header intentionally exports functions only, without unrelated Rust constants.
+The header exports functions and referenced opaque object types, without unrelated
+Rust constants or the private Rust object layout.
 
 ## Pointer and numerical contract
 
@@ -126,8 +128,9 @@ confirms the checked-in header matches generation. All-target Clippy and Rustdoc
 with warnings denied, formatting and whitespace checks pass.
 
 Statistics selection/partition and stable sorting with original indices are now
-bound, as documented below. Array2 ownership/dimensions/reshape/transpose remain
-required. These additions do not complete ciglet or the three-package bindings.
+bound, as documented below. The following checkpoint implements Array2 ownership,
+dimensions, reshape and transpose. These additions do not complete ciglet or the
+three-package bindings.
 
 ## Paired statistics checkpoint
 
@@ -210,3 +213,69 @@ aliases, to implemented C endpoints; 308 other public/configuration rows remain
 pending for C. All 332 public rows remain pending for WASM. This completes the
 current native statistics module's calculation endpoints through C, while the
 rest of ciglet and the three-package binding objective remain unfinished.
+
+## Owned array checkpoint
+
+Thirty new functions, fifteen per precision, expose filled/zero construction,
+row-major construction, checked row-table construction, independent cloning,
+independent transposed copies, release, shape, flattened/row copies, element
+reads/writes, bulk/row replacement, reshape and committed transpose. There are
+now 78 C functions and two forward-declared opaque types. Row-table construction
+accepts an explicit pointer and element count for each row, checks rectangular
+shape before allocation, and retains native empty-table shape zero by zero.
+Shape writes exactly three size_t values: rows, columns and total element count.
+Array data retain all floating-point bit patterns without a DSP finite-value
+restriction. Construction copies caller storage; it never adopts the caller's
+allocator. Read/copy functions do not expose internal pointers. Bulk replacement
+and row access cover native slice mutation without keeping a borrow across FFI.
+
+Constructors return ownership through a pointer slot only after successful
+construction. A caller must release any existing owner before overwriting its
+slot with another successful constructor. Clone/transposed results have separate
+allocations. Handles must come from this library and the correct precision's
+constructor, remain alive throughout each call and never be accessed through
+their private layout. A null or misaligned handle is rejected unless a null case
+is expressly allowed; alignment checks cannot establish liveness or provenance.
+Mutations/release require exclusive object access; reads permit no concurrent
+mutation. Caller buffers and pointer slots must be independent of private object
+storage. Release takes a pointer-to-handle, transfers sole ownership back to Rust,
+and clears that slot. Releasing the same cleared slot again succeeds. Other
+aliases become invalid and must not be used or freed. A null outer slot is an
+invalid pointer; a null handle in a valid initialized slot is a successful no-op.
+
+Core reshape validates before changing metadata. In-place transpose builds a
+complete transposed array before replacing the old storage, retaining the
+original on allocation/calculation errors or caught unwinds during preparation.
+Copies and constructor output slots are committed only on success. Native
+fallible array/vector allocation errors return status three; Box allocation
+failure may abort under the standard allocator and is not caught. Trivial
+float-array destruction invokes no user destructor or callback. Expected errors
+leave existing handles, metadata, values and caller outputs unchanged.
+
+All five agreed targets pass fourteen integration boundary tests across two
+suites and actual C callers exercising all 78 exports. Windows MSVC x86_64/i686
+Release also passes both suites and optimized C callers. Python ctypes calls
+all exports and performs owned-array lifecycle checks on Windows MSVC x86_64
+Debug/Release, Windows GNU x86_64 Debug and Linux GNU x86_64 Debug. The examples
+use CDLL/C calling convention, c_void_p handle slots, byref outputs, typed row
+pointer/count tables and finally cleanup. Python 32-bit and Linux/GNU Release
+binding callers remain unverified. Tests cover independent copies, all row/bulk
+operations, invalid lengths/coordinates/shapes, failed constructor slot retention,
+ragged rows, zero-column arrays and exact special-value bits. Empty-array tests
+also exercise usize::MAX by zero shape and zero-length null element buffers.
+
+The ledger now maps 30 original symbol rows to implemented C endpoints, including
+all six original array allocation/copy/flatten/free/reshape/transpose entries.
+Other public/configuration rows (302) and all 332 public WASM rows remain pending.
+That ledger must be supplemented by structure/configuration/ownership audits; it
+is not an exhaustive binding-completion percentage. Core Rust algorithms and
+historical model formats are unchanged by these wrappers. Final completed-binding
+verification and the remaining three-package work are still required.
+
+Additional primary references consulted for this checkpoint:
+
+- https://doc.rust-lang.org/std/boxed/struct.Box.html#method.into_raw
+- https://doc.rust-lang.org/std/boxed/struct.Box.html#method.from_raw
+- https://doc.rust-lang.org/nomicon/ffi.html
+- https://docs.python.org/3/library/ctypes.html
+- https://github.com/mozilla/cbindgen/blob/v0.29.4/docs.md

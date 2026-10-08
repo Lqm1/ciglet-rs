@@ -9,6 +9,16 @@
 #include <stdlib.h>
 
 /**
+ * Opaque binary32 array. Obtain and release it through its typed C functions.
+ */
+typedef struct CigletRsArrayF32 CigletRsArrayF32;
+
+/**
+ * Opaque binary64 array. Obtain and release it through its typed C functions.
+ */
+typedef struct CigletRsArrayF64 CigletRsArrayF64;
+
+/**
  * Compute difference into equally sized caller storage.
  * Empty buffers accept null pointers; errors leave output unchanged.
  *
@@ -623,5 +633,549 @@ uint32_t ciglet_rs_sort_f64(const double *input,
                             uintptr_t sorted_length,
                             uintptr_t *indices,
                             uintptr_t indices_length);
+
+/**
+ * Create an owned filled array; use value zero to create zeros.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_filled_f32(uintptr_t rows,
+                                    uintptr_t columns,
+                                    float value,
+                                    struct CigletRsArrayF32 **output);
+
+/**
+ * Copy a row-major buffer into an independent owned array.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_from_slice_f32(uintptr_t rows,
+                                        uintptr_t columns,
+                                        const float *input,
+                                        uintptr_t count,
+                                        struct CigletRsArrayF32 **output);
+
+/**
+ * Copy pointer/count row tables; ragged rows return status three.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_from_rows_f32(const float *const *rows,
+                                       const uintptr_t *counts,
+                                       uintptr_t row_count,
+                                       struct CigletRsArrayF32 **output);
+
+/**
+ * Create an independent copy, leaving the original unchanged.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_clone_f32(const struct CigletRsArrayF32 *handle,
+                                   struct CigletRsArrayF32 **output);
+
+/**
+ * Create an independent transposed copy.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_transposed_f32(const struct CigletRsArrayF32 *handle,
+                                        struct CigletRsArrayF32 **output);
+
+/**
+ * Release a handle and clear its slot. A null handle in a valid slot succeeds.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_release_f32(struct CigletRsArrayF32 **slot);
+
+/**
+ * Write rows, columns and element count to exactly three size_t entries.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_shape_f32(const struct CigletRsArrayF32 *handle,
+                                   uintptr_t *output,
+                                   uintptr_t count);
+
+/**
+ * Copy all row-major values to an equally sized caller-owned buffer.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_copy_flat_f32(const struct CigletRsArrayF32 *handle,
+                                       float *output,
+                                       uintptr_t count);
+
+/**
+ * Copy one row to a caller-owned buffer with matching column count.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_copy_row_f32(const struct CigletRsArrayF32 *handle,
+                                      uintptr_t row,
+                                      float *output,
+                                      uintptr_t count);
+
+/**
+ * Write one array element; out-of-range coordinates return status three.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_get_f32(const struct CigletRsArrayF32 *handle,
+                                 uintptr_t row,
+                                 uintptr_t column,
+                                 float *output);
+
+/**
+ * Replace one array element; out-of-range coordinates return status three.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_set_f32(struct CigletRsArrayF32 *handle,
+                                 uintptr_t row,
+                                 uintptr_t column,
+                                 float value);
+
+/**
+ * Replace all row-major values from an equally sized caller buffer.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_write_flat_f32(struct CigletRsArrayF32 *handle,
+                                        const float *input,
+                                        uintptr_t count);
+
+/**
+ * Replace one row from a buffer with matching column count.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_write_row_f32(struct CigletRsArrayF32 *handle,
+                                       uintptr_t row,
+                                       const float *input,
+                                       uintptr_t count);
+
+/**
+ * Change shape while retaining element count and row-major sequence.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_reshape_f32(struct CigletRsArrayF32 *handle,
+                                     uintptr_t rows,
+                                     uintptr_t columns);
+
+/**
+ * Transpose the owned array, committing only after a complete copy succeeds.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_transpose_f32(struct CigletRsArrayF32 *handle);
+
+/**
+ * Create an owned filled array; use value zero to create zeros.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_filled_f64(uintptr_t rows,
+                                    uintptr_t columns,
+                                    double value,
+                                    struct CigletRsArrayF64 **output);
+
+/**
+ * Copy a row-major buffer into an independent owned array.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_from_slice_f64(uintptr_t rows,
+                                        uintptr_t columns,
+                                        const double *input,
+                                        uintptr_t count,
+                                        struct CigletRsArrayF64 **output);
+
+/**
+ * Copy pointer/count row tables; ragged rows return status three.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_from_rows_f64(const double *const *rows,
+                                       const uintptr_t *counts,
+                                       uintptr_t row_count,
+                                       struct CigletRsArrayF64 **output);
+
+/**
+ * Create an independent copy, leaving the original unchanged.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_clone_f64(const struct CigletRsArrayF64 *handle,
+                                   struct CigletRsArrayF64 **output);
+
+/**
+ * Create an independent transposed copy.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_transposed_f64(const struct CigletRsArrayF64 *handle,
+                                        struct CigletRsArrayF64 **output);
+
+/**
+ * Release a handle and clear its slot. A null handle in a valid slot succeeds.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_release_f64(struct CigletRsArrayF64 **slot);
+
+/**
+ * Write rows, columns and element count to exactly three size_t entries.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_shape_f64(const struct CigletRsArrayF64 *handle,
+                                   uintptr_t *output,
+                                   uintptr_t count);
+
+/**
+ * Copy all row-major values to an equally sized caller-owned buffer.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_copy_flat_f64(const struct CigletRsArrayF64 *handle,
+                                       double *output,
+                                       uintptr_t count);
+
+/**
+ * Copy one row to a caller-owned buffer with matching column count.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_copy_row_f64(const struct CigletRsArrayF64 *handle,
+                                      uintptr_t row,
+                                      double *output,
+                                      uintptr_t count);
+
+/**
+ * Write one array element; out-of-range coordinates return status three.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_get_f64(const struct CigletRsArrayF64 *handle,
+                                 uintptr_t row,
+                                 uintptr_t column,
+                                 double *output);
+
+/**
+ * Replace one array element; out-of-range coordinates return status three.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_set_f64(struct CigletRsArrayF64 *handle,
+                                 uintptr_t row,
+                                 uintptr_t column,
+                                 double value);
+
+/**
+ * Replace all row-major values from an equally sized caller buffer.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_write_flat_f64(struct CigletRsArrayF64 *handle,
+                                        const double *input,
+                                        uintptr_t count);
+
+/**
+ * Replace one row from a buffer with matching column count.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_write_row_f64(struct CigletRsArrayF64 *handle,
+                                       uintptr_t row,
+                                       const double *input,
+                                       uintptr_t count);
+
+/**
+ * Change shape while retaining element count and row-major sequence.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_reshape_f64(struct CigletRsArrayF64 *handle,
+                                     uintptr_t rows,
+                                     uintptr_t columns);
+
+/**
+ * Transpose the owned array, committing only after a complete copy succeeds.
+ * Errors leave outputs and the existing array unchanged.
+ *
+ * # Safety
+ * Null/misaligned handles are rejected except for documented null cases.
+ * Other handles must be live objects from this precision's constructors. Mutations
+ * and release require exclusive access; reads forbid concurrent mutations.
+ * Nonempty caller inputs/tables must be initialized single-allocation ranges,
+ * stable throughout the call. Outputs must be writable for declared types and
+ * lengths. Every caller buffer/slot must be independent of private object storage.
+ * Release takes an initialized pointer slot and invalidates all handle aliases.
+ * Constructor outputs transfer ownership and must later be released exactly once.
+ */
+uint32_t ciglet_rs_array_transpose_f64(struct CigletRsArrayF64 *handle);
 
 #endif  /* CIGLET_RS_H */
