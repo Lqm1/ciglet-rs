@@ -14,11 +14,11 @@ Historical checkpoints below retain their original scope.
 Current binding inventories cover every portable public computation. OS
 process operations retain their native implementation under ADR 0007. The
 following sections include historical checkpoints; their older pending
-statements are not the current implementation status. Final latest-source
-platform and composed acceptance remains in progress.
+statements are not the current implementation status. The split verification scope
+is recorded in `workspace-split-verification.md`.
 
 
-The optional `wasm` feature exposes bindings from the existing library crate.
+The `ciglet-rs-wasm` package exposes the browser and Node.js bindings.
 It uses `wasm-bindgen` 0.2.129 and `js-sys` 0.3.106 on
 `wasm32-unknown-unknown`. The CLI must match the `wasm-bindgen` crate version.
 The declared Rust requirements are 1.81 for the libraries and 1.86 for the CLI;
@@ -33,9 +33,9 @@ There are no pending ciglet binding inventory rows. This inventory result does
 not prove final three-crate acceptance or replace public API/ownership audits.
 
 ```sh
-cargo build -p ciglet-rs-wasm --locked --lib  --target wasm32-unknown-unknown
-wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs.wasm --target web --out-dir pkg-web
-wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs.wasm --target nodejs --out-dir pkg-node
+cargo build --locked -p ciglet-rs-wasm --lib --target wasm32-unknown-unknown
+wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs_wasm.wasm --target web --out-dir pkg-web --out-name ciglet_rs
+wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs_wasm.wasm --target nodejs --out-dir pkg-node --out-name ciglet_rs
 node tests/wasm_window_node.cjs ./pkg-node
 node tests/wasm_all_node.cjs ./pkg-node
 ```

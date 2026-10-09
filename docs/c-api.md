@@ -11,9 +11,8 @@ targets are recorded in the SHIRO package's `docs/requirements-verification.md`.
 Historical checkpoints below retain their original scope.
 
 
-The optional `c-api` feature exports a C interface from this existing package.
-It does not create another crate. The native Rust implementation remains the
-calculation backend; unsafe code is confined to `crates/ciglet-rs-capi/src/c_api.rs` and its binding
+The `ciglet-rs-capi` package exports the C interface. The native Rust
+implementation remains the calculation backend; unsafe code is confined to `crates/ciglet-rs-capi/src/c_api.rs` and its binding
 modules under `crates/ciglet-rs-capi/src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
@@ -21,10 +20,10 @@ exports 646 status-returning functions, 31 opaque types, 33 concrete descriptors
 and 33 constants. The checkpoints below record implementation and verification
 evidence. Of 332 public upstream mappings, 332 have verified C bindings; none remain pending. All bundled approximation functions have verified C bindings. Browser/Node WebAssembly covers all 329 portable public mappings; three
 OS process mappings retain native Rust/C implementations under ADR 0007.
-Final latest-source three-package acceptance remains in progress. The following
+The split verification scope is recorded in `workspace-split-verification.md`. The following
 sections retain historical implementation checkpoints.
 
-Build with `cargo build -p ciglet-rs-capi --locked  --lib`. Cargo emits the Rust
+Build with `cargo build --locked -p ciglet-rs-capi --lib`. Cargo emits the Rust
 library, shared library and static library. Regenerate the checked-in header
 with cbindgen 0.29.4:
 
@@ -32,7 +31,7 @@ with cbindgen 0.29.4:
 cbindgen --config crates/ciglet-rs-capi/cbindgen.toml --crate ciglet-rs-capi --output crates/ciglet-rs-capi/include/ciglet_rs.h
 ```
 
-The generated header is specifically for a `c-api` build. Cbindgen currently
+The generated header belongs to the `ciglet-rs-capi` package. Cbindgen currently
 reports unmapped feature conditions and unrelated private/generic Rust items;
 the generated declarations are checked by compiling an independent C caller.
 The header exports functions, referenced opaque objects, C-layout descriptors and
