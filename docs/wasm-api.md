@@ -54,7 +54,7 @@ nine; ordering adds eight, median/smoothing adds five and frequency/distance add
 seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
 adds thirty-six; hyperbolic scalar and lane kernels add sixteen and trigonometric
 scalar and lane kernels add twenty; special scalar and lane kernels add
-twenty-eight; basic lane kernels add ten. Other DSP families and both remaining crates still
+twenty-eight; basic lane kernels add ten and sinc adds two. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -744,6 +744,41 @@ checks also pass on this artifact. Ten upstream mappings bring coverage to
 approximation submodules are now exposed; other DSP families and final combined
 acceptance remain required. Native source, C interfaces, dependencies, fixtures
 and previously implemented bindings remain unchanged.
+
+## Aliased sinc and its derivative
+
+Eight functions expose the entire native sinc module in both scalar precisions.
+`aliased_sinc_f32/f64` and `aliased_sinc_derivative_f32/f64` use the native
+Stable default. Corresponding `aliased_sinc_with_f32/f64` and
+`aliased_sinc_derivative_with_f32/f64` accept `SincPolicy.Stable` or
+`SincPolicy.Legacy`. Length is a scalar value, supporting signed and fractional
+lengths; angle is angular frequency. No native operation or policy is omitted.
+
+Legacy retains the original different denominator plateaus, 1e-4 for values
+and 1e-5 for derivatives, plus scalar intermediate rounding. Stable retains
+double intermediates, small-angle evaluation and removable integer-length
+poles, including even-length sign changes at odd turns. Fractional poles are
+not clamped. Original finite-input/output validation remains in effect.
+Positive-length Stable derivatives at zero can retain negative zero where
+Legacy returns positive zero. Binary32 Stable intermediates can remain finite
+for maximum length where Legacy scalar multiplication overflows.
+
+Actual Node.js and browser checks pass all 384 original C cases, with 916
+comparisons. Legacy binary32 values compare exact bits; binary64 normalized
+bounds remain 2e-16 for values and 5e-16 for derivatives, with zero bits exact.
+Independent integer-length identities and small-angle analytic checks retain
+existing native bounds. Additional checks cover full/default Stable agreement,
+signed/fractional/zero/unit lengths, integer and fractional poles, Legacy
+plateaus, extreme intermediates, signed zeros, nonfinite/domain errors, invalid
+policies and reuse after errors. No numerical algorithm or tolerance is changed.
+
+Runtime entry points are `node tests/wasm_sinc_node.cjs ./pkg-node` and
+`tests/wasm_sinc_browser.html`, sharing `wasm_sinc_checks.mjs`. Related native
+and C-interface tests, WASM Clippy and Rustdoc with warnings denied pass.
+All eight functions are absent without the feature. Two upstream mappings
+bring coverage to 223 implemented mappings; 109 public mappings remain pending.
+Native source, C interfaces, dependencies, fixtures and previous bindings remain
+unchanged. Remaining DSP families and combined three-crate acceptance are required.
 
 ## Primary references
 
