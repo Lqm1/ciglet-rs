@@ -16,6 +16,7 @@ mod phase;
 mod resampling;
 mod smoothing;
 mod statistics;
+mod trigonometric;
 mod vector;
 mod window;
 
@@ -32,5 +33,6 @@ pub use phase::*;
 pub use resampling::*;
 pub use smoothing::*;
 pub use statistics::*;
+pub use trigonometric::*;
 pub use vector::*;
 pub use window::*;

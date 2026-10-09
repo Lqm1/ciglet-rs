@@ -52,7 +52,8 @@ six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
 nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
 seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
-adds thirty-six; hyperbolic scalar and lane kernels add sixteen. Other DSP families and both remaining crates still
+adds thirty-six; hyperbolic scalar and lane kernels add sixteen and trigonometric
+scalar and lane kernels add twenty. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -573,8 +574,8 @@ Related native/C-interface checks and WASM Clippy/Rustdoc with warnings denied
 pass; all thirty-two functions are absent without the feature. Thirty-six
 upstream mappings bring coverage to 147 implemented mappings; 185 public
 mappings remain pending at this checkpoint. The following hyperbolic section
-completes that submodule; other lane, special and restricted trigonometric
-kernels remain required and pending.
+completes that submodule, and the later trigonometric section completes its
+scalar and lane submodules. Other basic lane and special kernels remain pending.
 Native source, C interfaces, dependencies, fixtures and prior bindings are
 unchanged.
 
@@ -610,6 +611,46 @@ denied pass. All eight functions are absent from an actual feature-disabled
 module. The preceding scalar approximation checks also pass on this artifact.
 Sixteen upstream mappings bring coverage to 163 implemented mappings;
 169 public mappings remain pending. Native source, C interfaces, dependencies,
+fixtures and previously implemented bindings remain unchanged.
+
+## Trigonometric scalar and lane formulas
+
+Ten functions expose every native trigonometric submodule operation in all
+three `ApproximationPrecision` modes. `trigonometric_sine`,
+`trigonometric_cosine`, `trigonometric_tangent` and
+`trigonometric_tangent_full` cover the scalar APIs. Corresponding `_lanes`
+functions cover those four operations plus `trigonometric_sine_full_lanes`
+and `trigonometric_cosine_full_lanes`. Native scalar full sine and cosine
+remain available through the previously exposed root approximation functions.
+All these native submodule inputs and outputs are binary32.
+
+Lane calls require exactly four angles and return independent `Float32Array`
+storage. Any invalid lane rejects the whole call without modifying the input.
+The restricted polynomial kernels retain evaluation outside their calibration
+interval and perform no periodic reduction. Full-range formulas retain native
+reduction direction and checked signed-turn conversion. Exact selects native
+double sin/cos/tan before conversion, retaining signed-zero results. Original
+SSE2-specific polynomial expression order and cosine's equality branch remain
+distinct from scalar formulas; vector cosine at binary32 half-pi returns zero
+in Approximate mode while the scalar strict-greater branch differs.
+
+Actual Node.js and browser checks pass all 256 original scalar C cases and
+144 original SSE2 four-lane cases, with 826 exact comparisons. All eight scalar
+source variants and twelve lane variants are covered, including native rejection
+of original nonfinite outputs. Additional tests check all three precision modes,
+independent Exact formulas, vector equality versus scalar branching, finite
+polynomial results outside calibration versus full-range reduction, signed
+zeros, invalid modes and shapes, nonfinite values in every lane position,
+turn overflow, immutable source bits, independent outputs and reuse after errors.
+No comparison bound or native numerical implementation is changed.
+
+Runtime entry points are `node tests/wasm_trigonometric_node.cjs ./pkg-node`
+and `tests/wasm_trigonometric_browser.html`, sharing
+`wasm_trigonometric_checks.mjs`. Ten related native/C-interface tests, WASM
+Clippy and Rustdoc with warnings denied pass. All ten functions are absent
+without the feature. Hyperbolic Node checks also pass on this artifact. Twenty
+upstream mappings bring coverage to 183 implemented mappings; 149 public
+mappings remain pending. Native source, C interfaces, dependencies, comparison
 fixtures and previously implemented bindings remain unchanged.
 
 ## Primary references
