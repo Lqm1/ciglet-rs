@@ -847,6 +847,34 @@ coverage to 238 implemented and 94 pending public mappings. Native/C source,
 fixtures, dependencies and prior bindings remain unchanged. Full remaining
 DSP coverage and combined three-crate acceptance are still required.
 
+## Complete spectral peak interpolation
+
+`spectral_peak_interpolate_f32/f64(magnitudes, bin)` returns an owned
+`SpectralPeakF32/F64`. Both native fields, `bin` and `magnitude`, have getters
+and setters. Constructors accept arbitrary field values. `from_values`,
+`set_values` and `values` use exactly two typed values and preserve every
+native bit, including signaling NaNs and signed zeros. Invalid replacement
+shapes leave the original peak unchanged. `cloned()` and array snapshots are
+independent; snapshots remain valid after generated `free()` releases owners.
+
+The bin argument uses the unsigned 32-bit WebAssembly ABI. Interpolation
+retains native interior-bin validation, mixed-precision polynomial arithmetic,
+the strict one-bin displacement condition and the center-plus-0.2 magnitude
+cap. Signed log magnitudes are accepted. Only the participating three bins
+are validated, so nonfinite values elsewhere remain ignored.
+
+Actual Node.js and browser checks consume both complete QIF1 C corpora,
+128 cases and 1,176 exact comparisons, plus independent parabola/cap/flat/
+displaced checks, signed magnitudes, all neighbor error positions, boundaries,
+overflow, input immutability and full native field storage/lifetimes. Run
+`node tests/wasm_spectral_peak_node.cjs ./pkg-node` or serve
+`tests/wasm_spectral_peak_browser.html`. Eight related native/C tests pass,
+as do WASM Clippy and Rustdoc with warnings denied. Both functions and owners
+are absent without the feature. Two original mappings bring coverage to
+240 implemented mappings and 92 pending public mappings. Native/C source,
+fixtures, dependencies and prior bindings remain unchanged. Full remaining
+DSP coverage and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
