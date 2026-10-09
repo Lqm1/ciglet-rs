@@ -48,7 +48,7 @@ window regression tests and host all-target/all-feature Clippy also pass.
 An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
-six mappings and DCT/phase adds fifteen. Other DSP families and both remaining crates still
+six mappings, DCT/phase adds fifteen and vectors add six. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -126,6 +126,39 @@ regression tests pass. WASM Clippy and Rustdoc with warnings denied pass, and an
 actual feature-disabled module exposes none of the eighteen functions. Fifteen
 upstream DCT/phase mappings are recorded, bringing WASM coverage to forty
 implemented mappings; the remaining 292 public mappings stay pending.
+
+## Vector operations
+
+Eleven functions expose the complete native vector module and scalar
+interpolation: `difference`, `cumulative_sum`, `reverse`, `linear_grid` and
+`interpolate_between` with `_f32`/`_f64` suffixes, plus `integer_sequence`.
+Floating arrays return independent `Float32Array`/`Float64Array` storage;
+integer progressions return `Int32Array`. Integer arguments use the signed
+32-bit ABI and lengths use the unsigned 32-bit ABI. Callers must supply integers
+in those ranges; native allocation limits and checked arithmetic remain.
+
+Differences retain the first sample, cumulative sums retain source operation
+order and the first zero sign, and reversal preserves arbitrary scalar bits.
+Inclusive grids retain multiply-before-divide rounding, with native finite
+fallbacks for overflowing endpoint differences. Scalar interpolation supports
+extrapolation. Integer sequences use wide intermediate arithmetic and reject
+results outside the signed 32-bit range.
+
+Actual Node.js and browser checks pass 48 original C vector cases, 36 grid and
+scalar-interpolation cases, and 18 integer-sequence cases. The 2,938 scalar
+comparisons are exact, including signed zeros. Additional checks cover NaN
+payloads and infinities in reversal, immutable inputs, independent outputs,
+empty/singleton inputs, range fallbacks, overflow errors and continued use.
+The shared tests are `wasm_vector_checks.mjs`, with
+`node tests/wasm_vector_node.cjs ./pkg-node` and
+`tests/wasm_vector_browser.html` as runtime entry points.
+
+Window, Fourier and DCT/phase Node checks also pass on this artifact. Thirteen
+native/C-interface regression tests pass. WASM Clippy and Rustdoc with warnings
+denied pass; all eleven functions are absent from an actual feature-disabled
+module. Six upstream mappings bring coverage to 46 implemented mappings;
+286 public mappings remain pending. Native implementations, C interfaces,
+dependencies and C fixtures remain unchanged.
 
 ## Primary references
 

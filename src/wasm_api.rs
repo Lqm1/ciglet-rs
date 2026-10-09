@@ -5,8 +5,10 @@
 //! panic abort is not recoverable through these bindings.
 mod fourier;
 mod phase;
+mod vector;
 mod window;
 
 pub use fourier::*;
 pub use phase::*;
+pub use vector::*;
 pub use window::*;
