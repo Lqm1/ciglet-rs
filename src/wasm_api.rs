@@ -6,6 +6,7 @@
 mod approximation;
 mod array;
 mod cepstrum;
+mod chirp_z;
 mod complex;
 mod correlogram;
 mod filterbank;
@@ -34,6 +35,7 @@ mod window;
 pub use approximation::*;
 pub use array::*;
 pub use cepstrum::*;
+pub use chirp_z::*;
 pub use complex::*;
 pub use correlogram::*;
 pub use filterbank::*;

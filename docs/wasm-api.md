@@ -1052,6 +1052,48 @@ to 259 implemented and 73 pending public mappings. Native/C source, fixtures,
 dependencies and prior bindings remain unchanged. Full remaining DSP coverage
 and combined three-crate acceptance are still required.
 
+## Complete Chirp-Z transforms
+
+`CztPlanF32/F64(length, angular_step, direction)` owns a complete reusable
+native plan and cached work storage. Directions use the existing
+`FftDirection.Forward=0` and `Inverse=1` constants and fallible numeric-code
+validation. Plans expose `length`, `is_empty()`, `transform(real, imaginary)`,
+`transform_into(real, imaginary, output)` and generated `free()`. Missing
+planes use undefined/null and represent zero; present planes match plan
+length. Both transforms retain native forward phase and normalized inverse
+conventions. Inverse direction negates the step and divides by length.
+
+`transform` returns existing complete `ComplexValuesF32/F64` owners without
+an extra native plane copy. `transform_into` writes alternating real and
+imaginary values to the caller's typed array after successful computation.
+Invalid component/output shapes preserve the output. Input/output arrays
+may overlap because input borrowing finishes before commit. Native IEEE
+propagation of nonfinite samples is retained. Length, finite step, phase
+range and direction validation remain native; errors leave plans reusable.
+`czt_f32/f64` supplies a one-shot equivalent with the same full arguments.
+
+Actual Node.js and browser checks consume both complete CZT1 C corpora,
+2,400 cases and 526,128 comparisons. Maximum normalized C error is
+1.4301623138882108e-7 for binary32 and 3.43811001174242e-16 for binary64,
+within unchanged native 5e-7 and 2e-15 bounds. All scenarios, component masks,
+directions and original grids are covered. Checks include plan reuse,
+one-shot agreement, complete output-buffer commit/aliasing, input immutability,
+owner lifetimes, absent planes, ordinary IEEE behavior and recovery after
+shape errors. Independent arbitrary-grid direct sums cover both precisions.
+Binary64 FFT-grid and inverse-roundtrip checks retain the existing native
+1e-11/1e-12 criteria. Binary32 chirp phases retain source scalar rounding;
+an ideal FFT-grid equality claim is not made for that precision.
+
+Run `node tests/wasm_czt_node.cjs ./pkg-node` or serve
+`tests/wasm_czt_browser.html`. Nine related native/C tests pass, as do WASM
+Clippy and Rustdoc with warnings denied. Existing actual Node FFT checks also
+pass all 720 records and 559,776 comparisons after sharing internal direction
+validation and result storage. Both new functions/plans are absent without
+the feature. Three original mappings bring coverage to 262 implemented and
+70 pending public mappings. Native/C source, fixtures and dependencies remain
+unchanged. Existing FFT changes are internal visibility only. Full remaining
+DSP coverage and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)

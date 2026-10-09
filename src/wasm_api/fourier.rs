@@ -19,7 +19,7 @@ impl From<FftDirection> for Direction {
 }
 
 // Validate within the method's Result path so errors release the owner guard.
-fn fft_direction(value: u32) -> Result<Direction, JsValue> {
+pub(super) fn fft_direction(value: u32) -> Result<Direction, JsValue> {
     match value {
         0 => Ok(FftDirection::Forward.into()),
         1 => Ok(FftDirection::Inverse.into()),
@@ -33,7 +33,7 @@ macro_rules! fourier_api {
         /// into JavaScript typed arrays, which outlive this owner's `free()`.
         #[wasm_bindgen]
         pub struct $values {
-            values: Vec<Complex<$scalar>>,
+            pub(super) values: Vec<Complex<$scalar>>,
         }
 
         #[wasm_bindgen]
