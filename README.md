@@ -2,7 +2,7 @@
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
-The native Rust phase passes the agreed five-target acceptance gate, including all installed fastapprox mappings. The complete C ABI is implemented and tested. Optional browser and Node.js WebAssembly bindings are being implemented; see [WASM coverage and runtime evidence](docs/wasm-api.md) and the [per-symbol binding inventory](docs/binding-inventory.csv). Final combined acceptance across all three crates remains pending.
+The native Rust phase passes the agreed five-target acceptance gate, including all installed fastapprox mappings. The complete C ABI is implemented and tested. Optional browser and Node.js WebAssembly bindings cover 329 portable public mappings; all 40 runtime verification families pass together. Three OS process lifecycle mappings remain available through native Rust/C and are explicitly native-only. See [WASM coverage and runtime evidence](docs/wasm-api.md) and the [per-symbol binding inventory](docs/binding-inventory.csv). Final combined acceptance across all three crates remains pending.
 
 Custom window generation accepts stateful/fallible trig callbacks with independent
 f32/f64 weight and callback precision. Standard Iterator::fold covers the source

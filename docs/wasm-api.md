@@ -6,11 +6,20 @@ It uses `wasm-bindgen` 0.2.129 and `js-sys` 0.3.106 on
 The declared Rust requirements are 1.81 for the libraries and 1.86 for the CLI;
 the current pinned Rust 1.94 builds both successfully.
 
+Current platform inventory contains 329 implemented portable public mappings,
+three native-only OS process lifecycle mappings and two nonpublic macro formals.
+The native-only entries are plotopen, plotopenv and plotclose; their complete
+Figure APIs remain implemented in Rust and C ABI. Browser/Node WASM uses complete
+portable plotting command streams instead of spawning OS child processes.
+There are no pending ciglet binding inventory rows. This inventory result does
+not prove final three-crate acceptance or replace public API/ownership audits.
+
 ```sh
 cargo build --locked --lib --features wasm --target wasm32-unknown-unknown
 wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs.wasm --target web --out-dir pkg-web
 wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs.wasm --target nodejs --out-dir pkg-node
 node tests/wasm_window_node.cjs ./pkg-node
+node tests/wasm_all_node.cjs ./pkg-node
 ```
 
 The web output is an ES module with explicit asynchronous initialization. Node
@@ -54,8 +63,9 @@ nine; ordering adds eight, median/smoothing adds five and frequency/distance add
 seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
 adds thirty-six; hyperbolic scalar and lane kernels add sixteen and trigonometric
 scalar and lane kernels add twenty; special scalar and lane kernels add
-twenty-eight; basic lane kernels add ten and sinc adds two. Other DSP families and both remaining crates still
-require complete WASM interfaces and final combined acceptance.
+twenty-eight; basic lane kernels add ten and sinc adds two. Later sections record
+the remaining completed families. Both remaining crates still require complete
+WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
 abort is not recovered by these interfaces. No native filesystem, process or
@@ -1697,7 +1707,7 @@ Snapshots outlive owners. These byte commands can be passed to a host renderer.
 Native Figure process lifecycle (open/open_with/spawn, child ID, close/status,
 captured output and Drop) remains available through native Rust and C ABI;
 browser/Node WASM does not create OS child processes. Lifecycle mappings are
-still pending explicit binding inventory classification, not claimed here as
+classified as native-only in the binding inventory; they are not claimed as
 implemented WASM process APIs.
 
 Actual Node.js and browser tests consume both complete original POSIX C
@@ -1751,9 +1761,34 @@ Run `node tests/wasm_scalar_node.cjs ./pkg-node` or serve
 `tests/wasm_scalar_browser.html`. Eight related native/C tests pass, together
 with WASM Clippy/Rustdoc warnings denied and feature-disabled absence of all
 seven functions. Five mappings bring coverage to 329 implemented and three
-pending public mappings. The remaining three are native process lifecycle
-entries awaiting explicit platform classification. Native/C code, dependencies,
+pending public mappings at that checkpoint. Those three native process lifecycle
+entries are now classified as native-only. Native/C code, dependencies,
 fixtures and previous bindings remain unchanged; combined acceptance remains.
+
+## Combined ciglet runtime verification
+
+`tests/wasm_all_checks.mjs` explicitly runs all 40 existing family verifiers
+sequentially against the same final module instance. Every family retains its
+complete source corpus, numerical criteria, public configuration and ownership
+checks. `wasm_all_node.cjs` independently compares its declared family list with
+all individual Node suite files before running. Optional third argument saves
+the full per-family result JSON. Serve `wasm_all_browser.html` to run the same
+40 families in the browser. The page reports progress and marks success only
+after every verifier returns successfully.
+
+Actual Node.js 24.14.1 and the in-app browser both pass all 40 families against
+the final complete WASM binary. `wasm_all_off.cjs` runs every individual
+feature-disabled export check against the actual module without the feature;
+all 40 confirm absence. These combined checks supplement the family evidence,
+and do not claim Release, other WASM engines or final three-crate acceptance.
+
+The combined Windows x86_64 MSVC native run uses
+`cargo test --locked --all-features --tests` with actual Gnuplot required.
+All 92 current integration suite files are present in the execution log;
+93 summaries including the library suite report 463 passing tests, zero failed
+and zero ignored. This is a refreshed host run, not a refreshed five-platform
+or final three-crate gate. Native algorithms and individual verifiers were
+unchanged during this combined verification checkpoint.
 
 ## Primary references
 

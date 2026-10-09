@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Ciglet complete WASM verification</title>
+<body>
+<pre id="result" data-status="pending">Running all browser checks.</pre>
+<script type="module">
+import init, * as api from '/bindings/ciglet_rs.js';
+import { verifyAllBindings } from '/tests/wasm_all_checks.mjs';
+const output = document.getElementById('result');
+try {
+    await init();
+    const result = await verifyAllBindings(api, async name => {
+        const response = await fetch('/tests/fixtures/' + name);
+        if (!response.ok) throw new Error('Fixture request failed: ' + name);
+        return new Uint8Array(await response.arrayBuffer());
+    }, (family, completed, total) => {
+        output.textContent = `Passed ${completed}/${total}: ${family}`;
+    });
+    output.dataset.status = 'passed';
+    output.textContent = `Ciglet all-family actual browser: ${Object.keys(result).length} families passed\n` + Object.keys(result).join(', ');
+} catch (error) { output.dataset.status = 'failed'; output.textContent = String(error?.stack ?? error); }
+</script>
+</body>
+</html>
