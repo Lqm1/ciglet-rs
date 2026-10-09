@@ -1446,6 +1446,58 @@ implemented and 26 pending public mappings. Native/C source, fixtures,
 dependencies and previous bindings remain unchanged. Remaining DSP coverage
 and combined three-crate acceptance are still required.
 
+## Complete spectral envelope estimation
+
+`SpectralEnvelopePlanF32/F64(length)` owns the complete native reusable
+cepstral workspace. Length must be a power of two of at least two. Owners
+expose `length`, `bins`, `is_empty()`, `estimate(spectrum, fundamental,
+harmonics)`, `estimate_with(spectrum, fundamental, harmonics, nyquist_code)`,
+`estimate_with_smoothing(spectrum, fundamental, harmonics, nyquist_code,
+smoothing_code)` and generated `free()`. `spectral_envelope_estimate_f32/f64`
+accepts spectrum, FFT length, fundamental and harmonics for the native
+one-shot equivalent. Input arrays remain unchanged.
+
+Fundamental is a sampling-rate ratio in `(0, 0.5]`. Harmonics use optional
+WASM32 unsigned integers; undefined/null selects the source convenience
+wrapper's implicit count, while explicit counts must be 2 through i32::MAX.
+`SpectrumNyquist.Preserve=0` and `Legacy=1` select both native Nyquist modes.
+Smoothing independently accepts Stable=0 and Legacy=1. Defaults are Preserve
+and Stable. Numeric codes are validated inside Rust Result, so invalid modes
+leave plans reusable. Native validation inspects every nonnegative spectrum
+bin, including Nyquist even in Legacy mode.
+
+`SpectralEnvelopeF32/F64(log_spectrum, cepstrum)` retains both complete mutable
+native output fields. The log spectrum is the full symmetric FFT grid in
+natural-log units, without an exponential conversion. Cepstrum retains DC
+and Nyquist. Constructors and setters accept arbitrary public storage and
+payloads, including mismatched lengths. Getters return independent typed
+arrays; `cloned()` and generated `free()` preserve independent ownership.
+Snapshots outlive result and plan owners.
+
+Actual Node.js and browser checks consume both complete ENV1 C corpora,
+288 cases and 36,576 comparisons. Unchanged normalized bounds are 3e-7 for
+binary32 and 5e-16 for binary64. Observed maximum errors for log spectrum and
+cepstrum are `[8.094401442487092e-8, 1.3996163455650517e-8]` and
+`[2.8748543874196476e-16, 2.720128377107085e-17]`, respectively.
+No numerical criterion or native algorithm changed.
+
+Checks include all independent Nyquist/smoothing combinations, explicit and
+implicit harmonics, default/one-shot/full-option agreement, full output shapes,
+metadata, reuse, immutable inputs, complete field mutation, raw IEEE payloads,
+clones, snapshots, invalid codes and parameters and recovery after workspace
+errors. Independent binary64 checks retain native constant-spectrum, full
+symmetry and zero-cutoff criteria. Both precisions cover the two-point and
+large implicit harmonic-count boundaries. Existing safe cutoff and harmonic
+conversion corrections remain in the native implementation.
+
+Run `node tests/wasm_envelope_node.cjs ./pkg-node` or serve
+`tests/wasm_envelope_browser.html`. Eleven related native/C tests pass, along
+with WASM Clippy and Rustdoc with warnings denied. Both functions and all four
+owners are absent without the feature. Two original mappings bring coverage
+to 308 implemented and 24 pending public mappings. Native/C source, fixtures,
+dependencies and previous bindings remain unchanged. Remaining DSP coverage
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
