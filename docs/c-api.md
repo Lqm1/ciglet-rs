@@ -8,8 +8,10 @@ modules under `src/c_api/`.
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
 exports 646 status-returning functions, 31 opaque types, 33 concrete descriptors
 and 33 constants. The checkpoints below record implementation and verification
-evidence. Of 332 public upstream mappings, 332 have verified C bindings; none remain pending. All bundled approximation functions have verified C bindings. Liblrhsmm and SHIRO
-bindings and all browser/Node WebAssembly bindings remain required work.
+evidence. Of 332 public upstream mappings, 332 have verified C bindings; none remain pending. All bundled approximation functions have verified C bindings. Browser/Node WebAssembly covers all 329 portable public mappings; three
+OS process mappings retain native Rust/C implementations under ADR 0007.
+Final latest-source three-package acceptance remains in progress. The following
+sections retain historical implementation checkpoints.
 
 Build with `cargo build --locked --features c-api --lib`. Cargo emits the Rust
 library, shared library and static library. Regenerate the checked-in header
