@@ -73,7 +73,12 @@ native calculation reuses the plan and scratch. Inverse FFTs divide by length.
 `inverse_dft_f32` and `inverse_dft_f64` retain the native quadratic normalized
 inverse DFT for arbitrary positive legacy-range lengths. `fft_shift_f32` and
 `fft_shift_f64` retain odd/even/empty ordering. `FftDirection` is Forward or
-Inverse.
+Inverse. The direction parameter uses these numeric constants through the
+unsigned 32-bit ABI and is validated within the Rust `Result` path. Invalid
+direction codes throw an ordinary exception without retaining the plan's
+borrow, so queries, later transforms and `free()` remain usable. Direct enum
+ABI conversion was observed to retain the plan borrow on an invalid code;
+this validation also covers both one-shot transforms.
 
 `ComplexValuesF32` and `ComplexValuesF64` own complete complex results. Their
 constructors accept equal-length real and imaginary planes, including empty
@@ -89,8 +94,13 @@ and 1e-15 for f64. Tests also check repeated reuse, invalid shapes, immutable
 inputs, result/plan lifetimes, original frequency ordering, independent getters,
 and exact arbitrary scalar bits including quiet/signaling NaN payloads,
 infinities, signed zero and subnormals. Window checks pass on the new artifact.
-Eight native and three C-interface Fourier regression tests pass. WASM Clippy
-and Rustdoc with warnings denied pass; an actual feature-disabled module
+Eight native and three C-interface Fourier regression tests pass. The full
+original Node/browser corpus also passes after testing invalid
+direction codes 2, 9 and 0xffffffff on both reusable methods, checking queries
+and successful transforms on the same plan after each error. Both one-shot
+functions reject the same invalid codes. Filterbank Node checks pass on this
+artifact. This correction changes no native algorithms or comparison bounds.
+WASM Clippy and Rustdoc with warnings denied pass; an actual feature-disabled module
 contains none of the six functions or four owner classes.
 
 ## DCT and phase operations

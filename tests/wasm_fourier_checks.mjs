@@ -81,6 +81,15 @@ export async function verifyFourierBindings(api, loadFixture) {
         for (const plan of plans.values()) plan.free();
         for (const invalid of [0, 3, 0xffffffff]) throws(() => new Plan(invalid));
         const plan = new Plan(4), real = new ArrayType([1, 2, 3, 4]);
+        for (const direction of [2, 9, 0xffffffff]) {
+            throws(() => plan.transform(real, null, direction));
+            assert(plan.length === 4 && !plan.is_empty(), 'transform direction error releases owner borrow');
+            throws(() => plan.process(new ArrayType(8), direction));
+            assert(plan.length === 4 && !plan.is_empty(), 'process direction error releases owner borrow');
+            const recovered = plan.transform(real, null, api.FftDirection.Forward);
+            assert(recovered.real[0] === 10, 'same plan reusable after invalid direction'); recovered.free();
+            throws(() => fft(4, real, null, direction));
+        }
         throws(() => plan.transform(new ArrayType(3), null, 0));
         throws(() => plan.transform(null, new ArrayType(5), 1));
         throws(() => plan.process(new ArrayType(7), 0));

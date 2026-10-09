@@ -18,6 +18,15 @@ impl From<FftDirection> for Direction {
     }
 }
 
+// Validate within the method's Result path so errors release the owner guard.
+fn fft_direction(value: u32) -> Result<Direction, JsValue> {
+    match value {
+        0 => Ok(FftDirection::Forward.into()),
+        1 => Ok(FftDirection::Inverse.into()),
+        _ => Err(JsValue::from_str("invalid FFT direction")),
+    }
+}
+
 macro_rules! fourier_api {
     ($scalar:ty, $values:ident, $plan:ident, $fft:ident, $idft:ident, $shift:ident) => {
         /// Complete independently owned complex result. Numeric getters copy
@@ -99,10 +108,14 @@ macro_rules! fourier_api {
                 &mut self,
                 real: Option<Vec<$scalar>>,
                 imaginary: Option<Vec<$scalar>>,
-                direction: FftDirection,
+                direction: u32,
             ) -> Result<$values, JsValue> {
                 self.plan
-                    .transform(real.as_deref(), imaginary.as_deref(), direction.into())
+                    .transform(
+                        real.as_deref(),
+                        imaginary.as_deref(),
+                        fft_direction(direction)?,
+                    )
                     .map(|values| $values { values })
                     .map_err(|error| JsValue::from_str(error.0))
             }
@@ -112,8 +125,9 @@ macro_rules! fourier_api {
             pub fn process(
                 &mut self,
                 interleaved: &[$scalar],
-                direction: FftDirection,
+                direction: u32,
             ) -> Result<$values, JsValue> {
+                let direction = fft_direction(direction)?;
                 if interleaved.len() != self.plan.len() * 2 {
                     return Err(JsValue::from_str(
                         "interleaved FFT input length differs from the plan",
@@ -129,7 +143,7 @@ macro_rules! fourier_api {
                         .map(|pair| Complex::new(pair[0], pair[1])),
                 );
                 self.plan
-                    .process(&mut values, direction.into())
+                    .process(&mut values, direction)
                     .map_err(|error| JsValue::from_str(error.0))?;
                 Ok($values { values })
             }
@@ -141,7 +155,7 @@ macro_rules! fourier_api {
             length: usize,
             real: Option<Vec<$scalar>>,
             imaginary: Option<Vec<$scalar>>,
-            direction: FftDirection,
+            direction: u32,
         ) -> Result<$values, JsValue> {
             let mut plan = $plan::new(length)?;
             plan.transform(real, imaginary, direction)
