@@ -1611,6 +1611,66 @@ eight functions and four owners. Four mappings bring coverage to 319
 implemented and 13 pending. Native/C code, dependencies, fixtures and previous
 bindings remain unchanged. Other families and combined acceptance remain.
 
+## Complete random sampling
+
+Six `random_*_f32/f64` functions expose `uniform_from_draw`,
+`white_from_draw` and `normal_from_draws`. Inclusive draws and maximum are
+u32, restricted to the native grid maximum 1 through i32::MAX. Gaussian
+variance is variance, not standard deviation. `RandomPolicy.Stable=0` and
+`Legacy=1` retain both native arithmetic policies; numeric codes fail inside
+Result. Uniform/white arithmetic and Legacy Gaussian transforms retain their
+selected-scalar division and source approximation behavior.
+
+`RandomWordSource.from_seed(seed)` owns the same explicitly seeded ChaCha8
+algorithm as the native Generator. Seeds must contain 32 bytes. Sources expose
+`next_u32()`, BigInt `next_u64()`, `fill_bytes(count)`, copied `seed()`, BigInt
+`stream()`, `set_stream(stream)`, `word_position()` and
+`set_word_position(bytes)`. Word positions use complete 16-byte little-endian
+u128 storage; the generator itself defines its 68-bit period wrap.
+`cloned()` preserves independent ChaCha state.
+
+`RandomWordSource(callback)` accepts a caller-owned JavaScript function
+returning an underlying u32 word, not an already sampled grid draw.
+`callback()` returns that function unchanged (or undefined for ChaCha).
+Custom sources use the native rand inclusive range sampler. Their u64 words
+place the first u32 in the low half; byte fills use little-endian words.
+Cloning an external source shares the caller's function state, as a cloned
+function handle does. ChaCha-specific state methods fail for external sources.
+Thrown callback values retain identity; non-integer, non-finite and nonnumeric
+returns are rejected. After the first callback failure no further callback
+is invoked for that operation. Placeholder words only unwind the infallible
+native RNG interface, and its result is discarded before returning the error.
+
+`RandomSampler(source, maximum)` consumes the source and preserves all
+native Sampler operations: maximum, draw, uniform_f32/f64, normal_f32/f64,
+normal_with_f32/f64 and white_noise_f32/f64. `from_seed(seed)` selects the
+native default grid. `cloned()` preserves stream state and `into_rng()`
+consumes the sampler to return the complete underlying word source, retaining
+external callback identity. Both owners provide generated `free()`.
+Internal fallible borrowing makes reentrant sampling a normal Result error;
+after a caught callback/reentrant error the owner is reusable and can be freed.
+Invalid Gaussian/noise parameters and allocations consume no draws.
+Zero variance consumes two grid draws; zero-amplitude noise still consumes
+one per sample. Stable positive-variance sampling retains the 128-attempt
+zero-first retry limit, while Legacy consumes exactly two draws.
+
+Actual Node.js and browser tests consume both complete RND1 corpora: 256
+cases and 1,024 exact C transform comparisons. Independent ChaCha8 tests
+compare 140 words across zero/nonzero keys, streams, block boundaries and
+68-bit wrap. Tests also cover source bytes/u64 order, state restoration,
+consuming ownership, clone/snapshot lifetime, external source identity,
+sampling consumption, zero-source retries, callback exception identity,
+invalid words, range rejection recovery and reentrant error recovery/free.
+Independent analytic/domain tests retain native bounds. The 200,000-sample
+uniform/Gaussian moment tests use the unchanged native acceptance criteria.
+
+Run `node tests/wasm_random_node.cjs ./pkg-node` or serve
+`tests/wasm_random_browser.html`. Twelve native/C tests pass, along with
+WASM Clippy/Rustdoc warnings denied and actual feature-disabled absence of
+six functions/two owners. Three mappings bring coverage to 322 implemented
+and 10 pending. Native/C algorithms, dependencies, fixtures and previous
+bindings remain unchanged. Remaining families and combined acceptance remain.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
@@ -1628,3 +1688,5 @@ bindings remain unchanged. Other families and combined acceptance remain.
 - [Version-matched CLI installation](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/wasm-bindgen-test/usage.md)
 - [Release library manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/Cargo.toml)
 - [Release CLI manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/crates/cli/Cargo.toml)
+- [rand 0.10 RNG trait migration](https://rust-random.github.io/book/update-0.10.html)
+- [rand_chacha 0.10 ChaCha8 state](https://docs.rs/rand_chacha/0.10.0/rand_chacha/struct.ChaCha8Rng.html)
