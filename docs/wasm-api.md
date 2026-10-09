@@ -904,6 +904,41 @@ the feature. Two original mappings bring coverage to 242 implemented and
 bindings remain unchanged. Full remaining DSP coverage and combined
 three-crate acceptance are still required.
 
+## Complete centered sinusoid synthesis
+
+`sinusoid_f32/f64(tone, sample_rate, length)` takes an owned
+`SinusoidF32/F64` configuration. All three native fields, `frequency_hz`,
+`amplitude` and `phase_radians`, have getters and setters. Constructors,
+`from_values`, `set_values`, `values`, `cloned()` and generated `free()` cover
+complete native storage. Three-element typed arrays preserve arbitrary field
+bits and snapshots survive owner release. Invalid replacement shapes are
+atomic. Arbitrary configuration storage is separate from synthesis validation.
+
+`sinusoids_f32/f64(frequencies, amplitudes, phases, sample_rate, length)` accepts
+three equal-length arrays and sums tones in input order. Both functions retain
+centered phase at floor(length/2), selected-scalar recurrence and the native
+single-tone amplitude correction. Negative frequencies and amplitudes are
+valid. Empty tone lists produce silence; zero and one sample lengths are safe.
+Lengths/rates use the unsigned 32-bit ABI and native legacy limits. Nonfinite
+parameters, invalid dimensions/rates and overflowing step/phase evaluations
+return errors. Native IEEE overflow during output summation remains retained.
+
+Actual Node.js and browser checks consume both complete SYN1 C corpora,
+96 cases and 21,492 comparisons. Maximum amplitude-normalized C error is zero
+for binary32 and 3.1086244689504383e-15 for binary64, within unchanged native
+bounds 2e-7 and 2e-14. Independent binary64 centered cosine checks retain
+1e-12; binary32 initial-sample checks use selected-scalar phase arithmetic.
+Additional checks cover negative parameters, input-order sums, source
+immutability, short/empty outputs, invalid shapes/domains, owner recovery,
+all mutable fields and arbitrary full-bit storage/clone/snapshot lifetimes.
+Run `node tests/wasm_synthesis_node.cjs ./pkg-node` or serve
+`tests/wasm_synthesis_browser.html`. Ten related native/C tests pass, as do
+WASM Clippy and Rustdoc with warnings denied. Four functions and two owners
+are absent without the feature. Three original mappings bring coverage to
+245 implemented and 87 pending public mappings. Native/C source, fixtures,
+dependencies and previous bindings remain unchanged. Remaining DSP features
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
