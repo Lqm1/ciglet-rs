@@ -51,7 +51,7 @@ added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
 nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
-seven; frame/extrema adds seven. Other DSP families and both remaining crates still
+seven; frame/extrema adds seven and filterbanks add twelve. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -467,6 +467,53 @@ Seven upstream mappings bring coverage to 99 implemented mappings; 233 public
 mappings remain pending. Native source, C interfaces, dependencies, existing
 WASM families and comparison fixtures remain unchanged.
 
+## Filterbanks
+
+`FilterBankF32` and `FilterBankF64` expose every native bank operation. Their
+constructors create custom zero-filled banks; `mel`, `mel_default` and `plp`
+construct generated banks. `MelOptionsF32` and `MelOptionsF64` expose all four
+mutable native fields, `minimum_hz`, `maximum_hz`, `scale` and
+`minimum_width_hz`. Mel construction copies these fields; the configuration
+owner can be reused, changed or freed independently of the resulting bank.
+
+The bank exposes `bins`, `channels`, `nyquist_hz`, `set_nyquist_hz`, `response`,
+`support`, `set_channel`, `cloned`, `apply`, `apply_spectrogram` and
+`apply_frames`, plus generated `free()`. Responses copy complete scalar storage
+into independent typed arrays; supports return independent `Uint32Array`
+start/end pairs. Missing channels return `undefined`. Mutation retains native
+atomic validation, signed weights and nonfinite inactive values. Metadata is
+inert and may be nonfinite. Clones retain independent responses and supports.
+
+Compression accepts the numeric values `FilterBankCompression.Logarithmic`
+and `FilterBankCompression.Plp`. Values are checked within the Rust method and
+invalid values return ordinary errors, keeping the owner usable. Using direct
+enum ABI conversion was observed to bypass borrowed-owner cleanup after an
+invalid value on the pinned backend. The numeric ABI uses unsigned 32-bit
+integers; pass integer compression codes and dimension/support/frame counts
+within that range. Native shape, support and overflow checks remain enforced.
+
+All three application methods retain frame-major output and native arithmetic.
+Explicit frame counts support zero-bin banks; inferred counts reject zero bins.
+Zero-channel banks return empty outputs, and inactive input bins are uninspected.
+Returned arrays and getter snapshots outlive both original and cloned owners.
+
+Actual Node.js and browser checks pass all 144 generated and 66 custom original
+C cases with 2,044,726 comparisons. Generated responses retain normalized bounds
+2e-7 for f32 and 2e-14 for f64, and outputs retain 2e-6 and 2e-13. Custom responses
+compare exact values; custom outputs retain 2e-7 and 2e-15. Additional checks
+cover all mutable options, default/full Mel agreement, signed weights, empty
+dimensions/supports, arbitrary inactive quiet/signaling NaN payloads, infinities,
+signed zero and subnormal bits, independent clones/getters/results, immutable
+sources, atomic errors, frame overflow and reuse after invalid compression.
+Entry points are `node tests/wasm_filterbank_node.cjs ./pkg-node` and
+`tests/wasm_filterbank_browser.html`, sharing `wasm_filterbank_checks.mjs`.
+
+Twelve related native/C-interface tests, WASM Clippy and Rustdoc with warnings
+denied pass. All four owner classes are absent from an actual feature-disabled
+module. Twelve upstream mappings bring coverage to 111 implemented mappings;
+221 public mappings remain pending. Native source, C interfaces, dependencies,
+existing WASM families and comparison fixtures remain unchanged.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
@@ -475,6 +522,8 @@ WASM families and comparison fixtures remain unchanged.
 - [JavaScript callbacks](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/reference/receiving-js-closures-in-rust.md)
 - [Deployment targets](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html)
 - [Exported owner classes](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/exported-rust-types.html)
+- [Returned Result errors](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/result.html)
+- [Exception destructor behavior](https://docs.rs/wasm-bindgen/0.2.129/wasm_bindgen/fn.throw_str.html)
 - [Rust 1.94 atan2 precision](https://doc.rust-lang.org/1.94.0/std/primitive.f64.html#method.atan2)
 - [Version-matched CLI installation](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/wasm-bindgen-test/usage.md)
 - [Release library manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/Cargo.toml)
