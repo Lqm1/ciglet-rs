@@ -54,7 +54,7 @@ nine; ordering adds eight, median/smoothing adds five and frequency/distance add
 seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
 adds thirty-six; hyperbolic scalar and lane kernels add sixteen and trigonometric
 scalar and lane kernels add twenty; special scalar and lane kernels add
-twenty-eight. Other DSP families and both remaining crates still
+twenty-eight; basic lane kernels add ten. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -577,7 +577,7 @@ upstream mappings bring coverage to 147 implemented mappings; 185 public
 mappings remain pending at this checkpoint. The following hyperbolic section
 completes that submodule, and the later trigonometric section completes its
 scalar and lane submodules. The special section completes that submodule;
-other basic lane kernels remain pending.
+the basic lane section completes the remaining lane kernels and conversions.
 Native source, C interfaces, dependencies, fixtures and prior bindings are
 unchanged.
 
@@ -699,11 +699,58 @@ coverage to 211 implemented mappings; 121 public mappings remain pending.
 Native source, C interfaces, dependencies, reference fixtures and existing
 bindings remain unchanged.
 
+## Basic lane operations and conversions
+
+Sixteen functions complete the native root lane API. The ten approximation
+functions use the `lanes_` prefix with native names `exponential2`,
+`exponential2_fast`, `exponential`, `exponential_fast`, `logarithm2`,
+`logarithm2_fast`, `logarithm`, `logarithm_fast`, `power` and `power_fast`.
+Every numeric buffer contains exactly four lanes. Power requires four bases
+and four independently selected exponents. A wrong shape or invalid lane
+rejects the entire call, preserving all input buffers. Results own independent
+`Float32Array` storage; all native kernels and bounds remain unchanged.
+
+`lanes_to_integers` returns `Int32Array` using the original truncation and
+SSE2 indefinite i32::MIN for nonfinite or out-of-range inputs.
+`lanes_from_integers` rounds `Int32Array` values to binary32 with nearest-even
+conversion. `lanes_to_bits` and `lanes_from_bits` exchange `Float32Array`
+and `Uint32Array` without numeric conversion, retaining full NaN payloads and
+signed zeros. `lanes_absolute` clears only the sign bit. All five buffer
+conversion operations enforce exactly four lanes and copy independent storage.
+
+`lanes_from_integer64(first, second)` accepts two signed 64-bit JavaScript
+BigInts and returns `Int32Array` in first-low, first-high, second-low,
+second-high word order. BigInt avoids Number's integer precision limit. Use
+values in the i64 range; the documented wasm-bindgen ABI wraps values outside
+that range. Floats and Integers lane aliases are represented by complete
+typed-array storage with every index accessible; no hidden SIMD alignment is
+required. Floating-point exception flags remain outside the native portable API.
+
+Actual Node.js and browser checks pass all 80 original SSE2 cases, with 1,532
+exact comparisons. All ten original kernels and three source conversion
+operations are covered. Additional checks verify both independently selected
+power inputs, scalar/kernel agreement, every invalid lane position and late
+error immutability, wrong shapes, independent output storage and reuse after
+errors. Full quiet/signaling NaN payload round trips, sign-only absolute,
+conversion indefinite values, truncation, nearest-even integer boundaries and
+signed BigInt min/max and low/high word order pass independently.
+
+Runtime entry points are `node tests/wasm_lanes_node.cjs ./pkg-node` and
+`tests/wasm_lanes_browser.html`, sharing `wasm_lanes_checks.mjs`. Nine related
+native/C-interface tests, WASM Clippy and Rustdoc with warnings denied pass.
+All sixteen functions are absent without the feature. Special-function Node
+checks also pass on this artifact. Ten upstream mappings bring coverage to
+221 implemented mappings; 111 public mappings remain pending. All native
+approximation submodules are now exposed; other DSP families and final combined
+acceptance remain required. Native source, C interfaces, dependencies, fixtures
+and previously implemented bindings remain unchanged.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
 - [Mutable numeric slices](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/number-slices.html)
 - [Optional numeric values](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/numbers.html)
+- [Integer BigInt arguments](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/numbers.html#bigint-to-u64-i64-u128-and-i128)
 - [JavaScript callbacks](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/reference/receiving-js-closures-in-rust.md)
 - [Deployment targets](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html)
 - [Exported owner classes](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/exported-rust-types.html)
