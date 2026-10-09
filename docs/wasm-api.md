@@ -1327,6 +1327,65 @@ to 285 implemented and 47 pending public mappings. Native/C source, fixtures,
 dependencies and prior bindings remain unchanged. Remaining DSP coverage and
 combined three-crate acceptance are still required.
 
+## Complete column-major matrices and LU
+
+`MatrixF32/F64(rows, columns, values)` accepts finite column-major storage:
+element `(row, column)` is at `row + column * rows`. Static `zeros(rows,
+columns)` and `identity(size)` retain native empty-shape and bounded-dimension
+behavior. Owners expose `rows`, `columns`, `as_slice()`, optional `get(row,
+column)`, `apply_row_swaps(partners)`, `pivot_rows()`, `multiply(right)`,
+`multiply_vector(values)`, `cloned()`, consuming `into_column_major()` and
+generated `free()`. Copied arrays and cloned owners have independent storage.
+Out-of-bounds cells return undefined. Consumed owners cannot be reused.
+
+Row partners use Uint32Array and describe successive swaps `(i, partners[i])`,
+in listed order. Complete validation precedes mutation. Preliminary pivoting
+retains the source square-matrix column scan, first-largest tie handling and
+ordered row exchanges. Rectangular row exchange retains the corrected native
+column-major stride. Multiplication retains source column/inner/row arithmetic
+order and rejects nonfinite products.
+
+`LuF32/F64.factor(matrix)` consumes a matrix and performs native partial
+pivoting during elimination. `factor_unpivoted(matrix)` consumes already
+pivoted input with the source exact accumulation order. Consumption also
+applies to failing factorization, matching native ownership. Clone the matrix
+first when it must be retained. Factors expose `packed()` as an independent
+complete Matrix owner, `row_swaps()` as copied Uint32Array, `solve(right)`,
+`cloned()` and generated `free()`. Packed L has an implicit unit diagonal;
+U includes the diagonal. Solving applies ordered row swaps and native forward
+and backward substitution. Singular/overflowing arithmetic and wrong shapes
+return ordinary errors; existing immutable source owners remain reusable.
+
+`matrix_apply_swaps_f32/f64(values, partners)` mutates the caller's typed
+array exactly as the native generic vector helper does, including arbitrary
+IEEE payloads. The same helper is available for u8/u16/u32/u64/i8/i16/i32/i64
+typed arrays; 64-bit integers use BigUint64Array/BigInt64Array. Invalid plans
+leave every byte unchanged. Matrix dimensions and indices use the WASM32
+unsigned range, with native i32 dimension/product limits retained.
+
+Actual Node.js and browser checks fully consume all four original/corrected
+MAT1 corpora: 216 matrix products, 34 permutations, 40 solves and 16,298
+comparisons. Source products, swaps, preliminary pivots, unpivoted packed LU
+and substitution match exactly with the unchanged native equality criterion.
+Robust solve residual maxima are 1.5354756289308175e-7 for binary32 and
+2.656234526205982e-16 for binary64, within unchanged native normalized bounds
+2e-6/1e-13. Independent late-pivot solution and `P*A=L*U` checks retain native
+analytic bounds. No algorithm or numerical criterion changed.
+
+Checks also cover rectangular identity/vector products, all lookups, consuming
+storage, clone/snapshot lifetimes, complete packed factors and swaps, source
+immutability, empty products/factors, singular inputs, invalid dimensions and
+plans, overflow, post-error recovery, signed zeros and arbitrary permutation
+payloads. All eight integer permutation widths retain complete stored bits.
+
+Run `node tests/wasm_matrix_node.cjs ./pkg-node` or serve
+`tests/wasm_matrix_browser.html`. Fifteen related native/C tests pass, as do
+WASM Clippy and Rustdoc with warnings denied. All ten vector functions and four
+matrix/LU owners are absent without the feature. Fifteen original mappings
+bring coverage to 300 implemented and 32 pending public mappings. Native/C
+source, fixtures, dependencies and previous bindings remain unchanged.
+Remaining DSP coverage and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
