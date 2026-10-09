@@ -875,6 +875,35 @@ are absent without the feature. Two original mappings bring coverage to
 fixtures, dependencies and prior bindings remain unchanged. Full remaining
 DSP coverage and combined three-crate acceptance are still required.
 
+## Complete bracketed root search
+
+`root_find_f32/f64(callback, start, end)` exposes the complete native search.
+The callback receives a Number rounded to the selected scalar precision and
+must return a Number, likewise converted to that precision. Captured state
+replaces the original C context pointer. Exceptions preserve the original
+JavaScript value, including thrown null and undefined. Non-number, nonfinite
+or binary32-overflow callback results produce errors. Rust Result handling
+retains recovery after callbacks fail; independent nested searches are valid.
+
+Native ordered-bound validation occurs before callbacks. Both endpoints are
+evaluated in order even when the first is a root. Endpoint roots, signed zero,
+the nonbracketing midpoint fallback, overflow-safe midpoint evaluation,
+absolute residual tolerance and native iteration limit remain unchanged.
+
+Actual Node.js and browser checks consume both complete ROT1 corpora,
+50 original C cases and 967 comparisons, with exact root equality and
+selected-precision callback arguments. Polynomial, cosine, exponential and
+linear callbacks retain their native scalar expression order. Captured state,
+endpoint call order, fallback, invalid bounds/results, late failures, exception
+identity, recovery and nested searches also pass. Run
+`node tests/wasm_root_node.cjs ./pkg-node` or serve
+`tests/wasm_root_browser.html`. Nine related native/C tests pass, as do WASM
+Clippy and Rustdoc with warnings denied. Both functions are absent without
+the feature. Two original mappings bring coverage to 242 implemented and
+90 pending public mappings. Native/C source, fixtures, dependencies and prior
+bindings remain unchanged. Full remaining DSP coverage and combined
+three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
