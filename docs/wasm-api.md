@@ -53,7 +53,8 @@ seven; resampling adds two, filtering adds eight and statistical arithmetic adds
 nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
 seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
 adds thirty-six; hyperbolic scalar and lane kernels add sixteen and trigonometric
-scalar and lane kernels add twenty. Other DSP families and both remaining crates still
+scalar and lane kernels add twenty; special scalar and lane kernels add
+twenty-eight. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -575,7 +576,8 @@ pass; all thirty-two functions are absent without the feature. Thirty-six
 upstream mappings bring coverage to 147 implemented mappings; 185 public
 mappings remain pending at this checkpoint. The following hyperbolic section
 completes that submodule, and the later trigonometric section completes its
-scalar and lane submodules. Other basic lane and special kernels remain pending.
+scalar and lane submodules. The special section completes that submodule;
+other basic lane kernels remain pending.
 Native source, C interfaces, dependencies, fixtures and prior bindings are
 unchanged.
 
@@ -652,6 +654,50 @@ without the feature. Hyperbolic Node checks also pass on this artifact. Twenty
 upstream mappings bring coverage to 183 implemented mappings; 149 public
 mappings remain pending. Native source, C interfaces, dependencies, comparison
 fixtures and previously implemented bindings remain unchanged.
+
+## Special scalar and lane kernels
+
+Twenty-eight functions expose every public operation of the native scalar and
+lane special-function modules. The `special_` prefix names the scalar functions
+`complementary_error`, `complementary_error_fast`, `error`, `error_fast`,
+`inverse_error`, `inverse_error_fast`, `log_gamma`, `log_gamma_fast`, `digamma`,
+`digamma_fast`, `lambert_w`, `lambert_w_fast`, `lambert_w_exp` and
+`lambert_w_exp_fast`. Appending `_lanes` selects each corresponding four-lane
+function. These native APIs use binary32; approximation variants are separate
+functions rather than precision modes.
+
+Lane inputs must have exactly four values. Results own independent
+`Float32Array` storage; native domain checks apply to every lane, and any error
+rejects the entire call without changing the input. Source-defined negative
+intervals for log-gamma and digamma remain available; they are not replaced by
+a blanket positive-input requirement. Inverse error, gamma poles and principal
+Lambert W retain native validation. No mathematical domain is silently saturated.
+
+Lambert W of exp(value) preserves ordinary positive finite source outputs and
+retains the existing native correction only when the original refinement is
+nonpositive or nonfinite. Extreme positive values avoid constructing their
+exponential; underflowed results round to positive zero. This binding adds no
+new numerical correction and changes no previous criterion.
+
+Actual Node.js and browser checks pass 232 original scalar C cases and 67
+original SSE2 lane cases, with 613 exact comparisons and 19 corrected-reference
+checks. All fourteen kernels in both interfaces are covered. Original valid
+outputs compare exact values. Invalid scalar Lambert source outputs retain the
+existing positive-result requirement; invalid vector source outputs compare
+the independent corrected-root fixture within its existing one-ULP bound, with
+underflow zero exact. Additional checks cover every lane's nonfinite/domain
+errors, invalid shapes, unchanged source bits after late failure, scalar/lane
+agreement, allowed negative intervals, extreme corrected inputs, independent
+arrays and reuse after errors.
+
+Runtime entry points are `node tests/wasm_special_node.cjs ./pkg-node` and
+`tests/wasm_special_browser.html`, sharing `wasm_special_checks.mjs`. Ten related
+native/C-interface tests, WASM Clippy and Rustdoc with warnings denied pass.
+All twenty-eight functions are absent without the feature. Trigonometric Node
+checks also pass on this artifact. Twenty-eight upstream mappings bring
+coverage to 211 implemented mappings; 121 public mappings remain pending.
+Native source, C interfaces, dependencies, reference fixtures and existing
+bindings remain unchanged.
 
 ## Primary references
 
