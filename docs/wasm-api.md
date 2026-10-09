@@ -1671,6 +1671,49 @@ six functions/two owners. Three mappings bring coverage to 322 implemented
 and 10 pending. Native/C algorithms, dependencies, fixtures and previous
 bindings remain unchanged. Remaining families and combined acceptance remain.
 
+## Complete plotting command streams
+
+`PlotCommands(bytes)` owns the complete native `Commands<Vec<u8>>` stream.
+`line_f32/f64(x, y, color_code)` accepts optional x coordinates; undefined or
+null selects selected-scalar indices. Extra x values are ignored and a short
+x buffer fails before any output. Color codes are `PlotColor.Blue=0`, Red=1,
+Green=2, Black=3, Cyan=4 and Yellow=5. Invalid codes fail inside Rust Result.
+`plot_color_from_character(string)` exposes native `Color::from(char)`:
+lowercase r/g/k/c/y select their colors and every other Unicode scalar selects
+blue. Empty or multiple-character input is rejected.
+
+`image_f32/f64(rows, columns, values)` accepts the full native row-major
+matrix, including zero dimensions. Shape, arithmetic overflow and native
+dimension limits are checked before writing. All numeric and nonfinite
+formatting remains in the native command implementation, retaining signed
+zero, signed NaN, infinities, six-decimal coordinates and C-style scientific
+image exponents. Input arrays remain unchanged.
+
+Mutable `bytes` getter/setter provides complete arbitrary writer storage;
+`append(bytes)` accepts raw configuration or other Gnuplot commands, including
+non-UTF8 bytes. `cloned()` creates an independent stream, consuming
+`into_inner()` returns its bytes, and generated `free()` releases the owner.
+Snapshots outlive owners. These byte commands can be passed to a host renderer.
+Native Figure process lifecycle (open/open_with/spawn, child ID, close/status,
+captured output and Drop) remains available through native Rust and C ABI;
+browser/Node WASM does not create OS child processes. Lifecycle mappings are
+still pending explicit binding inventory classification, not claimed here as
+implemented WASM process APIs.
+
+Actual Node.js and browser tests consume both complete original POSIX C
+transcripts, 16 line and six image commands, with all 6,980 bytes exact.
+Checks cover every color, optional/explicit/extra x, empty lines and matrices,
+nonfinite/signed-zero/extreme values, raw stream replacement/append, invalid
+shape/dimension/color atomicity, post-error reuse, consuming ownership, cloning
+and snapshot lifetime. Twenty-one related native/C tests pass with real
+Gnuplot required, including actual SVG generation, broken pipes, exit status,
+process cleanup and concurrent output draining. WASM Clippy/Rustdoc deny
+warnings; feature-disabled checks confirm absence of the color function and
+command owner. Run `node tests/wasm_plotting_node.cjs ./pkg-node` or serve
+`tests/wasm_plotting_browser.html`. Two command mappings bring coverage to
+324 implemented and eight pending. Native/C code, dependencies, fixtures and
+previous bindings remain unchanged. Combined acceptance remains required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
