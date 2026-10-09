@@ -64,3 +64,9 @@ helpers, every macro/build configuration or final native platform execution.
 Their existing mappings still require the remaining field/source acceptance
 review and the final five-target and combined three-package gates. Full original
 functionality remains the objective; inventory counts are not completion claims.
+
+The complementary native named-field set is now recorded in
+native-value-field-bindings.csv and native-value-field-audit.md. Its checker
+compares all public native module sources with twenty types and sixty-eight
+fields, including caller-owned C result representations and immutable Wave
+owner boundaries. Final execution gates remain separate.
