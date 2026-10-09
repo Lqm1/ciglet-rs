@@ -939,6 +939,39 @@ are absent without the feature. Three original mappings bring coverage to
 dependencies and previous bindings remain unchanged. Remaining DSP features
 and combined three-crate acceptance are still required.
 
+## Complete band-feature cepstra
+
+`BandCepstralOptions(order, include_dc)` exposes both independently mutable
+native fields, `cloned()`, `coefficient_count(bands)` and generated `free()`.
+Order and band counts use the unsigned 32-bit WebAssembly ABI. The native
+order clamp remains applied; zero bands and bands outside the legacy signed
+range are errors. Failed computations release the options borrow for reuse.
+
+`band_to_cepstrum_f32/f64(bands, options)` returns the requested prefix.
+`band_to_cepstrum_legacy_f32/f64` returns the complete original band-count
+buffer, including untouched DCT suffix values. Both retain upstream scaling
+and optional DC placement after the non-DC coefficients. Signed log-band
+features are accepted without applying an additional logarithm.
+`band_spectrogram_to_cepstra_f32/f64(features, bands, options)` processes
+flattened frame-major features. Empty frame sets and zero coefficient counts
+retain native behavior; invalid shapes and nonfinite later frames are errors.
+All returned arrays own their storage independently of inputs and options.
+
+Actual Node.js and browser checks consume both complete CEP1 C corpora,
+96 cases and 15,592 comparisons, with zero measured C difference. Unchanged
+native normalized bounds remain 1e-7 for binary32 and 1e-15 for binary64.
+Checks include all original order/DC variants, full suffix and prefix,
+frame layout, mutable/maximal/zero order, singleton and empty results,
+shape/domain/late errors, input immutability and options reuse. A complete
+existing Mel filterbank to floored log-band to cepstrum pipeline also passes.
+Run `node tests/wasm_cepstrum_node.cjs ./pkg-node` or serve
+`tests/wasm_cepstrum_browser.html`. Seven related native/C tests pass, as do
+WASM Clippy and Rustdoc with warnings denied. All six functions and the options
+owner are absent without the feature. Two original mappings bring coverage
+to 247 implemented and 85 pending public mappings. Native/C source, fixtures,
+dependencies and prior bindings remain unchanged. Full remaining DSP coverage
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
