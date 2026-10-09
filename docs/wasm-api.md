@@ -50,7 +50,7 @@ Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
-nine; ordering adds eight. Other DSP families and both remaining crates still
+nine; ordering adds eight and median/smoothing adds five. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -355,6 +355,45 @@ functions and both classes are absent from an actual feature-disabled module.
 Eight mappings bring coverage to 80 implemented mappings; 252 public mappings
 remain pending. Native source, C interfaces, dependencies and fixtures remain
 unchanged.
+
+## Median filtering and smoothing
+
+Ten functions expose `median_filter`, `moving_average`, `moving_average_with`,
+`moving_rms` and `moving_rms_with` in both precisions. `SmoothingPolicy` selects
+Stable or Legacy for average/RMS computations. Every call delegates to the
+unchanged native implementation and returns independently owned typed arrays.
+
+Median filtering accepts finite samples and retains the original growing-prefix
+and shrinking-suffix endpoint windows. Positive integer widths are bounded;
+nonempty signals require width no greater than signal length. Empty signals
+return empty after validating the width. Finite even-window medians retain the
+overflow-safe averaging correction.
+
+Stable averages use compensated sample-cell windows with fractional half-widths;
+Stable RMS uses scaled squares and integer half-widths. Endpoints are replicated.
+Zero average width returns an unchanged copy, and zero RMS width returns
+absolute values. Positive tiny average widths retain the native adjacent-cell
+limit. Legacy retains original cumulative-grid or square-average-root arithmetic,
+including its validated overflow errors. Integer widths must be unsigned 32-bit
+values within the native legacy bounds.
+
+Actual Node.js and browser tests pass 192 original C median cases, 120 original
+C Legacy smoothing cases and 660 independent high-precision integral-moment
+cases. The 77,116 comparisons include complete source immutability and exact
+default/explicit Stable agreement. Original median/Legacy comparisons remain
+exact. Stable relative bounds remain 2e-7 for f32 and 4e-15 for f64, with only
+the existing one-quantum allowance for subnormal RMS reference values. Additional
+checks cover endpoint rules, fractional DC preservation, tiny widths, signed
+zero, empty signals, finite extremes, invalid/nonfinite widths or inputs,
+Legacy overflow, invalid policies, independent outputs and reuse after errors.
+Entry points are `node tests/wasm_smoothing_node.cjs ./pkg-node` and
+`tests/wasm_smoothing_browser.html`, sharing `wasm_smoothing_checks.mjs`.
+
+Seventeen related native/C-interface tests, WASM Clippy and Rustdoc with warnings
+denied pass. All ten functions are absent from an actual feature-disabled module.
+Five upstream mappings bring coverage to 85 implemented mappings; 247 public
+mappings remain pending. Native/C implementations, dependencies, existing WASM
+families and comparison fixtures remain unchanged.
 
 ## Primary references
 
