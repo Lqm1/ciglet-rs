@@ -51,7 +51,8 @@ added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
 nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
-seven; frame/extrema adds seven and filterbanks add twelve. Other DSP families and both remaining crates still
+seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
+adds thirty-six. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -524,6 +525,58 @@ module. Twelve upstream mappings bring coverage to 111 implemented mappings;
 221 public mappings remain pending. Native source, C interfaces, dependencies,
 existing WASM families and comparison fixtures remain unchanged.
 
+## Scalar approximation and comparisons
+
+Thirty-two functions cover every public root `approximation` operation and
+both scalar comparison operations and constants. `ApproximationPrecision`
+selects Fast, Approximate or Exact. `approximation_sine_f32/f64`,
+`approximation_cosine_f32/f64`, `approximation_atan2_f32/f64`,
+`approximation_logarithm_f32/f64` and `approximation_exponential_f32/f64`
+expose every native precision mode. Both `approximation_atan2_fast_f32/f64`
+convenience functions are included. Exact evaluates native double math before
+conversion; the approximation stages retain native binary32 rounding, even
+when returned through a binary64 interface.
+
+The binary32 convenience functions use the `approximation_` prefix followed
+by the native names: `sine`, `sine_fast`, `cosine`, `cosine_fast`, `logarithm2`,
+`logarithm2_fast`, `logarithm`, `logarithm_fast`, `exponential2`,
+`exponential2_fast`, `exponential`, `exponential_fast`, `power` and
+`power_fast`. All checks and full-range reductions delegate native kernels.
+Original underflow clamps, signed-zero branch behavior and range errors remain.
+
+`scalar_minimum_f32/f64` and `scalar_maximum_f32/f64` retain the second operand
+on ties and unordered comparisons. `legacy_epsilon()` returns 1e-15 and
+`legacy_infinity_sentinel()` returns finite 1e15. Scalar NaN classification is
+preserved; payload transport through JavaScript Number is not promised.
+
+Actual Node.js and browser verification passes 128 original trig/atan2 cases,
+30 original log/exp cases, 48 frequency-tail approximation cases and 456
+bundled scalar cases, with 2,516 comparisons. All fourteen bundled root
+kernels have independent original C coverage, including scalar results from
+the original SSE2 corpus. These checks do not declare the lane bindings done.
+Approximation modes, scalar comparisons and frequency-tail outputs compare
+exact values. Existing host math checks retain their one-ULP and normalized
+machine-epsilon bounds. Binary64 Exact logarithm has one measured one-ULP
+difference on the pinned WASM backend, so its WASM comparator alone uses the
+same bounded host criterion. The native exact-log criterion is unchanged.
+Atan2 contributes six one-ULP differences under its existing host criterion.
+Rust's official `f64::ln` documentation describes platform-dependent precision;
+these measured results do not establish an unlimited tolerance for other math.
+
+Additional checks cover precision constants, convenience agreement, default
+kernel composition, full-range Exact versus legacy range rejection, positive
+log domain, nonfinite errors, original underflow clamps, signed zeros, NaN
+comparisons and reuse after errors. Runtime entry points are
+`node tests/wasm_approximation_node.cjs ./pkg-node` and
+`tests/wasm_approximation_browser.html`, sharing `wasm_approximation_checks.mjs`.
+Related native/C-interface checks and WASM Clippy/Rustdoc with warnings denied
+pass; all thirty-two functions are absent without the feature. Thirty-six
+upstream mappings bring coverage to 147 implemented mappings; 185 public
+mappings remain pending. Approximation submodules for lanes, hyperbolic,
+special and restricted trigonometric kernels remain required and pending.
+Native source, C interfaces, dependencies, fixtures and prior bindings are
+unchanged.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
@@ -535,6 +588,7 @@ existing WASM families and comparison fixtures remain unchanged.
 - [Returned Result errors](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/result.html)
 - [Exception destructor behavior](https://docs.rs/wasm-bindgen/0.2.129/wasm_bindgen/fn.throw_str.html)
 - [Rust 1.94 atan2 precision](https://doc.rust-lang.org/1.94.0/std/primitive.f64.html#method.atan2)
+- [Rust logarithm precision](https://doc.rust-lang.org/std/primitive.f64.html#method.ln)
 - [Version-matched CLI installation](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/wasm-bindgen-test/usage.md)
 - [Release library manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/Cargo.toml)
 - [Release CLI manifest](https://github.com/wasm-bindgen/wasm-bindgen/blob/0.2.129/crates/cli/Cargo.toml)
