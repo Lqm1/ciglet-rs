@@ -52,7 +52,7 @@ six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
 nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
 seven; frame/extrema adds seven, filterbanks add twelve and scalar approximation
-adds thirty-six. Other DSP families and both remaining crates still
+adds thirty-six; hyperbolic scalar and lane kernels add sixteen. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -572,10 +572,45 @@ comparisons and reuse after errors. Runtime entry points are
 Related native/C-interface checks and WASM Clippy/Rustdoc with warnings denied
 pass; all thirty-two functions are absent without the feature. Thirty-six
 upstream mappings bring coverage to 147 implemented mappings; 185 public
-mappings remain pending. Approximation submodules for lanes, hyperbolic,
-special and restricted trigonometric kernels remain required and pending.
+mappings remain pending at this checkpoint. The following hyperbolic section
+completes that submodule; other lane, special and restricted trigonometric
+kernels remain required and pending.
 Native source, C interfaces, dependencies, fixtures and prior bindings are
 unchanged.
+
+## Hyperbolic scalar and lane formulas
+
+Eight functions complete the native hyperbolic submodules: `hyperbolic_sine`,
+`hyperbolic_cosine`, `hyperbolic_tangent` and `hyperbolic_sigmoid`, and the
+corresponding names with `_lanes` appended. All use the existing complete
+`ApproximationPrecision` selection. These native APIs use binary32 for scalar
+inputs and every lane; there is no additional native binary64 variant to omit.
+
+Lane functions accept exactly four values and return independent
+`Float32Array` storage in native index order. A wrong shape or any invalid lane
+rejects the whole call, and input arrays remain unchanged. Scalar and lane
+calculations delegate unchanged native kernels. Fast and Approximate retain
+original exponential formulas; Exact uses double exponential followed by
+binary32 conversion and source formula stages. It does not substitute a
+different host sinh/cosh/tanh implementation. Source underflow clamps and
+intermediate overflow rejection remain in effect.
+
+Actual Node.js and browser checks pass all 128 original scalar C cases and
+48 original four-lane SSE2 cases, with 644 exact comparisons. All eight source
+variants for each interface are covered. Additional tests independently
+reconstruct Exact binary32 stages, compare scalar and lane outputs in all three
+modes, reject nonfinite and overflow values at every lane position, verify
+unchanged input bits after late errors, reject incomplete and oversized arrays
+and invalid modes, and verify independent results and reuse after errors.
+Runtime entry points are `node tests/wasm_hyperbolic_node.cjs ./pkg-node` and
+`tests/wasm_hyperbolic_browser.html`, sharing `wasm_hyperbolic_checks.mjs`.
+
+Ten related native/C-interface tests, WASM Clippy and Rustdoc with warnings
+denied pass. All eight functions are absent from an actual feature-disabled
+module. The preceding scalar approximation checks also pass on this artifact.
+Sixteen upstream mappings bring coverage to 163 implemented mappings;
+169 public mappings remain pending. Native source, C interfaces, dependencies,
+fixtures and previously implemented bindings remain unchanged.
 
 ## Primary references
 
