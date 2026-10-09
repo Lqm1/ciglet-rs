@@ -1152,6 +1152,54 @@ coverage to 267 implemented and 65 pending public mappings. Native/C source,
 fixtures, dependencies and previous bindings remain unchanged. Remaining
 DSP coverage and combined three-crate acceptance are still required.
 
+## Complete polynomial evaluation and roots
+
+`polynomial_evaluate_f32/f64(coefficients, real, imaginary)` accepts existing
+`ComplexValuesF32/F64` coefficient owners. The corresponding
+`polynomial_evaluate_real_f32/f64` accepts a real typed array. Both return
+an independently owned complete complex value through `ComplexValues`, with
+length one. Coefficients retain descending order and the native source power
+accumulation. The implementation does not change rounding through Horner
+evaluation. Arguments and coefficients must be finite; empty coefficients
+and overflowing evaluation return ordinary errors.
+
+`polynomial_roots_f32/f64(coefficients)` and
+`polynomial_roots_real_f32/f64(coefficients)` expose both native root entry
+points and return `PolynomialRootsF32/F64` owners. Root order, complex
+normalization, source initial values, level-one binary32 trigonometry,
+radius clamp and the 50-step limit remain native. Nonzero constants return
+no roots; zero leading coefficients and singular/overflowing computations
+are rejected. Unconverged finite estimates remain available.
+
+Each report exposes all four mutable native fields: `values`, `iterations`,
+`converged`, and binary64 `maximum_residual`, plus `cloned()` and generated
+`free()`. Values use independent `ComplexValues` owners on both read and
+replacement. The constructor accepts all four fields and preserves arbitrary
+metadata and complex payloads, matching the native public struct. Iterations
+use the WASM32 unsigned integer range. `residual_storage()` and
+`set_residual_storage(values)` retain arbitrary binary64 payload bits through
+one-element typed storage. Invalid storage lengths leave the report reusable.
+Clones and snapshots outlive their source and retain independent storage.
+
+Actual Node.js and browser checks pass all 65 original POL1 polynomial cases
+and 2,460 evaluation/root/ownership comparisons with exact C results, using
+the unchanged native equality criterion. Both complete 61-case source
+trigonometry tails also match. Tests cover real/complex entry-point and full
+report agreement, source ordering, input immutability, constants, independent
+linear/imaginary roots, invalid and overflowing inputs, post-error owner
+recovery, complete field mutation, arbitrary NaN/signed-zero/subnormal bits,
+cloning and lifetimes. The original eight-root nonconvergence case retains
+50 iterations and its full report; independent product-of-linear-factors
+residual checking uses the unchanged native relative 1e-8 criterion.
+
+Run `node tests/wasm_polynomial_node.cjs ./pkg-node` or serve
+`tests/wasm_polynomial_browser.html`. Ten related native/C tests pass, as do
+WASM Clippy and Rustdoc with warnings denied. All eight functions and two
+reports are absent without the feature. Six original mappings bring coverage
+to 273 implemented and 59 pending public mappings. Native/C source, fixtures,
+dependencies and previous bindings remain unchanged. Remaining DSP coverage
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
