@@ -813,6 +813,40 @@ absent without the feature. Eleven original complex mappings bring coverage
 to 234 implemented mappings and 98 pending public mappings. Remaining ciglet
 features, liblrhsmm and SHIRO WASM, and combined acceptance remain required.
 
+## Complete Kalman filtering and smoothing
+
+`kalman_filter_f32/f64` initializes the mean from the first measurement.
+`kalman_filter_with_initial_f32/f64` accepts an explicit initial mean.
+`kalman_smooth_f32/f64` performs the native backward smoothing operation.
+All functions retain native length, finite-input, nonnegative-variance and
+overflow validation. Empty inputs produce empty arrays and zero likelihood.
+Zero posterior/process uncertainty retains the corrected zero backward gain.
+The native wide-logarithm fallback outside the binary32 approximation domain
+is also retained.
+
+`KalmanEstimateF32/F64` exposes every public native estimate field: independently
+mutable `means`, `variances` and `log_likelihood`, plus `cloned()` and generated
+`free()`. Its constructor accepts arbitrary field contents and independently
+sized arrays, as does the native public struct. Getters return independent
+typed arrays. `likelihood_value()` and `set_likelihood_value(array)` preserve
+all scalar bits through a one-element typed array, including signaling NaN
+payloads. Invalid replacement lengths leave the likelihood unchanged.
+Computation functions validate their inputs separately from arbitrary storage.
+
+Actual Node.js and browser checks consume both complete KLM1 C corpora,
+216 cases and 21,452 comparisons, with exact equality of filtered means,
+variances, likelihoods and smoothed values. Independent posterior identities,
+deterministic limits, both initialization paths, empty arrays, shape/domain
+and overflow errors, corrected wide likelihoods, full-bit field storage,
+clone/setter independence and snapshots surviving owner release also pass.
+Run `node tests/wasm_kalman_node.cjs ./pkg-node` or serve
+`tests/wasm_kalman_browser.html`. All twelve related native/C tests pass,
+as do WASM Clippy and Rustdoc with warnings denied. All six functions and
+both owners are absent without the feature. Four original mappings bring
+coverage to 238 implemented and 94 pending public mappings. Native/C source,
+fixtures, dependencies and prior bindings remain unchanged. Full remaining
+DSP coverage and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
