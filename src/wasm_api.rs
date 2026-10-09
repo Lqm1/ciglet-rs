@@ -8,6 +8,7 @@ mod fourier;
 mod interpolation;
 mod phase;
 mod resampling;
+mod statistics;
 mod vector;
 mod window;
 
@@ -16,5 +17,6 @@ pub use fourier::*;
 pub use interpolation::*;
 pub use phase::*;
 pub use resampling::*;
+pub use statistics::*;
 pub use vector::*;
 pub use window::*;

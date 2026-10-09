@@ -49,7 +49,8 @@ An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
-seven; resampling adds two and filtering adds eight. Other DSP families and both remaining crates still
+seven; resampling adds two, filtering adds eight and statistical arithmetic adds
+nine. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -279,6 +280,44 @@ denied pass, and all sixteen functions are absent from an actual feature-disable
 module. Eight upstream mappings bring coverage to 63 implemented mappings;
 269 public mappings remain pending. Native implementations, C interfaces,
 dependencies and comparison fixtures remain unchanged.
+
+## Statistical arithmetic
+
+Twenty-four functions expose both precisions of `sum`, `sum_squares`, `mean`,
+`mean_with`, `variance`, `variance_with`, `dot`, `covariance`, `covariance_with`,
+`correlation`, `correlation_with` and `cross_correlation`, with `_f32`/`_f64`
+suffixes. `StatisticsPolicy` selects the complete Stable/Legacy policies.
+Defaults use the native compensated, centered and scaled binary64 moments;
+explicit Legacy retains original selected-precision reductions and cancellation.
+Population variance and Pearson correlation retain native range/constant-input
+errors. Stable correlation preserves scaled information even if a standalone
+variance would overflow or round to zero.
+
+Sum, sum of squares, dot and cross correlation retain IEEE nonfinite behavior
+and positive-zero reduction identities. Cross correlation is unnormalized,
+uses nonnegative lags and zero-fills excess lags. Lag counts must be unsigned
+32-bit integers within native validation bounds. Returned arrays own independent
+storage and every input remains unchanged.
+
+Actual Node.js and browser checks pass 64 original C statistic cases and 96
+independent rational-moment cases, for 4,255 comparisons. Legacy finite results
+compare exact values and nonfinite outputs retain the source classifications.
+Stable reference bounds remain 2e-7 for f32 and 4e-15 for f64; zero results are
+exact. Default and explicit Stable calls agree exactly. Additional checks cover
+extreme constant moments, scaled correlation, original overflow, positive zero,
+empty/mismatched vectors, constant correlation errors, nonfinite inputs,
+invalid policies/lags, independent results and use after errors. Entry points
+are `node tests/wasm_statistics_node.cjs ./pkg-node` and
+`tests/wasm_statistics_browser.html`, sharing `wasm_statistics_checks.mjs`.
+
+All previous WASM families pass their Node checks on this artifact. Seventeen
+native/C-interface regression tests pass. WASM Clippy and Rustdoc with warnings
+denied pass; all twenty-four functions are absent from an actual feature-disabled
+module. Nine upstream mappings bring coverage to 72 implemented mappings;
+260 public mappings remain pending. Minimum, maximum, median, selection and
+sorting remain pending WASM work, including complete result/partition storage
+and original indices. Native source, C interfaces, dependencies and comparison
+fixtures remain unchanged.
 
 ## Primary references
 
