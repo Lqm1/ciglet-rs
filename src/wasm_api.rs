@@ -5,6 +5,7 @@
 //! panic abort is not recoverable through these bindings.
 mod filtering;
 mod fourier;
+mod frame_extrema;
 mod frequency_distance;
 mod interpolation;
 mod ordering;
@@ -17,6 +18,7 @@ mod window;
 
 pub use filtering::*;
 pub use fourier::*;
+pub use frame_extrema::*;
 pub use frequency_distance::*;
 pub use interpolation::*;
 pub use ordering::*;

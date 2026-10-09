@@ -51,7 +51,7 @@ added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
 nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
-seven. Other DSP families and both remaining crates still
+seven; frame/extrema adds seven. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -433,6 +433,37 @@ Entry points are `node tests/wasm_frequency_distance_node.cjs ./pkg-node` and
 Thirteen related native/C-interface tests, WASM Clippy and Rustdoc with warnings
 denied pass; all eighteen functions are absent from an actual feature-disabled
 module. Seven mappings bring coverage to 92 implemented mappings; 240 public
+mappings remain pending. Native source, C interfaces, dependencies, existing
+WASM families and comparison fixtures remain unchanged.
+
+## Frames and extrema
+
+Six functions complete both native modules in both precisions: `fetch_frame`,
+`extremum` and `peak`, with `_f32`/`_f64` suffixes. `ExtremumDirection` selects
+Maximum or Minimum. Frames use the native centered start convention and positive
+zero padding outside the input; copied samples retain arbitrary scalar bits.
+Center is a signed 32-bit integer in WASM, while length and inclusive range
+endpoints are unsigned 32-bit integers. Native allocation and checked-index
+limits remain enforced. Returned frames own independent typed-array storage.
+
+Global extremum search retains the first winning index and first-index ties.
+Peak search retains strict two-sided neighbor comparisons, endpoint skipping
+and the original starting-index fallback. Only inspected samples require finite
+values, including neighbors inspected by peak search. Inputs remain unchanged.
+
+Actual Node.js and browser checks pass all 50 original C frame cases and 360
+original C search cases, with 13,672 exact comparisons. Additional checks cover
+empty/odd/even/distant frames, complete quiet/signaling NaN payloads, infinities,
+signed zero and subnormal frame storage, positive-zero padding, signed center
+overflow, invalid lengths/ranges/enums, tie handling, singleton/fallback behavior,
+nonfinite samples outside the inspected region, immutable sources, independent
+frames and reuse after errors. Runtime entry points are
+`node tests/wasm_frame_extrema_node.cjs ./pkg-node` and
+`tests/wasm_frame_extrema_browser.html`, sharing `wasm_frame_extrema_checks.mjs`.
+
+Ten related native/C-interface tests, WASM Clippy and Rustdoc with warnings
+denied pass; all six functions are absent from an actual feature-disabled module.
+Seven upstream mappings bring coverage to 99 implemented mappings; 233 public
 mappings remain pending. Native source, C interfaces, dependencies, existing
 WASM families and comparison fixtures remain unchanged.
 
