@@ -1714,6 +1714,47 @@ command owner. Run `node tests/wasm_plotting_node.cjs ./pkg-node` or serve
 324 implemented and eight pending. Native/C code, dependencies, fixtures and
 previous bindings remain unchanged. Combined acceptance remains required.
 
+## Source scalar expressions, arbitrary folds and constants
+
+`scalar_add_f32/f64(first, second)` and
+`scalar_accumulate_square_f32/f64(accumulator, value)` expose the source
+ADD and ADDSQR expressions in the selected scalar precision. Squaring precedes
+addition without requesting fused multiply-add. Ordinary IEEE results, including
+NaN and infinity, are retained.
+
+`scalar_fold_f32/f64(values, initial, callback, context)` exposes the complete
+caller-defined N_TO_ONE operation. It processes inputs in increasing order;
+the callback receives accumulator, next value and the unchanged context object.
+Its numeric result is converted to the selected scalar after each invocation.
+Empty input returns the initial value unchanged and permits a missing callback.
+Nonempty input requires a callback. JavaScript exceptions retain identity and
+stop immediately; nonnumeric returns fail, while numeric NaN/infinity remain
+valid IEEE values. Callbacks are synchronous and are not retained. Nested folds
+are permitted, and input arrays are copied by the numeric-slice binding.
+
+`scalar_math_constants()` returns an independent Float64Array containing
+M_EPS, finite M_INF, pi and half-pi. Original bits are
+`3cd203af9ee75616`, `430c6bf526340000`, `400921fb54442d18` and
+`3ff921fb54442d18`. Native Rust pi constants avoid duplicate approximations.
+
+Actual Node.js and browser verification consumes the complete RED1 tails from
+both CUS1 corpora: 24 stateful custom folds and 72 callback invocations, with
+exact C results. The preceding window records are verified separately by the
+complete window binding suite, not counted as scalar comparisons. Tests include
+42 selected-scalar expression checks, four exact constant comparisons, an
+explicit non-fused square regression, order-sensitive context mutation,
+signed-zero empty seeds, IEEE exceptional values, invalid/missing callbacks,
+exception identity/early stopping, input immutability and nested folds.
+No numerical criterion changed.
+
+Run `node tests/wasm_scalar_node.cjs ./pkg-node` or serve
+`tests/wasm_scalar_browser.html`. Eight related native/C tests pass, together
+with WASM Clippy/Rustdoc warnings denied and feature-disabled absence of all
+seven functions. Five mappings bring coverage to 329 implemented and three
+pending public mappings. The remaining three are native process lifecycle
+entries awaiting explicit platform classification. Native/C code, dependencies,
+fixtures and previous bindings remain unchanged; combined acceptance remains.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
