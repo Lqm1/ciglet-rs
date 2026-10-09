@@ -49,7 +49,7 @@ An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
-seven. Other DSP families and both remaining crates still
+seven; resampling adds two. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -201,6 +201,43 @@ Clippy and Rustdoc with warnings denied. All twelve functions are absent from an
 actual feature-disabled module. Seven upstream mappings bring WASM coverage to
 53 implemented mappings; 279 public mappings remain pending. Native source,
 C interfaces, dependencies and original comparison fixtures remain unchanged.
+
+## Resampling operations
+
+Eight functions expose both precisions of `resample`, `resample_with`,
+`resample_with_kernel` and `resample_output_length`, with `_f32`/`_f64` suffixes.
+They use the existing `BoundaryPolicy`/`KernelPolicy` enums. The default includes
+sample zero and uses the corrected kernel; the boundary-only function retains
+original kernel arithmetic, and the full function selects both independently.
+The ratio is output rate divided by input rate. Downsampling retains the native
+32-tap Hamming FIR and 16-sample delay compensation. Results own independent
+typed arrays; inputs remain unchanged.
+
+Output sizing uses native source-precision multiplication followed by positive
+half-away rounding, with checked legacy bounds. Ratio one retains exact input
+sample bits and count, including large counts that cannot be represented exactly
+as binary32. The sizing functions allocate no sample arrays. Counts must be
+unsigned 32-bit integers; native validation further restricts supported lengths.
+
+Actual Node.js and browser checks pass all 210 original C resampling records,
+including downsampling and upsampling, for 17,098 scalar comparisons across
+corpus and boundary checks. Original normalized C bounds remain 2e-7 for f32
+and 2e-15 for f64; convenience functions and input preservation compare exact
+values. Tests cover all four policies, fractional rates, independent near-integer
+impulse limits, retained Legacy behavior, sample-zero inclusion/omission, signed
+zero identity, length rounding, empty outputs, invalid ratios/enums/nonfinite
+samples, size overflow, independent outputs and reuse after errors. Entry points
+are `node tests/wasm_resampling_node.cjs ./pkg-node` and
+`tests/wasm_resampling_browser.html`, sharing `wasm_resampling_checks.mjs`.
+The FIR/convolution portions of the shared corpus are parsed here but are not
+claimed as exposed WASM filtering functions.
+
+All previous WASM families pass Node checks on this artifact. Thirteen related
+native/C-interface tests pass. WASM Clippy and Rustdoc with warnings denied pass;
+all eight functions are absent from an actual feature-disabled module. Two
+upstream mappings bring coverage to 55 implemented mappings; 277 public mappings
+remain pending. Native source, C interfaces, dependencies and original fixtures
+remain unchanged.
 
 ## Primary references
 
