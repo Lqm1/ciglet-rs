@@ -24,6 +24,12 @@ in SHIRO's native acceptance audit.
 
 ## Own-header structure fields
 
+The field-by-field Native/C/WASM ledger and current runtime evidence are in
+public-field-binding-audit.md and public-field-bindings.csv. Its header-integrity
+checker covers all five own-header structures and twenty fields, with ownership
+and validation differences recorded explicitly. Broader acceptance remains
+separate from this scoped field mapping.
+
 | C fields | Rust configuration and evidence |
 | --- | --- |
 | cplx.real, imag | complex::Complex.re, im; construction/arithmetic/bit comparisons in tests/complex.rs |
