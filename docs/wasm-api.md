@@ -1561,6 +1561,56 @@ coverage to 315 implemented and 17 pending. Native/C source, dependencies,
 fixtures and previous bindings remain unchanged. Remaining families and
 combined three-crate acceptance are still required.
 
+## Complete WAVE byte processing
+
+`wave_read_f32/f64(bytes, max_frames)` and
+`wave_read_at_f32/f64(bytes, position, max_frames)` expose the native decoder.
+Positions are unsigned 64-bit JavaScript BigInts, while the frame budget is
+WASM32 usize. `WaveF32/F64` exposes every native mutable public field:
+sample_rate, bits_per_sample, channels, encoding and samples. Encoding accepts
+`WaveEncoding.Pcm=0` and `Float=1`; invalid codes fail atomically. Constructors
+retain arbitrary public metadata and typed sample payloads. `position` reports
+the native decoder's final seek position. `cloned()` and generated `free()`
+provide independent ownership; sample snapshots outlive owners.
+
+`WaveWriteOptions()` retains native defaults (16 bits, centered PCM8,
+padding enabled). `WaveWriteOptions.legacy(bits)` selects source quantization
+and disables padding. All three fields remain independently mutable.
+`WavePcm8Quantization.Centered=0` and `Legacy=1` select valid modes; invalid
+codes fail inside Result and leave options usable. Native validation of
+sample widths, sample rate and finite output samples is unchanged.
+
+`wave_write_pcm_f32/f64(samples, rate, options)` returns complete WAVE bytes.
+`wave_write_pcm_at_f32/f64(bytes, position, samples, rate, options)` writes to
+an independent byte stream, retaining existing prefix and suffix, filling a
+seek gap with zero bytes and reporting the final position. `WaveBytes` exposes
+copied bytes, position, `cloned()`, consuming `into_bytes()` and `free()`.
+Input arrays and owners remain unchanged. Offset/size/allocation errors are
+returned. Browser/Node bindings use byte streams; OS filename operations and
+external stream callbacks remain native, as required by the binding design.
+File and stream source mappings share the same complete byte codec.
+
+Actual Node.js and browser tests consume both complete WAV1 corpora, 72
+decode cases with 504 samples. The 308 unchanged samples match C exactly;
+196 samples affected by the already disclosed native unsigned-PCM,
+extensible-format and binary32 32-bit PCM fixes match independent standard
+decode values. Both complete WVW1 corpora cover 24 encode cases and 1,396
+exact C output bytes. No decoder or quantization algorithm changed.
+
+Additional checks cover every byte-multiple PCM width through 128 bits,
+IEEE float formats, stereo left-channel behavior, all public fields and raw
+payloads, both quantizers with independent padding, safe clipping, metadata,
+stream offsets/overwrite/seek gaps, clone and snapshot lifetimes, consuming
+byte ownership, frame budgets, every truncated prefix, unknown padded chunks,
+empty/odd final data, partial frames, duplicate/missing chunks, extension sizes,
+extensible GUID/valid-bit validation, invalid modes and error recovery.
+Run `node tests/wasm_wave_node.cjs ./pkg-node` or serve
+`tests/wasm_wave_browser.html`. Twenty-one native/C tests pass. WASM
+Clippy/Rustdoc deny warnings; feature-disabled checks confirm absence of all
+eight functions and four owners. Four mappings bring coverage to 319
+implemented and 13 pending. Native/C code, dependencies, fixtures and previous
+bindings remain unchanged. Other families and combined acceptance remain.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)

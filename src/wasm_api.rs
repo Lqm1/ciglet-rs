@@ -38,6 +38,7 @@ mod stft;
 mod synthesis;
 mod trigonometric;
 mod vector;
+mod wave;
 mod window;
 
 pub use approximation::*;
@@ -75,4 +76,5 @@ pub use stft::*;
 pub use synthesis::*;
 pub use trigonometric::*;
 pub use vector::*;
+pub use wave::*;
 pub use window::*;
