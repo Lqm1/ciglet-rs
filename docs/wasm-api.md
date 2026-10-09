@@ -780,6 +780,39 @@ bring coverage to 223 implemented mappings; 109 public mappings remain pending.
 Native source, C interfaces, dependencies, fixtures and previous bindings remain
 unchanged. Remaining DSP families and combined three-crate acceptance are required.
 
+## Complete complex values
+
+`ComplexF32` and `ComplexF64` expose owned native complex values. Constructors
+take real and imaginary components. Both fields have getters and setters.
+`from_components`, `set_components` and `components` use exactly two typed-array
+values, preserving NaN payloads, signed zeros and subnormals without Number
+conversion. Replacement errors leave the original value intact. `cloned` and
+returned component arrays are independent and remain valid after source release.
+
+`conjugate`, `add`, `subtract` and `multiply` retain ordinary native IEEE
+arithmetic. `divide` retains finite validation and scaled overflow/underflow
+recovery. `exponential(mode)` and `argument(mode)` expose Fast=0,
+Approximate=1 and Exact=2. Mode arguments use the unsigned 32-bit ABI and are
+validated inside Rust Result handling, so invalid codes do not poison an owner
+borrow. Owners remain reusable after errors and expose generated `free()`.
+
+Actual Node.js and browser checks consume both original CPX1 complex corpora,
+128 records, and perform 2,468 numerical comparisons plus storage, payload,
+lifetime, same-owner operands, atomic errors and scaled-division checks.
+Conjugation, arithmetic and all complex exponential modes match C exactly.
+Binary32 arguments also match exactly. Four binary64 arguments differ by one
+ULP in both Approximate and Exact modes, eight comparisons in total, with
+maximum normalized error 9.503968395502985e-17. These use the existing WASM
+atan2 bound of one ULP and f64 epsilon; native/C bounds are unchanged.
+The separately verified CPX1 scalar tail is structurally consumed in full.
+
+Run `node tests/wasm_complex_node.cjs ./pkg-node` or serve
+`tests/wasm_complex_browser.html`. Native complex and C-interface tests pass,
+as do WASM Clippy and Rustdoc with warnings denied. Both owner classes are
+absent without the feature. Eleven original complex mappings bring coverage
+to 234 implemented mappings and 98 pending public mappings. Remaining ciglet
+features, liblrhsmm and SHIRO WASM, and combined acceptance remain required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)

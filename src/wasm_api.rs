@@ -4,6 +4,7 @@
 //! retained, and ordinary errors become JavaScript exceptions. A WebAssembly
 //! panic abort is not recoverable through these bindings.
 mod approximation;
+mod complex;
 mod filterbank;
 mod filtering;
 mod fourier;
@@ -24,6 +25,7 @@ mod vector;
 mod window;
 
 pub use approximation::*;
+pub use complex::*;
 pub use filterbank::*;
 pub use filtering::*;
 pub use fourier::*;
