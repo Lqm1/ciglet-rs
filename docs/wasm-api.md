@@ -1012,6 +1012,46 @@ and 79 pending public mappings. Native/C source, fixtures, dependencies and
 prior bindings remain unchanged. These array owners will carry correlogram
 and other DSP results; those bindings and combined acceptance remain required.
 
+## Complete correlogram and frequency mapping
+
+`CorrelogramMethod` exposes Autocorrelation=0, AbsoluteDifference=1,
+SquaredDifference=2 and Yin=3. `CorrelogramPolicy` exposes Stable=0 and
+Legacy=1. `correlogram_compute_f32/f64(samples, centers, lengths, periods,
+method)` uses Stable by default; `correlogram_compute_with_f32/f64` accepts
+an additional policy. Centers use Int32Array and lengths use Uint32Array.
+Results are complete independent `Array2F32/F64` owners. Native method-specific
+arithmetic, strict trailing boundary, negative-center clamp and unavailable
+lag values remain unchanged. Stable ACF scaling/DC conditioning and Legacy
+prefix-sum arithmetic are both retained.
+
+`CorrelogramFrame(center, length)` exposes both mutable native fields,
+`cloned()`, generated `free()` and single-frame `compute_f32/f64` methods.
+All method/policy arguments use numeric codes validated inside Rust Result
+handling; invalid codes do not poison frame borrows. Dimensions and lengths
+use the unsigned 32-bit ABI; frame centers use signed 32-bit values. Storage
+accepts the complete field range, with native validation during computation.
+
+`correlogram_to_frequency_f32/f64(periods, sampling_rate, frequencies)` returns
+an independent array while retaining frequency order. The signed sample rate
+must be positive. Positive zero frequency selects the last lag; negative
+frequency and negative zero select lag zero. Singleton lags, empty frequency
+sets, native validation and source-array reuse after errors are preserved.
+
+Actual Node.js and browser checks consume both complete CRG1 C corpora,
+64 cases and 21,971 comparisons, with zero measured C difference. Unchanged
+criteria are binary32 exact equality and binary64 normalized error at most
+3e-15. Independent ramp/ACF/difference/YIN identities, both policies/defaults,
+DC conditioning/extreme scaling, strict boundaries, silence, signed centers,
+maximal frame storage, errors/owner recovery, signed-zero mapping and returned
+owner independence also pass. Run
+`node tests/wasm_correlogram_node.cjs ./pkg-node` or serve
+`tests/wasm_correlogram_browser.html`. Nine related native/C tests pass, as do
+WASM Clippy and Rustdoc with warnings denied. Six functions and the frame
+owner are absent without the feature. Six original mappings bring coverage
+to 259 implemented and 73 pending public mappings. Native/C source, fixtures,
+dependencies and prior bindings remain unchanged. Full remaining DSP coverage
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
