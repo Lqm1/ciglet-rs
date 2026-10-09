@@ -1,5 +1,11 @@
 # C interface implementation status
 
+The accepted native and binding gates are verified within the agreed execution
+scope. The final requirement decision, exact evidence and authorized deferred
+targets are recorded in the SHIRO package's `docs/requirements-verification.md`.
+Historical checkpoints below retain their original scope.
+
+
 The optional `c-api` feature exports a C interface from this existing package.
 It does not create another crate. The native Rust implementation remains the
 calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
