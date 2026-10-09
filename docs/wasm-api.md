@@ -1254,6 +1254,79 @@ implemented and 53 pending public mappings. Native/C source, fixtures,
 dependencies and previous bindings remain unchanged. Remaining DSP coverage
 and combined three-crate acceptance are still required.
 
+## Complete STFT analysis and synthesis
+
+`StftPlanF32/F64(length, window_code, precision_code)` exposes native
+`analyze(signal, centers, window_lengths, options)` and
+`synthesize(magnitude, phase, options)`. Window codes use all seven existing
+`WindowKind` values, precision uses `WindowPrecision.Accurate=0` and
+`Approximate=1`, and synthesis Nyquist uses `SpectrumNyquist.Preserve=0`
+and `Legacy=1`. Codes are validated inside Rust Result. Plans retain cached
+transform/window storage and remain reusable after ordinary errors.
+Centers use Int32Array; lengths use Uint32Array. Arrays remain frame-major.
+
+`StftAnalysisOptions()` exposes all mutable fields and native defaults:
+`subtract_mean=false`, `magnitude=true`, `phase=true`,
+`normalization_hop=undefined`. Explicit positive spacing supports a single
+frame. `StftFrameGrid(hop, frames, window_factor, zero_padding_factor)` exposes
+all four mutable fields. Both owners support `cloned()` and generated `free()`.
+All lengths/counts use the WASM32 unsigned range; offsets/centers use signed
+32-bit integers. Native checked shape/allocation and legacy-range validation
+remain in effect.
+
+`StftSynthesisOptionsF32/F64(hop, offset, fade_samples, normalization, nyquist)`
+exposes all five mutable fields and `cloned()`. Typed one-element
+`normalization_storage()` and `set_normalization_storage(values)` preserve
+arbitrary scalar payloads; invalid lengths leave the owner unchanged.
+Output length retains `hop * frames + offset`, clipping, normalized inverse
+FFT, source level-two polar conversion and Hann endpoint fades. Preserve
+retains real DC/Nyquist; Legacy reproduces preceding-bin substitution.
+
+`StftAnalysisF32/F64` exposes all six mutable native result fields:
+`frames`, `bins`, optional `magnitude`, optional `phase`, optional
+`window_weight`, optional `normalization`. Its constructor accepts all fields,
+including arbitrary public metadata/storage. Getters return independent typed
+arrays. Optional values use undefined/null for absence; present empty arrays
+remain distinct. Typed `window_weight_storage()`/`normalization_storage()` and
+their setters preserve scalar payloads and optional presence. Every result
+supports `cloned()` and generated `free()`; snapshots outlive owners.
+
+`stft_analyze_regular_f32/f64(signal, grid, precision_code, options)` and
+`stft_synthesize_regular_f32/f64(magnitude, phase, grid, normalization,
+nyquist_code)` expose both convenience operations. Regular analysis uses
+Blackman and explicit grid hop. Regular synthesis retains zero offset and
+32-sample fade. `stft_analyze_regular_legacy_f32/f64(signal, grid, level,
+options)` also exposes the signed source macro level: levels at least three
+use Accurate; all lower signed levels use Approximate. The named stft/stft_2
+entry points correspond to explicit Accurate/Approximate codes, respectively.
+
+Actual Node.js and browser checks consume all four original fixture files:
+960 STF1 analysis cases, 576 IST1 synthesis cases and 65,920 comparisons.
+Magnitude normalized errors retain native bounds 2e-6/2e-14; maxima are
+5.960464477539062e-7/1.7763568394002505e-15. Phase comparisons retain native
+frame-amplitude weighting and exclude 7,808 phase values whose magnitudes are
+below 1e-6, where phase is undefined. Weighted phase maxima are
+2.3841857910156197e-7/4.440892098500626e-16, within the same bounds.
+Inverse normalized errors retain 2e-7/2e-15 bounds; maxima are
+1.1920928955078125e-7/3.3306690738754696e-16. No numerical criterion changed.
+
+Checks cover all output masks, window/precision selections, reused plans,
+normalization metadata, variable/odd windows, negative-center padding,
+both Nyquist policies, offset/fade, empty/singleton cases, signed macro levels,
+regular/explicit agreement, all mutable fields and arbitrary typed payloads,
+source immutability, cloning, snapshots and recovery after invalid options
+and shapes. Binary64 regular audio reconstruction retains the native 1e-4
+interior absolute bound. Existing odd-window and variable-window corrections
+remain in the native implementation.
+
+Run `node tests/wasm_stft_node.cjs ./pkg-node` or serve
+`tests/wasm_stft_browser.html`. Nineteen related native/C tests pass, along
+with WASM Clippy and Rustdoc with warnings denied. All six functions and eight
+owners are absent without the feature. Six original mappings bring coverage
+to 285 implemented and 47 pending public mappings. Native/C source, fixtures,
+dependencies and prior bindings remain unchanged. Remaining DSP coverage and
+combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
