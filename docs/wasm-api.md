@@ -1200,6 +1200,60 @@ to 273 implemented and 59 pending public mappings. Native/C source, fixtures,
 dependencies and previous bindings remain unchanged. Remaining DSP coverage
 and combined three-crate acceptance are still required.
 
+## Complete instantaneous frequency detector
+
+`InstantaneousFrequencyDetectorF32/F64(center_frequency, resolution)` owns
+the complete native detector. Frequency arguments and results are ratios of
+the sampling rate. Kernel length retains source truncation of `4/resolution`;
+generated filters retain the four-term cosine window and its modulated
+derivative. Resolution must produce a positive bounded length. The owner
+exposes `center_frequency`, fallible `set_center_frequency(value)`, `kernels`,
+`estimate(samples)`, `estimate_with(samples, policy_code)`, `cloned()` and
+generated `free()`.
+
+`InstantaneousFrequencyPolicy.Stable=0` and `Legacy=1` select both native
+modes. The default is Stable, which scales samples and filters and computes
+the quotient in double precision. Legacy retains selected-scalar accumulation
+and quotient. Only the centered participating sample region is inspected.
+Short buffers return positive zero after kernel validation. Zero response,
+nonfinite participating samples and invalid numeric policy codes return
+ordinary errors and leave the detector reusable.
+
+`InstantaneousFrequencyKernelsF32/F64(real, imaginary, derivative_real,
+derivative_imaginary)` exposes all four mutable native arrays and `cloned()`.
+Getters return independent typed arrays. Constructors and setters retain
+arbitrary lengths and payloads, reflecting unrestricted native public fields.
+`Detector.from_kernels(center_frequency, kernels)` validates and copies all
+four arrays. Reading `detector.kernels` creates an independent owner; assigning
+`detector.kernels = kernels` replaces all fields, including temporarily invalid
+edits, matching native `kernels_mut()`. Estimation validates edits again.
+Returned snapshots and cloned detectors outlive their sources.
+
+Actual Node.js and browser checks pass all 48 IFD1 C cases, 192 estimates and
+17,504 comparisons. Generated binary32 kernels and legacy estimates match
+exactly, retaining the native exact checks. Binary64 maximum normalized kernel
+error is 7.050229737040669e-17 within the unchanged 3e-15 bound; maximum
+normalized legacy estimate error is 1.0216802890740152e-13 within the unchanged
+1e-12 bound. Supplied exact C kernels also retain reference estimate criteria.
+Both complete fixture files are consumed.
+
+Checks cover full kernel/center configuration, independent clones, immutable
+input arrays, default/explicit Stable agreement, ignored outer samples, short
+buffers, zero responses, invalid parameters and policy codes, errors after
+editing every kernel, repair and reuse, all four arbitrary typed payloads,
+signed-zero center metadata and owner lifetimes. Independent custom-filter
+estimates cover ordinary, maximum finite and smallest subnormal sample scales
+with unchanged native analytic criteria. A binary64 sinusoid retains the
+native absolute 1e-12 criterion. No algorithm or numerical bound changed.
+
+Run `node tests/wasm_instantaneous_frequency_node.cjs ./pkg-node` or serve
+`tests/wasm_instantaneous_frequency_browser.html`. Nine related native/C tests
+pass, as do WASM Clippy and Rustdoc with warnings denied. All four owners are
+absent without the feature. Six original mappings bring coverage to 279
+implemented and 53 pending public mappings. Native/C source, fixtures,
+dependencies and previous bindings remain unchanged. Remaining DSP coverage
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
