@@ -50,7 +50,8 @@ Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
-nine; ordering adds eight and median/smoothing adds five. Other DSP families and both remaining crates still
+nine; ordering adds eight, median/smoothing adds five and frequency/distance adds
+seven. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -394,6 +395,46 @@ denied pass. All ten functions are absent from an actual feature-disabled module
 Five upstream mappings bring coverage to 85 implemented mappings; 247 public
 mappings remain pending. Native/C implementations, dependencies, existing WASM
 families and comparison fixtures remain unchanged.
+
+## Frequency conversions and spectral distance
+
+Eighteen functions complete both native modules in both precisions. Frequency
+operations are `frequency_to_mel`, `mel_to_frequency`, `frequency_to_bark`,
+`bark_to_frequency`, `equal_loudness` and `mel_space`, with `_f32`/`_f64` suffixes.
+Mel conversions retain original approximate binary32 logarithm/exponential
+stages, even with binary64 inputs. Bark conversions use native hyperbolic
+functions; equal loudness retains selected-precision powers. Mel grids return
+intervals plus one independently owned typed-array points, preserving native
+scalar interpolation. Intervals must be unsigned 32-bit integers within native
+positive legacy bounds.
+
+Distance operations are `itakura_saito`, `log_itakura_saito` and
+`log_itakura_saito_with`, with both precision suffixes. `DistancePolicy` selects
+Stable or Legacy. Stable scaled log accumulation retains finite extreme-ratio
+log distances, adjacent-value divergence and native zero/infinity semantics.
+Identical positive spectra have zero mean divergence and negative-infinite log
+distance; a single zero against a positive bin gives infinity, while paired
+zeros are undefined. Legacy retains original approximate-log and selected-scalar
+accumulation. Nonempty equally sized nonnegative finite arrays remain required.
+
+Actual Node.js and browser tests pass 24 original C frequency cases, ten Mel
+grids and 106 Legacy distance cases, with 2,438 comparisons including source
+preservation. Frequency normalized bounds remain 1e-7 for f32 and 1e-15 for f64;
+Mel grids and Legacy distances compare exact values. Additional independent
+analytic tests cover divergence/log divergence and scale invariance, stable
+default agreement, identical/zero spectra, adjacent values, extreme ratios,
+signed Bark round trips, invalid domains/shapes/policies/counts, unchanged
+spectra, independent grids and reuse after errors. The separate approximation
+fields in the frequency corpus are parsed without claiming their WASM coverage.
+Entry points are `node tests/wasm_frequency_distance_node.cjs ./pkg-node` and
+`tests/wasm_frequency_distance_browser.html`, sharing
+`wasm_frequency_distance_checks.mjs`.
+
+Thirteen related native/C-interface tests, WASM Clippy and Rustdoc with warnings
+denied pass; all eighteen functions are absent from an actual feature-disabled
+module. Seven mappings bring coverage to 92 implemented mappings; 240 public
+mappings remain pending. Native source, C interfaces, dependencies, existing
+WASM families and comparison fixtures remain unchanged.
 
 ## Primary references
 
