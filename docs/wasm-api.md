@@ -50,7 +50,7 @@ Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
 seven; resampling adds two, filtering adds eight and statistical arithmetic adds
-nine. Other DSP families and both remaining crates still
+nine; ordering adds eight. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -314,14 +314,53 @@ All previous WASM families pass their Node checks on this artifact. Seventeen
 native/C-interface regression tests pass. WASM Clippy and Rustdoc with warnings
 denied pass; all twenty-four functions are absent from an actual feature-disabled
 module. Nine upstream mappings bring coverage to 72 implemented mappings;
-260 public mappings remain pending. Minimum, maximum, median, selection and
-sorting remain pending WASM work, including complete result/partition storage
-and original indices. Native source, C interfaces, dependencies and comparison
+260 public mappings remained pending at that checkpoint. The ordering interface
+below completes minimum, maximum, median, selection and sorting. Native source,
+C interfaces, dependencies and comparison
 fixtures remain unchanged.
+
+## Ordering and selection
+
+Ten functions complete the native statistics API: `minimum`, `maximum`,
+`median`, `select_nth` and `sort` with `_f32`/`_f64` suffixes. Empty minimum
+and maximum return `undefined`; a present NaN remains a numeric NaN. Comparison
+folds retain native second-operand ties and NaN behavior. Median uses IEEE total
+ordering and native finite overflow-safe averaging.
+
+Selection accepts a mutable typed array and updates it in place through the
+documented numeric-slice copyback interface. It returns the selected scalar and
+retains the complete native partition in the original array. Invalid indices
+fail before mutation. Callers must pass an unsigned 32-bit index. Sorting leaves
+inputs unchanged and returns `SortedValuesF32` or `SortedValuesF64`, with full
+`values`, `indices` and value `length` getters. Original indices use Uint32Array,
+matching WASM's 32-bit usize. Getters copy independent arrays that outlive
+`free()`. Constructors retain both complete fields, including arbitrary scalar
+bits and indices, without normalizing their contents or lengths.
+
+Actual Node.js and browser tests pass all 64 original/disclosed-sort-corrected
+C cases and 848 corpus selections, with 43,514 exact comparisons. Every
+selection checks copyback, partition invariants and the complete value multiset.
+Additional checks cover signed zero, quiet/signaling and signed NaN payloads,
+infinities, subnormals, stable tie indices, optional absence versus present NaN,
+finite median overflow, unchanged shared inputs, atomic invalid selection,
+independent getters, complete constructors and arrays retained after owner
+release. Scalar NaN results have JavaScript Number semantics; exact payloads are
+verified through the returned or updated typed-array storage. Runtime entry
+points are `node tests/wasm_ordering_node.cjs ./pkg-node` and
+`tests/wasm_ordering_browser.html`, sharing `wasm_ordering_checks.mjs`.
+
+Statistical arithmetic checks pass on the new artifact. Seventeen native/C
+regression tests, WASM Clippy and Rustdoc with warnings denied pass. All ten
+functions and both classes are absent from an actual feature-disabled module.
+Eight mappings bring coverage to 80 implemented mappings; 252 public mappings
+remain pending. Native source, C interfaces, dependencies and fixtures remain
+unchanged.
 
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
+- [Mutable numeric slices](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/number-slices.html)
+- [Optional numeric values](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/numbers.html)
 - [JavaScript callbacks](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/reference/receiving-js-closures-in-rust.md)
 - [Deployment targets](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html)
 - [Exported owner classes](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/exported-rust-types.html)

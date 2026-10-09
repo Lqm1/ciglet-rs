@@ -6,6 +6,7 @@
 mod filtering;
 mod fourier;
 mod interpolation;
+mod ordering;
 mod phase;
 mod resampling;
 mod statistics;
@@ -15,6 +16,7 @@ mod window;
 pub use filtering::*;
 pub use fourier::*;
 pub use interpolation::*;
+pub use ordering::*;
 pub use phase::*;
 pub use resampling::*;
 pub use statistics::*;
