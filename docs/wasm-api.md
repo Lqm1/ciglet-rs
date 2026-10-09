@@ -972,6 +972,46 @@ to 247 implemented and 85 pending public mappings. Native/C source, fixtures,
 dependencies and prior bindings remain unchanged. Full remaining DSP coverage
 and combined three-crate acceptance are still required.
 
+## Complete owned two-dimensional arrays
+
+`Array2U8/U16/U32/U64/F32/F64` expose the complete native row-major operations
+for the four original byte widths and both floating precisions. Constructors
+copy `(rows, columns, typed_values)`. `zeros`, `filled` and
+`from_rows(packed_values, row_lengths)` cover initialization and row copying;
+row lengths distinguish empty rows from an empty row collection. Ragged,
+truncated and trailing packed storage are rejected. All dimension and index
+arguments use the unsigned 32-bit WebAssembly ABI. U64 scalar values use
+BigInt and arrays use BigUint64Array, preserving all 64 bits. Integer scalar
+conversion retains the documented wasm-bindgen wrapping behavior.
+
+Readonly metadata is `rows`, `columns`, `length` and `is_empty()`. `values`,
+`flatten`, `row` and `get` expose storage; missing rows or cells return
+undefined. `set_values`, `set_row` and `set` cover all native mutable access.
+Missing cell updates return false. Shape/row replacement errors are atomic.
+`reshape`, `transpose`, `transposed` and `cloned` retain native algorithms,
+including zero-by-large empty shapes and allocation-before-mutation behavior.
+Typed storage preserves arbitrary bits, including signaling NaNs, signed
+zeros, infinities and subnormals.
+
+`into_row_major()` consumes the owner and moves its native buffer into the
+returned typed array. The generated JavaScript owner is then invalid for
+further calls. This avoids an extra native clone; JavaScript output storage
+is independent. Other getters and copies also own their arrays, and snapshots
+remain valid after generated `free()` releases their original owners.
+
+Actual Node.js and browser checks consume all 240 original ARR1 C records,
+testing six element types in 360 cases and 330,720 exact byte/metadata
+comparisons. Coverage includes initialization, all original copy/flatten/
+transpose results, row construction, consumed owners, arbitrary floating
+payloads, mutable storage, shape changes, atomic errors, source immutability
+and snapshot lifetimes. Run `node tests/wasm_array_node.cjs ./pkg-node` or
+serve `tests/wasm_array_browser.html`. Seven related native/C tests pass,
+as do WASM Clippy and Rustdoc with warnings denied. All six owners are absent
+without the feature. Six original mappings bring coverage to 253 implemented
+and 79 pending public mappings. Native/C source, fixtures, dependencies and
+prior bindings remain unchanged. These array owners will carry correlogram
+and other DSP results; those bindings and combined acceptance remain required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
@@ -981,6 +1021,7 @@ and combined three-crate acceptance are still required.
 - [JavaScript callbacks](https://github.com/wasm-bindgen/wasm-bindgen/blob/main/guide/src/reference/receiving-js-closures-in-rust.md)
 - [Deployment targets](https://wasm-bindgen.github.io/wasm-bindgen/reference/deployment.html)
 - [Exported owner classes](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/exported-rust-types.html)
+- [BigUint64Array and native u64 storage](https://wasm-bindgen.github.io/wasm-bindgen/api/js_sys/struct.BigUint64Array.html)
 - [Returned Result errors](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/result.html)
 - [Exception destructor behavior](https://docs.rs/wasm-bindgen/0.2.129/wasm_bindgen/fn.throw_str.html)
 - [Rust 1.94 atan2 precision](https://doc.rust-lang.org/1.94.0/std/primitive.f64.html#method.atan2)
