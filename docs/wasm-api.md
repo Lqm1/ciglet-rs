@@ -1386,6 +1386,66 @@ bring coverage to 300 implemented and 32 pending public mappings. Native/C
 source, fixtures, dependencies and previous bindings remain unchanged.
 Remaining DSP coverage and combined three-crate acceptance are still required.
 
+## Complete LF glottal model
+
+`GlottalModelF32/F64(period, closure, peak, return_time, excitation)` exposes
+all five mutable native fields. Period is in seconds; closure, peak and
+return_time are period ratios. Signed finite excitation may invert the
+waveform. Constructors and setters retain intermediate invalid configurations,
+matching the native public struct; calculation validates physical timing.
+`from_shape(shape, period, excitation)` retains the source piecewise Rd mapping.
+`from_components(values)`, `components()` and atomic `set_components(values)`
+use five-element typed storage to preserve arbitrary scalar payloads.
+Every model supports `cloned()` and generated `free()`.
+
+Models expose `prepare()`, `spectrum(frequencies)` and
+`sampled_period(sampling_rate, count)`. The native model is Copy, so these
+methods retain the caller's owner and prepare an independent value.
+`GlottalPreparedF32/F64` exposes complete native public operations:
+`model()` returns an independent original configuration, `spectrum(frequencies)`
+uses Approximate, `spectrum_with(frequencies, code)` selects Fast=0,
+Approximate=1 or Exact=2, `sampled_period(sampling_rate, count)` reuses derived
+parameters, and `cloned()` copies the prepared model. Numeric precision is
+validated inside Rust Result, leaving owners reusable after invalid codes.
+
+`GlottalSpectrumF32/F64(magnitude, phase)` exposes both mutable native arrays,
+including arbitrary mismatched storage and IEEE payloads. Getters return
+independent typed arrays; owners support `cloned()` and generated `free()`.
+Queries are finite hertz values. DC explicitly returns positive zero in both
+arrays. Phase uses native accurate atan2. Samples start at time zero and
+entries after the period remain positive zero. Rates use signed 32-bit values;
+counts use WASM32 unsigned values. Native index checks, truncation, high-pitch
+scaling and level-two waveform approximation remain unchanged.
+
+Actual Node.js and browser checks consume both complete LFM1 original C
+corpora: 106 cases and 16,608 comparisons. Model fields and all binary32
+outputs retain exact source bits. Binary64 magnitude and waveform comparisons
+also have zero observed error; normalized phase error reaches
+1.2983319909810025e-16. Unchanged native binary64 bounds remain
+`[1e-17, 3e-15, 5e-16]` for magnitude, phase and waveform. No bound changed.
+
+Both complete 208-case LFP1 corrected endpoint corpora additionally exercise
+WASM preparation, retained model fields and empty sampled periods, 416 cases
+total. Private derived parameters are checked by the existing native unit
+tests, which pass along with the original-versus-corrected endpoint regression.
+The browser checks do not claim direct access to private prepared fields.
+
+Checks cover all public fields, reusable/one-shot/default/explicit precision
+agreement, independent cloning and owner/snapshot lifetimes, immutable query
+arrays, all three precision modes, DC, approximate/exact conjugate symmetry,
+amplitude doubling, negative excitation, truncated/empty periods, large sample
+indices, invalid physical timings, raw model/spectrum payload storage, atomic
+shape errors, late frequency overflow and post-error recovery. Existing native
+analytic criteria are retained; binary32 amplitude doubling is exact.
+
+Run `node tests/wasm_glottal_node.cjs ./pkg-node` or serve
+`tests/wasm_glottal_browser.html`. Twelve related native/unit/C tests pass,
+along with WASM Clippy and Rustdoc with warnings denied. All six owners are
+absent without the feature. Six original mappings bring coverage to 306
+implemented and 26 pending public mappings. Native/C source, fixtures,
+dependencies and previous bindings remain unchanged. Remaining DSP coverage
+and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
