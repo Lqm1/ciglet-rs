@@ -1498,6 +1498,69 @@ to 308 implemented and 24 pending public mappings. Native/C source, fixtures,
 dependencies and previous bindings remain unchanged. Remaining DSP coverage
 and combined three-crate acceptance are still required.
 
+## Complete linear prediction
+
+Twenty-four `prediction_*_f32/f64` functions expose every native one-shot
+operation: Levinson recursion, waveform estimation, magnitude estimation,
+scaled estimation, gain and resonances. Explicit arithmetic accepts
+`PredictionArithmetic.Stable=0` and `Legacy=1`; Nyquist independently accepts
+Preserve=0 and Legacy=1. Defaults retain native Stable/Preserve behavior.
+Codes are fallibly validated inside Rust Result.
+
+`PredictionSpectrumPlanF32/F64(length)` exposes length, `is_empty()`,
+`estimate`, `estimate_with_arithmetic`, `estimate_scaled` and `spectrum`.
+All power-of-two lengths permitted by the native implementation are retained,
+including a singleton forward spectrum. Inputs remain unchanged and errors
+release workspace borrows so plans can be reused.
+
+`PredictionF32/F64(coefficients, autocorrelation)` retains both full mutable
+native fields, including arbitrary mismatched lengths and IEEE payloads.
+`ScaledPredictionF32/F64` exposes copied coefficients, complete
+`autocorrelation_parts()`, `gain_parts()`, `gain()`, `cloned()` and consuming
+`into_prediction()`. Conversion consumes the owner on success or error.
+Correlation parts contain copied Float64Array fractions and Int32Array
+exponents plus length. Gain parts expose mutable binary64 fraction and i32
+exponent, with typed `fraction_storage()` for payload-preserving copies.
+Nonrepresentable ordinary correlations or gains fail without discarding the
+available scaled representation in an independent owner.
+
+`PredictionResonanceF32/F64(frequency_nyquist, real, imaginary)` exposes the
+full native frequency and complex pole, `from_components`, `components`,
+`set_components`, `pole`, `set_pole` and `cloned()`. Typed replacement validates
+shape atomically. `PredictionResonanceEstimateF32/F64(resonances, iterations,
+converged, maximum_residual)` retains all four mutable native fields.
+Resonances are frequency/real/imaginary triples; `resonance(index)` returns an
+independent owner or undefined. Binary64 `residual_storage()` and
+`set_residual_storage()` preserve residual payloads. Arbitrary public result
+storage is retained; no invented convergence or physical validation is added.
+All twelve owners provide generated `free()`. Returned arrays outlive owners.
+
+Actual Node.js and browser verification consumes all eight original and
+high-precision corpora: 128 waveform, 96 spectrum, 22 resonance, 200 stable
+recursion and 128 scaled waveform cases, with 10,664 numeric comparisons.
+Waveform Legacy coefficients, correlations and gains, and resonance
+frequencies/poles match their C references exactly. Spectrum comparisons
+retain the five native normalized bounds: binary32
+`[2e-8, 3e-8, 0, 7e-8, 8e-8]`, binary64
+`[5e-17, 2e-15, 4e-16, 2e-15, 3e-15]`.
+Stable coefficient maxima are 9.436895704622536e-16 and
+1.926515763819101e-11, within unchanged 2e-15/6e-11 bounds. Scaled correlation
+and coefficient comparisons retain native criteria; no bound was widened.
+
+Additional checks cover independent regularized Toeplitz equations and
+analytic spectra/poles, all policy combinations and methods, full public
+field mutation, raw IEEE payloads, cloning, copied storage lifetime, consuming
+success/error, invalid input/mode recovery, silence, ignored Nyquist,
+maximum/subnormal magnitudes and waveforms, FFT overflow, cancellation,
+normalized fractions/exponents and subnormal FFT coefficient estimation.
+Run `node tests/wasm_prediction_node.cjs ./pkg-node` or serve
+`tests/wasm_prediction_browser.html`. Forty-one related native/C tests pass,
+with WASM Clippy/Rustdoc warnings denied and actual feature-disabled absence
+of all twenty-four functions and twelve owners. Seven original mappings bring
+coverage to 315 implemented and 17 pending. Native/C source, dependencies,
+fixtures and previous bindings remain unchanged. Remaining families and
+combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
