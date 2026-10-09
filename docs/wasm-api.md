@@ -49,7 +49,7 @@ An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
 six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
-seven; resampling adds two. Other DSP families and both remaining crates still
+seven; resampling adds two and filtering adds eight. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -238,6 +238,47 @@ all eight functions are absent from an actual feature-disabled module. Two
 upstream mappings bring coverage to 55 implemented mappings; 277 public mappings
 remain pending. Native source, C interfaces, dependencies and original fixtures
 remain unchanged.
+
+## Filtering operations
+
+Sixteen functions complete the native filtering API in both precisions:
+`windowed_fir`, `fir`, `bandpass_fir`, `convolve`, `filter`, `filter_with`,
+`forward_backward_filter` and `forward_backward_filter_with`, with `_f32`/`_f64`
+suffixes. `FilterPassband` selects Lowpass, Highpass, Bandpass or Bandstop and
+the existing `WindowKind` supports all seven windows. `FilterStartup` selects
+ZeroState or LegacyZeroPrefix. All computations delegate to the native API.
+
+Windowed FIR cutoffs use cycles per sample; the simpler FIR functions normalize
+cutoffs to Nyquist. Lowpass/highpass use only the lower cutoff. Fractional-bin
+weights, even-length Nyquist replacement and accurate window multiplication
+remain unchanged. Convolution returns the full linear output in original
+coefficient accumulation order, or an empty array for empty operands.
+
+Recursive filters retain the original monic denominator convention: denominator
+element zero is ignored, without coefficient normalization. Default startup is
+the native corrected zero state; LegacyZeroPrefix preserves the skipped leading
+samples in equal-length coefficient fast paths. Forward/backward filtering
+retains the simple two-pass workflow without endpoint padding. Every output owns
+independent typed-array storage; inputs remain unchanged.
+
+Actual Node.js and browser checks pass 600 original C FIR cases, 120 convolution
+cases and 420 original/disclosed-corrected C recursive-filter cases. The 52,526
+scalar comparisons cover both startups, causal/two-pass calls and their defaults.
+Recursive results and convenience wrappers compare exact values; original FIR
+and convolution normalized bounds remain 2e-7 for f32 and 2e-15 for f64.
+Additional checks cover every window/passband combination, independent impulse
+recurrence and convolution, monic behavior, short/empty inputs, ignored cutoff,
+shape/range/enum/nonfinite errors, recursive overflow, unchanged inputs,
+independent outputs and reuse after errors. Entry points are
+`node tests/wasm_filtering_node.cjs ./pkg-node` and
+`tests/wasm_filtering_browser.html`, sharing `wasm_filtering_checks.mjs`.
+
+All earlier WASM families pass their Node checks on this artifact. Thirteen
+native/C-interface regression tests pass. WASM Clippy and Rustdoc with warnings
+denied pass, and all sixteen functions are absent from an actual feature-disabled
+module. Eight upstream mappings bring coverage to 63 implemented mappings;
+269 public mappings remain pending. Native implementations, C interfaces,
+dependencies and comparison fixtures remain unchanged.
 
 ## Primary references
 
