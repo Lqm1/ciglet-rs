@@ -48,7 +48,8 @@ window regression tests and host all-target/all-feature Clippy also pass.
 An actual feature-disabled WASM module exposes none of the six functions.
 Every existing locked package is retained; only optional WASM packages were
 added. The inventory records nineteen complete window mappings. Fourier adds
-six mappings, DCT/phase adds fifteen and vectors add six. Other DSP families and both remaining crates still
+six mappings, DCT/phase adds fifteen, vectors add six and interpolation adds
+seven. Other DSP families and both remaining crates still
 require complete WASM interfaces and final combined acceptance.
 
 Ordinary validation errors become JavaScript exceptions. A WebAssembly panic
@@ -159,6 +160,47 @@ denied pass; all eleven functions are absent from an actual feature-disabled
 module. Six upstream mappings bring coverage to 46 implemented mappings;
 286 public mappings remain pending. Native implementations, C interfaces,
 dependencies and C fixtures remain unchanged.
+
+## Interpolation operations
+
+Twelve additional functions complete the native interpolation API alongside the
+previous scalar `interpolate_between` bindings. Both precisions expose
+`interpolate_linear`, `interpolate_uniform`, `interpolate_sinc`,
+`interpolate_sinc_with`, `interpolate_sinc_with_kernel` and
+`interpolate_fill_missing`, each with `_f32`/`_f64` suffixes. Results own
+independent numeric typed arrays and inputs remain unchanged.
+
+Linear interpolation accepts strictly increasing coordinates, unordered queries
+and clamped endpoints. Uniform coordinates occupy `[start, end)` and retain the
+original near-final-sample clamp. Four-lobe Lanczos interpolation exposes all
+native boundary/kernel choices through `BoundaryPolicy` and `KernelPolicy`.
+The default includes sample zero and uses the corrected near-zero kernel;
+`interpolate_sinc_with` selects the boundary with the original kernel;
+`interpolate_sinc_with_kernel` selects both independently. These are the native
+correction and compatibility policies, not new WASM behavior.
+
+Missing-value interpolation supports exact sentinels, NaN sentinels, repeated
+nearest known values outside the known range and the all-missing zero fallback.
+Ordinary native validation and arithmetic failures become JavaScript exceptions.
+Arrays remain independent across calls, including after validation errors.
+
+Actual Node.js and browser checks pass all 48 original C linear cases and 112
+disclosed-corrected C extended cases from both precision/boundary corpora.
+The 9,282 scalar comparisons are exact. Default and explicit stable Lanczos
+calls also reproduce the included-boundary corpus. Additional checks cover an
+independent analytic near-zero kernel limit, all four policy combinations,
+NaN/infinity sentinels, signed zeros, unordered and empty queries, singleton
+sources, invalid coordinates/policies, overflow, input immutability, independent
+outputs and reuse after errors. Runtime entry points are
+`node tests/wasm_interpolation_node.cjs ./pkg-node` and
+`tests/wasm_interpolation_browser.html`, sharing `wasm_interpolation_checks.mjs`.
+
+All previously implemented WASM families pass their Node checks on this artifact.
+Seventeen native/C-interface interpolation regression tests pass, as do WASM
+Clippy and Rustdoc with warnings denied. All twelve functions are absent from an
+actual feature-disabled module. Seven upstream mappings bring WASM coverage to
+53 implemented mappings; 279 public mappings remain pending. Native source,
+C interfaces, dependencies and original comparison fixtures remain unchanged.
 
 ## Primary references
 
