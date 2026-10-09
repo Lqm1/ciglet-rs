@@ -65,5 +65,5 @@ The later near-zero conditioning correction uses KernelPolicy independently
 of sample-zero handling. Default sinc_uniform selects Stable, while the existing
 sinc_uniform_with keeps source kernel arithmetic. sinc_uniform_with_kernel
 exposes both policies explicitly. Original/disclosed-corrected fixture comparisons
-are unchanged; tests/resampling_conditioning.rs adds independent mathematical
+are unchanged; crates/ciglet-rs/tests/resampling_conditioning.rs adds independent mathematical
 limit checks. See dsp-optimization-audit.md for measurements and current validation.

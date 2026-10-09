@@ -71,7 +71,7 @@ explicit boundary selection. New `resample_with_kernel` and
 reproduced near-zero numerical defect and the already disclosed sample-zero fix.
 No model, audio or feature format changes.
 
-`tests/resampling_conditioning.rs` compares impulse interpolation near integer
+`crates/ciglet-rs/tests/resampling_conditioning.rs` compares impulse interpolation near integer
 coordinates to an independently evaluated sinc product, checks both signs,
 binary32/binary64, fractional-rate bounded output and every boundary/kernel
 combination. Legacy fixture suites remain unchanged. SHIRO selects the corrected

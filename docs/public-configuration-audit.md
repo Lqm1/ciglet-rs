@@ -11,7 +11,7 @@ in SHIRO's native acceptance audit.
 
 | Header item | Current mapping or required review |
 | --- | --- |
-| CIG_CORR_ACF, AMDF, SQRDIFF, YIN | Explicit Method i32 codes 0/1/2/3 and checked conversion; tests/public_configuration.rs |
+| CIG_CORR_ACF, AMDF, SQRDIFF, YIN | Explicit Method i32 codes 0/1/2/3 and checked conversion; crates/ciglet-rs/tests/public_configuration.rs |
 | malloc2d, copy2d, free2d, flatten, reshape, transpose | Array2 ownership/shape operations; existing array compatibility and C corpus cover both macro and implementation names |
 | CIG_DEF_N_TO_ONE | Standard slice Iterator::fold; noncommutative/stateful operation, initial seed, counts and bits checked against twelve C records per precision |
 | CIG_DEF_ADD, ADDSQR, MAX, MIN | Scalar closures/statistics and strict scalar comparisons; existing statistics/scalar C fixtures retain grouping/ties |
@@ -32,14 +32,14 @@ separate from this scoped field mapping.
 
 | C fields | Rust configuration and evidence |
 | --- | --- |
-| cplx.real, imag | complex::Complex.re, im; construction/arithmetic/bit comparisons in tests/complex.rs |
-| ifdetector.fc | Detector::center_frequency, set_center_frequency and from_kernels; tests/instantaneous_frequency.rs |
+| cplx.real, imag | complex::Complex.re, im; construction/arithmetic/bit comparisons in crates/ciglet-rs/tests/complex.rs |
+| ifdetector.fc | Detector::center_frequency, set_center_frequency and from_kernels; crates/ciglet-rs/tests/instantaneous_frequency.rs |
 | ifdetector.nh, hr, hi, hdr, hdi | Kernels::real, imaginary, derivative_real, derivative_imaginary; length follows the vectors; from_kernels and kernels_mut preserve caller-designed filters and revalidate them before use |
 | filterbank.nchannel, nf | FilterBank::channels and bins; checked owned construction ties dimensions to response storage |
 | filterbank.fnyq | nyquist_hz and set_nyquist_hz; arbitrary metadata remains supported without changing custom responses |
 | filterbank.fresp, lower_idx, upper_idx | response, support and set_channel expose channel response and half-open support; 33 unchanged-C records per precision cover signed/custom responses and empty-frame behavior |
-| lfmodel.T0, te, tp, ta, Ee | Model::period, closure, peak, return_time, excitation; all five remain public; tests/glottal.rs and the 208-case preparation corpus |
-| figure.handle | Commands<W> accepts a caller-owned Write implementation; Figure owns native process/stdin lifetime and exposes mutable command writer access; tests/plotting.rs exercises both command bytes and actual Gnuplot |
+| lfmodel.T0, te, tp, ta, Ee | Model::period, closure, peak, return_time, excitation; all five remain public; crates/ciglet-rs/tests/glottal.rs and the 208-case preparation corpus |
+| figure.handle | Commands<W> accepts a caller-owned Write implementation; Figure owns native process/stdin lifetime and exposes mutable command writer access; crates/ciglet-rs/tests/plotting.rs exercises both command bytes and actual Gnuplot |
 
 Independent dimension or owning-pointer mutation is replaced by checked owned
 construction. Callers can reconstruct resized detectors/banks rather than leave
@@ -62,7 +62,7 @@ than rebuilding an incompatible global typedef. Scalar/bundled fastapprox
 kernels intentionally retain their original binary32 storage; generic outer
 arithmetic preserves the documented source conversion stages. Both precisions
 are exercised by the algorithm-specific C corpora and independent tests.
-Public exports are the modules in src/lib.rs and corresponding symbols in
+Public exports are the modules in crates/ciglet-rs/src/lib.rs and corresponding symbols in
 api-inventory.csv, including ownership equivalents. This maps packaging and
 precision selection without adding a second package or hiding standalone APIs.
 

@@ -1,8 +1,10 @@
 # ciglet-rs
 
+This repository is a Cargo workspace containing `ciglet-rs`, `ciglet-rs-capi` and `ciglet-rs-wasm` under `crates/`. See [workspace layout](docs/workspace-layout.md) for package selection, artifact names and binding commands. See [workspace split verification](docs/workspace-split-verification.md) for migration checks and their scope.
+
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
-The native Rust phase passes the agreed five-target acceptance gate, including all installed fastapprox mappings. The complete C ABI is implemented and tested. Optional browser and Node.js WebAssembly bindings cover 329 portable public mappings; all 40 runtime verification families pass together. Three OS process lifecycle mappings remain available through native Rust/C and are explicitly native-only. See [WASM coverage and runtime evidence](docs/wasm-api.md) and the [per-symbol binding inventory](docs/binding-inventory.csv). Three-package real-speech Node/browser and all three Windows/Linux x86_64 Python compositions pass. The accepted complete-task gates are recorded in the sibling SHIRO package's `docs/requirements-verification.md`; `docs/cross-crate-verification.md` provides reproduction.
+The native Rust phase passes the agreed five-target acceptance gate, including all installed fastapprox mappings. The complete C ABI is implemented and tested. Optional browser and Node.js WebAssembly bindings cover 329 portable public mappings; all 40 runtime verification families pass together. Three OS process lifecycle mappings remain available through native Rust/C and are explicitly native-only. See [WASM coverage and runtime evidence](docs/wasm-api.md) and the [per-symbol binding inventory](docs/binding-inventory.csv). Three-package real-speech Node/browser and all three Windows/Linux x86_64 Python compositions pass. The accepted complete-task gates are recorded in [SHIRO requirements verification](https://github.com/Lqm1/shiro-rs/blob/main/docs/requirements-verification.md); `docs/cross-crate-verification.md` provides reproduction.
 
 Custom window generation accepts stateful/fallible trig callbacks with independent
 f32/f64 weight and callback precision. Standard Iterator::fold covers the source

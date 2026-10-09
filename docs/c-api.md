@@ -1,4 +1,9 @@
-# C interface implementation status
+# C ABI
+
+The current adapter is the separate `ciglet-rs-capi` workspace package.
+See [workspace layout](workspace-layout.md) for current build commands and artifact names.
+Public C symbols, headers, JavaScript API names and numerical behavior are retained.
+Older implementation checkpoints below describe the original feature-based layout.
 
 The accepted native and binding gates are verified within the agreed execution
 scope. The final requirement decision, exact evidence and authorized deferred
@@ -8,8 +13,8 @@ Historical checkpoints below retain their original scope.
 
 The optional `c-api` feature exports a C interface from this existing package.
 It does not create another crate. The native Rust implementation remains the
-calculation backend; unsafe code is confined to `src/c_api.rs` and its binding
-modules under `src/c_api/`.
+calculation backend; unsafe code is confined to `crates/ciglet-rs-capi/src/c_api.rs` and its binding
+modules under `crates/ciglet-rs-capi/src/c_api/`.
 
 Binding coverage is tracked in `docs/binding-inventory.csv`. The current header
 exports 646 status-returning functions, 31 opaque types, 33 concrete descriptors
@@ -19,12 +24,12 @@ OS process mappings retain native Rust/C implementations under ADR 0007.
 Final latest-source three-package acceptance remains in progress. The following
 sections retain historical implementation checkpoints.
 
-Build with `cargo build --locked --features c-api --lib`. Cargo emits the Rust
+Build with `cargo build -p ciglet-rs-capi --locked  --lib`. Cargo emits the Rust
 library, shared library and static library. Regenerate the checked-in header
 with cbindgen 0.29.4:
 
 ```text
-cbindgen --config cbindgen.toml --crate ciglet-rs --output include/ciglet_rs.h
+cbindgen --config crates/ciglet-rs-capi/cbindgen.toml --crate ciglet-rs-capi --output crates/ciglet-rs-capi/include/ciglet_rs.h
 ```
 
 The generated header is specifically for a `c-api` build. Cbindgen currently

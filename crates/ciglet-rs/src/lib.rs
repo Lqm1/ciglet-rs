@@ -1,0 +1,54 @@
+//! Signal-processing operations reimplemented from ciglet.
+//! Native Rust API; C ABI and WebAssembly adapters are separate workspace packages.
+#![forbid(unsafe_code)]
+mod accumulation;
+pub mod approximation;
+pub mod array;
+pub mod cepstrum;
+pub mod chirp_z;
+pub mod complex;
+pub mod correlogram;
+pub mod cosine;
+pub mod distance;
+pub mod extrema;
+pub mod filterbank;
+pub mod filtering;
+pub mod fourier;
+pub mod frame;
+pub mod frequency;
+pub mod glottal;
+pub mod instantaneous_frequency;
+pub mod interpolation;
+pub mod kalman;
+pub mod matrix;
+pub mod median;
+pub mod phase;
+pub mod plotting;
+pub mod polynomial;
+pub mod prediction;
+pub mod random;
+pub mod real_cepstrum;
+pub mod resampling;
+pub mod root;
+pub mod scalar;
+pub mod sinc;
+pub mod smoothing;
+pub mod spectral_envelope;
+pub mod spectral_peak;
+pub mod statistics;
+pub mod stft;
+pub mod synthesis;
+pub mod vector;
+pub mod wave;
+pub mod wave_write;
+pub mod window;
+
+/// Invalid DSP input shape or parameters.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Error(pub &'static str);
+impl std::fmt::Display for Error {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(self.0)
+    }
+}
+impl std::error::Error for Error {}

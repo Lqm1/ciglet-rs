@@ -1,4 +1,9 @@
-# WebAssembly interface
+# Browser and Node.js WebAssembly API
+
+The current adapter is the separate `ciglet-rs-wasm` workspace package.
+See [workspace layout](workspace-layout.md) for current build commands and artifact names.
+Public C symbols, headers, JavaScript API names and numerical behavior are retained.
+Older implementation checkpoints below describe the original feature-based layout.
 
 The accepted native and binding gates are verified within the agreed execution
 scope. The final requirement decision, exact evidence and authorized deferred
@@ -28,7 +33,7 @@ There are no pending ciglet binding inventory rows. This inventory result does
 not prove final three-crate acceptance or replace public API/ownership audits.
 
 ```sh
-cargo build --locked --lib --features wasm --target wasm32-unknown-unknown
+cargo build -p ciglet-rs-wasm --locked --lib  --target wasm32-unknown-unknown
 wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs.wasm --target web --out-dir pkg-web
 wasm-bindgen target/wasm32-unknown-unknown/debug/ciglet_rs.wasm --target nodejs --out-dir pkg-node
 node tests/wasm_window_node.cjs ./pkg-node

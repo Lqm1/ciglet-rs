@@ -10,12 +10,12 @@ from pathlib import Path
 import re
 
 root = Path(__file__).resolve().parent.parent
-modules = re.findall(r'^pub mod (\w+);', (root / 'src/lib.rs').read_text(encoding='utf-8'), re.M)
+modules = re.findall(r'^pub mod (\w+);', (root / 'crates/ciglet-rs/src/lib.rs').read_text(encoding='utf-8'), re.M)
 original = {}
 for module in modules:
     if module in ('c_api', 'wasm_api'):
         continue
-    source = (root / 'src' / f'{module}.rs').read_text(encoding='utf-8')
+    source = (root / 'crates' / 'ciglet-rs' / 'src' / f'{module}.rs').read_text(encoding='utf-8')
     declarations = re.findall(r'pub struct (\w+)(?:<[^{}]*>)?\s*\{([^{}]*)\}', source)
     starts = re.findall(r'pub struct (\w+)(?:<[^{}]*>)?\s*\{', source)
     assert starts == [name for name, _ in declarations], (module, 'Unsupported declaration')
@@ -35,7 +35,7 @@ mapped = {row['Type']: row['Fields'].split(';') for row in rows}
 assert len(rows) == len(mapped), 'Duplicate types'
 assert mapped == original, {'source': original, 'ledger': mapped}
 for row in rows:
-    assert row['NativeSource'] == f"src/{row['Type'].split('::')[0]}.rs", row
+    assert row['NativeSource'] == f"crates/ciglet-rs/src/{row['Type'].split('::')[0]}.rs", row
     for column in ('NativeSource', 'CSource', 'WasmSource'):
         for path in row[column].split(';'):
             assert (root / path).is_file(), (column, path)

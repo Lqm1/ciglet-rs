@@ -1,6 +1,6 @@
 # Native named-field value audit
 
-The public native modules in src/lib.rs contain twenty named-field value,
+The public native modules in crates/ciglet-rs/src/lib.rs contain twenty named-field value,
 configuration and result types with sixty-eight public fields. The source-derived
 set is recorded in native-value-field-bindings.csv. This complements the pinned
 upstream five-structure/twenty-field ledger; the two counts describe different

@@ -24,10 +24,28 @@ checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 name = "ciglet-rs"
 version = "0.1.0"
 dependencies = [
- "js-sys",
  "rand",
  "rand_chacha",
  "rustfft",
+]
+
+[[package]]
+name = "ciglet-rs-capi"
+version = "0.1.0"
+dependencies = [
+ "ciglet-rs",
+ "rand_chacha",
+ "rustfft",
+]
+
+[[package]]
+name = "ciglet-rs-wasm"
+version = "0.1.0"
+dependencies = [
+ "ciglet-rs",
+ "js-sys",
+ "rand",
+ "rand_chacha",
  "wasm-bindgen",
 ]
 

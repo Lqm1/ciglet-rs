@@ -109,7 +109,7 @@ documented default/Legacy Nyquist distinction. See vector-phase-compatibility.md
 
 ## Single-sinusoid amplitude and short lengths
 
-The inline gensin function in ciglet.h accepts an amplitude but never uses it. Its initial samples and recurrence produce a unit-amplitude sinusoid regardless of the amplitude argument. It also unconditionally writes indices 0 and 1, so lengths below two access outside the allocated buffer. The Rust synthesis::sinusoid implementation now applies amplitude to its initial recurrence samples. Both synthesis entry points handle zero and one sample lengths safely. tests/synthesis.rs verifies zero, fractional, negative, and greater-than-one amplitudes against an independent centered cosine formula, plus short inputs. Compatibility fixtures use the unmodified single-sinusoid C function only with unit amplitude; multisinusoid C fixtures include nonunit amplitudes. These are intentional corrections, not claims that the original ignored-amplitude behavior is retained.
+The inline gensin function in ciglet.h accepts an amplitude but never uses it. Its initial samples and recurrence produce a unit-amplitude sinusoid regardless of the amplitude argument. It also unconditionally writes indices 0 and 1, so lengths below two access outside the allocated buffer. The Rust synthesis::sinusoid implementation now applies amplitude to its initial recurrence samples. Both synthesis entry points handle zero and one sample lengths safely. crates/ciglet-rs/tests/synthesis.rs verifies zero, fractional, negative, and greater-than-one amplitudes against an independent centered cosine formula, plus short inputs. Compatibility fixtures use the unmodified single-sinusoid C function only with unit amplitude; multisinusoid C fixtures include nonunit amplitudes. These are intentional corrections, not claims that the original ignored-amplitude behavior is retained.
 
 ## WAVE sample decoding and stream ownership
 
@@ -134,7 +134,7 @@ Specification references: https://learn.microsoft.com/en-us/windows/win32/multim
 
 ## Resampling first-sample omission
 
-The original cig_rresample interpolation checks ix_base + j > 0, excluding source index zero for every nonidentity ratio. A single nonzero input sample therefore produces only zeros after upsampling. resampling::resample uses corrected first-sample inclusion. resample_with offers BoundaryPolicy::LegacySkipFirst for unchanged-C comparisons and pipelines requiring original boundary values. Ratio one still copies every input sample exactly. The independent impulse regression in tests/filter_resample.rs distinguishes corrected and legacy outputs. See docs/filter-resample-compatibility.md for the original-C corpus and precision measurements.
+The original cig_rresample interpolation checks ix_base + j > 0, excluding source index zero for every nonidentity ratio. A single nonzero input sample therefore produces only zeros after upsampling. resampling::resample uses corrected first-sample inclusion. resample_with offers BoundaryPolicy::LegacySkipFirst for unchanged-C comparisons and pipelines requiring original boundary values. Ratio one still copies every input sample exactly. The independent impulse regression in crates/ciglet-rs/tests/filter_resample.rs distinguishes corrected and legacy outputs. See docs/filter-resample-compatibility.md for the original-C corpus and precision measurements.
 
 ## Spectral peak neighbor bounds
 
