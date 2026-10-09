@@ -1094,6 +1094,64 @@ the feature. Three original mappings bring coverage to 262 implemented and
 unchanged. Existing FFT changes are internal visibility only. Full remaining
 DSP coverage and combined three-crate acceptance are still required.
 
+## Complete real cepstrum and minimum phase
+
+`RealCepstrumPlanF32/F64(length)` exposes the complete reusable native plan:
+`length`, `bins`, `is_empty()`, `analyze(logs, policy)`,
+`reconstruct(coefficients, policy)`,
+`minimum_phase_with(logs, policy, lifter_code)`,
+`spectrogram_to_cepstra(magnitudes, count, policy)`,
+`cepstra_to_spectrogram(coefficients, frames, count, policy)` and generated
+`free()`. Outputs are independent typed arrays. Input arrays remain unchanged.
+Lengths and counts use the WASM32 unsigned integer range.
+
+Nyquist policies use existing `SpectrumNyquist.Preserve=0` and `Legacy=1`.
+The new `CepstralLifter.Causal=0` and `Legacy=1` constants select the lifter
+independently. Numeric codes are validated inside Rust Result, so invalid
+codes leave the owner reusable. Preserve includes the supplied Nyquist bin;
+Legacy mirrors the preceding bin and ignores the unused Nyquist input.
+The causal lifter retains DC/Nyquist and clears all negative quefrencies.
+The legacy lifter preserves the source's doubled Nyquist coefficient and
+first negative-quefrency coefficient.
+
+`real_cepstrum_from_log_spectrum_f32/f64(logs)`,
+`real_cepstrum_to_log_spectrum_f32/f64(coefficients, length)` and
+`real_cepstrum_minimum_phase_f32/f64(logs)` supply all native one-shot entry
+points. They use Preserve, with Causal for minimum phase. Analysis accepts
+already logarithmic spectra. Reconstruction accepts a coefficient prefix
+up to transform length and returns the full native log-spectrum buffer.
+Matrix conversion preserves frame-major storage, approximate log with the
+native 1e-15 floor, approximate exp, explicit frame count and empty coefficient
+frames. Transform length must be a positive power of two; one-shot analysis
+and minimum phase infer length from at least two spectrum bins.
+
+Actual Node.js and browser checks pass all 144 original RCP1 cases and 50,860
+comparisons. The seven comparisons cover legacy analysis, reconstruction
+from C and computed coefficients, legacy minimum phase, matrix analysis,
+and matrix reconstruction from C and computed coefficients. Unchanged native
+normalized bounds are `[3e-8, 1.2e-7, 2e-7, 1.6e-7, 7e-9, 0, 2.5e-6]` for
+binary32 and `[5e-17, 3e-16, 3e-16, 3e-16, 3e-17, 0, 0]` for binary64.
+Observed maxima are `[1.4858453763329853e-8, 6.939960699696553e-8,
+1.0104661339460338e-7, 1.411484763920191e-7, 4.170882985242948e-9, 0, 0]`
+and `[4.364540199625453e-17, 2.1510171894736168e-16,
+2.1510171894736168e-16, 2.121702267680549e-16,
+2.4212402950875138e-17, 0, 0]`, respectively.
+
+Checks also cover all Nyquist/lifter combinations, one-shot agreement,
+independent binary64 cosine reconstruction and causal phase, the legacy
+lifter difference, ignored input regions, zero coefficient frames,
+singletons, empty matrices, checked shape/size failures, invalid numeric
+codes, recovery after late frame errors, input immutability, returned-array
+lifetimes and reusable plans. No native algorithm or numerical bound changed.
+
+Run `node tests/wasm_real_cepstrum_node.cjs ./pkg-node` or serve
+`tests/wasm_real_cepstrum_browser.html`. Nine related native/C tests pass,
+along with WASM Clippy and Rustdoc with warnings denied. The six functions
+and two plans are absent without the feature. Five original mappings bring
+coverage to 267 implemented and 65 pending public mappings. Native/C source,
+fixtures, dependencies and previous bindings remain unchanged. Remaining
+DSP coverage and combined three-crate acceptance are still required.
+
 ## Primary references
 
 - [Supported numeric arrays](https://wasm-bindgen.github.io/wasm-bindgen/reference/types/boxed-slices.html)
