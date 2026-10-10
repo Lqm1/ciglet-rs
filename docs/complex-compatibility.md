@@ -44,6 +44,15 @@ finite bounded exponents and valid bit conversions are checked before use.
 Unsupported or unrepresentable results return errors. Exact means host libm,
 not mathematical exactness or guaranteed bit equality across hosts.
 
+The cross-platform fixture test permits at most one ULP for host-libm complex
+exponentials, arguments, logarithms and scalar exponentials, with normalized
+error bounded by the selected scalar's epsilon. It reports both maxima for each
+operation. Zero results, including their signs, still require exact equality.
+Ordinary complex arithmetic and the Fast/Approximate kernels remain bit-exact.
+This bound includes the one-ULP complex exponential difference observed on
+macOS ARM. ARM CI checks the full core and C ABI suites on Linux, macOS and
+Windows instead of extrapolating from x86 results.
+
 The reference uses unmodified ciglet commit
 `895ba9b1c0eabee83d3544208bbc82420efa3206` headers. Each precision has 64 complex
 cases (eight real values by eight angles), five arithmetic/conjugation results,

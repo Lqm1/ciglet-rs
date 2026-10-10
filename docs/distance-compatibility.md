@@ -30,7 +30,12 @@ bit-approximation helper is shared with the validated public logarithm code to
 preserve these Legacy artifacts. It does not weaken the public logarithm input
 checks. In particular, Legacy accepts paired zero bins and reproduces the
 source's implementation-dependent finite result; this is not a mathematical
-divergence guarantee. Other platforms' NaN propagation remains unaudited.
+divergence guarantee. Invalid intermediate arithmetic uses the negative quiet
+NaN convention of the original x86 fixtures before the private bit-log kernel.
+NaN signs and payloads are otherwise platform dependent. Without this explicit
+convention, a positive ARM NaN changes a finite Legacy artifact by about 177.
+This normalization preserves the published x86 fixture values on ARM as well;
+it does not change finite intermediates or the Stable policy.
 
 For identical singleton spectra `[0.5]`, the pinned C fixture returns about
 `-13.30342` in float and `-13.3132562637329` in double. These finite values arise

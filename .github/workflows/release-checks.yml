@@ -10,6 +10,20 @@ defaults:
   run:
     shell: bash
 jobs:
+  arm-numerics:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04-arm, macos-latest, windows-11-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - name: Install the pinned Rust toolchain
+      run: rustup toolchain install 1.94.0 --profile minimal
+    - name: Check ARM arithmetic and C ABI against the original C fixtures
+      run: cargo +1.94.0 test --locked -p ciglet-rs -p ciglet-rs-capi -- --nocapture
   check:
     runs-on: windows-latest
     steps:

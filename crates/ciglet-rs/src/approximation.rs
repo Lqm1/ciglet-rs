@@ -223,6 +223,14 @@ fn logarithm2_bits(value: f32) -> f32 {
 // Explicit source compatibility for distance intermediates and random draws
 // outside the mathematical log domain. Public log APIs validate.
 pub(crate) fn logarithm_legacy_bits(value: f32) -> f32 {
+    // The original x86 fixtures use a negative quiet NaN for invalid arithmetic.
+    // ARM can produce a positive NaN instead. Its sign becomes a large finite
+    // difference in this bit approximation, so preserve the fixture convention.
+    let value = if value.is_nan() {
+        f32::from_bits(0xffc0_0000)
+    } else {
+        value
+    };
     std::f32::consts::LN_2 * logarithm2_bits(value)
 }
 
@@ -264,4 +272,17 @@ pub fn power(value: f32, exponent: f32) -> Result<f32, Error> {
 /// Bundled level-one power, retaining its logarithm2/exponential2 bit kernels.
 pub fn power_fast(value: f32, exponent: f32) -> Result<f32, Error> {
     exponential2_fast(exponent * logarithm2_fast(value)?)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn legacy_nan_artifact_preserves_the_original_fixture_bits() {
+        for bits in [0x7fc0_0000, 0xffc0_0000, 0x7fc0_1234, 0xffc0_5678] {
+            assert_eq!(
+                super::logarithm_legacy_bits(f32::from_bits(bits)).to_bits(),
+                0x4385_4978,
+            );
+        }
+    }
 }

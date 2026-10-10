@@ -36,20 +36,20 @@ fn exact<T: Scalar>(actual: T, expected: T) {
         "{actual:?} != {expected:?}"
     );
 }
-fn compare_host<T: Scalar>(actual: T, expected: T, maximum: &mut f64, scalar_exp: bool) {
+fn compare_host<T: Scalar>(actual: T, expected: T, maximum: &mut f64, maximum_ulp: &mut u64) {
     let error = (actual.into() - expected.into()).abs() / (1.0 + expected.into().abs());
     assert!(error.is_finite());
     *maximum = maximum.max(error);
-    if scalar_exp && std::mem::size_of::<T>() == 8 {
-        let distance = actual.into().to_bits().abs_diff(expected.into().to_bits());
-        assert!(distance <= 1, "scalar exp ULP distance: {distance}");
-        assert!(
-            error <= f64::EPSILON,
-            "scalar exp normalized error: {error}"
-        );
+    let distance = if std::mem::size_of::<T>() == 8 {
+        actual.into().to_bits().abs_diff(expected.into().to_bits())
     } else {
-        exact(actual, expected);
-    }
+        u64::from(
+            (actual.into() as f32)
+                .to_bits()
+                .abs_diff((expected.into() as f32).to_bits()),
+        )
+    };
+    *maximum_ulp = (*maximum_ulp).max(distance);
     if actual == T::zero() || expected == T::zero() {
         exact(actual, expected);
     }
@@ -64,6 +64,7 @@ fn reference<T: Scalar>(bytes: &[u8]) {
     reader.width = reader.integer() as usize;
     let count = reader.integer();
     let mut maximum = [0.0f64; 4];
+    let mut maximum_ulp = [0u64; 4];
     for _ in 0..count {
         let first = reader.point::<T>();
         let second = reader.point::<T>();
@@ -80,8 +81,8 @@ fn reference<T: Scalar>(bytes: &[u8]) {
         for (field, value) in actual.into_iter().enumerate() {
             let expected = reader.point::<T>();
             if field == 7 {
-                compare_host(value.re, expected.re, &mut maximum[0], false);
-                compare_host(value.im, expected.im, &mut maximum[0], false);
+                compare_host(value.re, expected.re, &mut maximum[0], &mut maximum_ulp[0]);
+                compare_host(value.im, expected.im, &mut maximum[0], &mut maximum_ulp[0]);
             } else {
                 exact(value.re, expected.re);
                 exact(value.im, expected.im);
@@ -95,7 +96,7 @@ fn reference<T: Scalar>(bytes: &[u8]) {
             complex::argument(first, Precision::Exact).unwrap(),
             reader.scalar(),
             &mut maximum[1],
-            false,
+            &mut maximum_ulp[1],
         );
     }
     let scalars = reader.integer();
@@ -109,7 +110,7 @@ fn reference<T: Scalar>(bytes: &[u8]) {
             let actual = approximation::logarithm_with(value, precision).unwrap();
             let expected = reader.scalar::<T>();
             if field == 2 {
-                compare_host(actual, expected, &mut maximum[2], false);
+                compare_host(actual, expected, &mut maximum[2], &mut maximum_ulp[2]);
             } else {
                 exact(actual, expected);
             }
@@ -121,7 +122,7 @@ fn reference<T: Scalar>(bytes: &[u8]) {
             let actual = approximation::exponential_with(exponent, precision).unwrap();
             let expected = reader.scalar::<T>();
             if field == 2 {
-                compare_host(actual, expected, &mut maximum[3], true);
+                compare_host(actual, expected, &mut maximum[3], &mut maximum_ulp[3]);
             } else {
                 exact(actual, expected);
             }
@@ -140,6 +141,18 @@ fn reference<T: Scalar>(bytes: &[u8]) {
         "{}-byte libm maximum normalized errors (complex exp, argument, log, exp): {maximum:?}",
         reader.width
     );
+    println!("host libm maximum ULP distances: {maximum_ulp:?}");
+    let epsilon = if reader.width == 4 {
+        f64::from(f32::EPSILON)
+    } else {
+        f64::EPSILON
+    };
+    for (field, (&error, &ulp)) in maximum.iter().zip(&maximum_ulp).enumerate() {
+        assert!(
+            ulp <= 1 && error <= epsilon,
+            "host libm field {field}: {ulp} ULP, normalized error {error}"
+        );
+    }
 }
 #[test]
 fn c_float_reference() {
