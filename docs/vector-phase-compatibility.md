@@ -62,6 +62,12 @@ interfaces. The target-specific numeric comparison results are recorded in the
 project progress record; exact agreement on this finite corpus is not a claim
 of universal bitwise transcendental compatibility.
 
+On macOS ARM, the atan2 corpus differs from the x86 fixture by one ULP. The
+cross-platform test now permits at most one ULP and normalized error no greater
+than the selected scalar's epsilon for nonzero atan2 outputs. Signed zeros and
+all other vector/phase fields still require bit equality. This changes only the
+comparison with a fixture generated on another host, not the implementation.
+
 All 100 integration tests pass on Windows MSVC x86_64/i686, Windows GNU
 x86_64 and Linux GNU x86_64/i686. Every compared scalar and integer output in
 this corpus matches the C fixture exactly on all five targets. The measured

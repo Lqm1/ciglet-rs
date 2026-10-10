@@ -85,10 +85,24 @@ fn check<T: Scalar>(bytes: &[u8]) {
                 if field == 7 && a != T::zero() && b != T::zero() {
                     let error = (a.into() - b.into()).abs() / (1.0 + b.into().abs());
                     maximum_argument_error = maximum_argument_error.max(error);
-                    assert_eq!(
-                        a.into().to_bits(),
-                        b.into().to_bits(),
-                        "atan2 case {case} sample {i}: {error}"
+                    let (ulp, epsilon) = if r.width == 8 {
+                        (
+                            a.into().to_bits().abs_diff(b.into().to_bits()),
+                            f64::EPSILON,
+                        )
+                    } else {
+                        (
+                            u64::from(
+                                (a.into() as f32)
+                                    .to_bits()
+                                    .abs_diff((b.into() as f32).to_bits()),
+                            ),
+                            f64::from(f32::EPSILON),
+                        )
+                    };
+                    assert!(
+                        ulp <= 1 && error <= epsilon,
+                        "atan2 case {case} sample {i}: {ulp} ULP, normalized error {error}"
                     );
                 } else {
                     assert_eq!(

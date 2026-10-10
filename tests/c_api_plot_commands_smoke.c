@@ -49,15 +49,21 @@ static void compare_fixture(const Sink *memory, const Sink *external, const char
     assert(!ferror(file) && feof(file));
     assert(fclose(file) == 0);
     assert(memory->count == count && external->count == count);
+    if (memcmp(memory->bytes, expected, count) != 0) {
+        for (size_t i = 0; i < count; ++i) if (memory->bytes[i] != expected[i]) {
+            fprintf(stderr, "Plot fixture differs at byte %zu: actual %.24s, expected %.24s\n", i, memory->bytes + i, expected + i);
+            break;
+        }
+    }
     assert(memcmp(memory->bytes, expected, count) == 0);
     assert(memcmp(external->bytes, expected, count) == 0);
     assert(external->writes == count && external->flushes == 11);
 }
 #define CHECK_PRECISION(SUFFIX, TYPE, HANDLE, MAXIMUM, BITS, FIXTURE) \
 static void check_##SUFFIX(void) { \
-    BITS bits = 1; TYPE tiny; memcpy(&tiny, &bits, sizeof tiny); \
-    TYPE y[] = {0.0, -0.0, 1.23456789, -0.0000005, 1e20, 1e-20, MAXIMUM, tiny, NAN, -NAN, INFINITY, -INFINITY}; \
-    TYPE x[12]; for (int i = 0; i < 12; ++i) x[i] = (TYPE)(i * 0.25 - 1.0); \
+    BITS bits = 1; _Alignas(8) TYPE tiny; memcpy(&tiny, &bits, sizeof tiny); \
+    _Alignas(8) TYPE y[] = {0.0, -0.0, 1.23456789, -0.0000005, 1e20, 1e-20, MAXIMUM, tiny, (TYPE)copysign(NAN, 1.0), (TYPE)copysign(NAN, -1.0), INFINITY, -INFINITY}; \
+    _Alignas(8) TYPE x[12]; for (int i = 0; i < 12; ++i) x[i] = (TYPE)(i * 0.25 - 1.0); \
     const uint8_t colors[] = "brgkcy?"; \
     Sink memory = {0}, external = {0}; CigletRsBytes *owner = NULL; \
     for (int i = 0; i < 7; ++i) { \
