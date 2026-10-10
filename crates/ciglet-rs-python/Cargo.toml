@@ -1,4 +1,5 @@
 [package]
+publish = false
 name = "ciglet-rs-python"
 version.workspace = true
 edition.workspace = true
@@ -16,3 +17,6 @@ rand = { version = "0.10.3", default-features = false }
 rand_chacha = { version = "0.10.0", default-features = false, features = ["std"] }
 ciglet-rs = { path = "../ciglet-rs", version = "0.1.0" }
 pyo3 = { version = "0.29.3", features = ["multiple-pymethods"] }
+
+[features]
+cross-windows = ["pyo3/generate-import-lib"]

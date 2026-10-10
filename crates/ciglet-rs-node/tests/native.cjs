@@ -45,7 +45,7 @@ test('copied mutation and checked dimensions', () => {
   for (const invalid of [-1, 1.25, NaN, Infinity, 2 ** 53]) {
     assert.throws(() => new api.FftPlanF32(invalid));
   }
-  assert.equal(api.version(), '0.1.0');
+  assert.equal(api.version(), require('../package.json').version);
 });
 
 test('native process ownership captures output and errors', () => {

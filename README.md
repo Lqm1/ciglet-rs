@@ -121,3 +121,5 @@ Framewise correlograms support ACF, AMDF, squared difference and YIN, with perio
 Reusable spectral-envelope plans return the complete log-envelope and one-sided cepstrum, with explicit harmonic counts and Nyquist compatibility policies. See docs/spectral-envelope-compatibility.md.
 
 LF glottal models support Rd construction, direct public timing/amplitude configuration, reusable derived parameters, analytic magnitude/phase response and sampled periods. Signed excitation and source approximation stages are retained. See docs/glottal-compatibility.md.
+
+Release checkpoints, package names and owner setup steps are documented in [the release procedure](docs/releases.md).
