@@ -32,7 +32,7 @@ int main(void) {
     assert(ciglet_rs_scalar_add_f32(INFINITY,-INFINITY,&output)==0 && isnan(output));
 }
 {
-    double output=71, input[3]={1,2,3};
+    _Alignas(8) double output=71, input[3]={1,2,3};
     size_t calls=0;
     assert(ciglet_rs_scalar_fold_f64(input,3,4,ordered_f64,&calls,&output)==0 && output==4123 && calls==3);
     assert(ciglet_rs_scalar_fold_f64(input,3,4,ordered_f64,&calls,input)==0 && input[0]==4123 && calls==6);
@@ -51,7 +51,7 @@ int main(void) {
     assert(ciglet_rs_scalar_maximum_f64(NAN,3,&output)==0 && output==3);
     assert(ciglet_rs_scalar_add_f64(INFINITY,-INFINITY,&output)==0 && isnan(output));
 }
-CigletRsMathConstants constants;
+_Alignas(8) CigletRsMathConstants constants;
 assert(sizeof(constants)==4*sizeof(double));
 assert(offsetof(CigletRsMathConstants,half_pi)==3*sizeof(double));
 assert(ciglet_rs_math_constants(&constants)==0);

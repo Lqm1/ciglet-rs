@@ -27,7 +27,7 @@ static uint32_t write_bytes(void *opaque,const uint8_t *bytes,uintptr_t length,u
 }
 static uint32_t flush_bytes(void *opaque){++((struct Sink *)opaque)->flushes;return 0;}
 static float scalar32(uint32_t bits){float value;memcpy(&value,&bits,4);return value;}
-static double scalar64(uint64_t bits){double value;memcpy(&value,&bits,8);return value;}
+static double scalar64(uint64_t bits){_Alignas(8) double value;memcpy(&value,&bits,8);return value;}
 static const uint32_t input_f32_0[]={0};
 static const uint8_t expected_f32_0[]={82,73,70,70,36,0,0,0,87,65,86,69,102,109,116,32,16,0,0,0,1,0,1,0,34,86,0,0,34,86,0,0,1,0,8,0,100,97,116,97,0,0,0,0};
 static const uint32_t input_f32_1[]={UINT32_C(0xbf600000),UINT32_C(0xbf000000),UINT32_C(0xbe000000),UINT32_C(0xb727c5ac),UINT32_C(0x0),UINT32_C(0x3e000000),UINT32_C(0x3f000000),UINT32_C(0x3f600000)};
@@ -104,7 +104,7 @@ static void check_f32(uint16_t bits,uint32_t rate,const uint32_t *input,size_t c
 }
 
 static void check_f64(uint16_t bits,uint32_t rate,const uint64_t *input,size_t count,const uint8_t *expected,size_t expected_count,int case_index) {
-    double samples[16];assert(count<=16);for(size_t i=0;i<count;++i)samples[i]=scalar64(input[i]);
+    _Alignas(8) double samples[16];assert(count<=16);for(size_t i=0;i<count;++i)samples[i]=scalar64(input[i]);
     struct CigletRsWaveWriteOptions options;assert(ciglet_rs_wave_write_options_legacy(bits,&options)==0);
     struct CigletRsBytes *owner=NULL,*cloned=NULL;uintptr_t size=0;uint8_t bytes[256];
     assert(ciglet_rs_wave_encode_f64(samples,count,rate,options,&owner)==0);
@@ -161,7 +161,7 @@ check_f64(32,22050,input_f64_9,0,expected_f64_9,sizeof(expected_f64_9),9);
 check_f64(32,22050,input_f64_10,8,expected_f64_10,sizeof(expected_f64_10),10);
 check_f64(32,22050,input_f64_11,9,expected_f64_11,sizeof(expected_f64_11),11);
 {
-double samples[2]={0,0.5};struct Sink sink={0};struct CigletRsWriteStream stream={&sink,write_bytes,flush_bytes};
+_Alignas(8) double samples[2]={0,0.5};struct Sink sink={0};struct CigletRsWriteStream stream={&sink,write_bytes,flush_bytes};
 assert(ciglet_rs_wave_write_options_default(&options)==0);
 for(int failure=1;failure<=4;++failure){memset(&sink,0,sizeof(sink));sink.failure=failure;assert(ciglet_rs_wave_write_stream_f64(stream,samples,2,16000,options)==3 && sink.flushes==0 && sink.count==(failure==4?8:0));}
 memset(&sink,0,sizeof(sink));options.pad_odd_data=2;assert(ciglet_rs_wave_write_stream_f64(stream,samples,2,16000,options)==3 && sink.writes==0);

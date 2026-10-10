@@ -71,7 +71,7 @@ assert(ciglet_rs_wave_release_f32(&owner)==0);
 }
 {
 struct CigletRsWaveF64 *owner=NULL,*clone=NULL;struct CigletRsWaveInfo info;
-double samples[7];const double expected[7]={-1,-0.5,-1.0/128,0,1.0/128,0.25,127.0/128};
+_Alignas(8) double samples[7];_Alignas(8) const double expected[7]={-1,-0.5,-1.0/128,0,1.0/128,0.25,127.0/128};
 assert(ciglet_rs_wave_decode_f64(prefixed,sizeof(prefixed),3,7,&owner)==0);
 assert(ciglet_rs_wave_info_f64(owner,&info)==0 && info.sample_count==7 && info.sample_rate==16000 && info.bits_per_sample==8 && info.channels==1 && info.encoding==CIGLET_RS_WAVE_PCM);
 assert(ciglet_rs_wave_clone_f64(owner,&clone)==0);assert(ciglet_rs_wave_release_f64(&owner)==0);

@@ -30,7 +30,7 @@ static uint32_t flush_bytes(void *context) {
     return sink->failure == 5 ? 9 : 0;
 }
 static CigletRsWriteStream stream(Sink *sink) {
-    CigletRsWriteStream result = {sink, write_bytes, flush_bytes};
+    _Alignas(8) CigletRsWriteStream result = {sink, write_bytes, flush_bytes};
     return result;
 }
 static void append(Sink *sink, CigletRsBytes **owner) {
@@ -100,9 +100,9 @@ int main(void) {
         if (failure == 4) assert(failed.count == 8);
         assert(failed.flushes == (failure == 5));
     }
-    Sink invalid = {0}; double y[] = {1, 2};
+    Sink invalid = {0}; _Alignas(8) double y[] = {1, 2};
     assert(ciglet_rs_plot_line_stream_f64(stream(&invalid), y, 1, y, 2, 'r') == 2);
-    CigletRsWriteStream missing = stream(&invalid); missing.flush = NULL;
+    _Alignas(8) CigletRsWriteStream missing = stream(&invalid); missing.flush = NULL;
     assert(ciglet_rs_plot_configuration_stream(missing, NULL, 0) == 1);
     assert(invalid.writes == 0 && invalid.flushes == 0);
     return 0;

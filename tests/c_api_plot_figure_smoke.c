@@ -10,7 +10,7 @@
 #include "ciglet_rs.h"
 
 static CigletRsPath path(const char *text) {
-    CigletRsPath value = {(const uint8_t *)text, strlen(text), CIGLET_RS_PATH_UTF8};
+    _Alignas(8) CigletRsPath value = {(const uint8_t *)text, strlen(text), CIGLET_RS_PATH_UTF8};
     return value;
 }
 static void configuration(CigletRsFigure *figure, const char *text) {
@@ -58,10 +58,10 @@ int main(int argc, char **argv) {
         if (mode == 0) assert(ciglet_rs_figure_open(&figure) == 0);
         else if (mode == 1) assert(ciglet_rs_figure_open_with(path(program), &figure) == 0);
         else {
-            CigletRsPath value = path("C caller");
-            CigletRsPlotEnvironment env = {path("CIGLET_ABI_CALLER"), &value};
-            CigletRsPath cwd = path(directory);
-            CigletRsPlotProcessOptions options = {0};
+            _Alignas(8) CigletRsPath value = path("C caller");
+            _Alignas(8) CigletRsPlotEnvironment env = {path("CIGLET_ABI_CALLER"), &value};
+            _Alignas(8) CigletRsPath cwd = path(directory);
+            _Alignas(8) CigletRsPlotProcessOptions options = {0};
             options.program = path(program); options.environment = &env; options.environment_count = 1;
             options.directory = &cwd; options.stdout_mode = CIGLET_RS_PLOT_CAPTURE; options.stderr_mode = CIGLET_RS_PLOT_CAPTURE;
             assert(ciglet_rs_figure_spawn(options, &figure) == 0);
@@ -73,12 +73,12 @@ int main(int argc, char **argv) {
         assert(ciglet_rs_figure_configuration(figure, NULL, 0) == 0);
         configuration(figure, "set terminal svg size 320,240\n");
         char files[4][2048];
-        float f32[] = {0, 1, 0, -1}; double f64[] = {0, 1, 0, -1};
+        float f32[] = {0, 1, 0, -1}; _Alignas(8) double f64[] = {0, 1, 0, -1};
         output_file(figure, directory, mode, "line32", files[0], sizeof files[0]);
         assert(ciglet_rs_figure_line_f32(figure, NULL, 0, f32, 4, 'r') == 0);
         output_file(figure, directory, mode, "line64", files[1], sizeof files[1]);
         assert(ciglet_rs_figure_line_f64(figure, NULL, 0, f64, 4, 'r') == 0);
-        float pixels32[] = {0, 1, 2, 3, 4, 5}; double pixels64[] = {0, 1, 2, 3, 4, 5};
+        float pixels32[] = {0, 1, 2, 3, 4, 5}; _Alignas(8) double pixels64[] = {0, 1, 2, 3, 4, 5};
         CigletRsArrayF32 *array32 = NULL; CigletRsArrayF64 *array64 = NULL;
         assert(ciglet_rs_array_from_slice_f32(2, 3, pixels32, 6, &array32) == 0);
         assert(ciglet_rs_array_from_slice_f64(2, 3, pixels64, 6, &array64) == 0);
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
         assert(ciglet_rs_figure_image_f64(figure, array64) == 0);
         assert(ciglet_rs_array_release_f32(&array32) == 0); assert(ciglet_rs_array_release_f64(&array64) == 0);
         configuration(figure, "unset output\n");
-        CigletRsPlotExitStatus status = {0};
+        _Alignas(8) CigletRsPlotExitStatus status = {0};
         if (mode < 2) assert(ciglet_rs_figure_close(&figure, &status) == 0);
         else {
             CigletRsBytes *out = NULL, *err = NULL;

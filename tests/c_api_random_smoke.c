@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 static float scalar32(uint32_t bits) { float value;memcpy(&value,&bits,4);return value; }
-static double scalar64(uint64_t bits) { double value;memcpy(&value,&bits,8);return value; }
+static double scalar64(uint64_t bits) { _Alignas(8) double value;memcpy(&value,&bits,8);return value; }
 static uint32_t bits32(float value) { uint32_t bits;memcpy(&bits,&value,4);return bits; }
 static uint64_t bits64(double value) { uint64_t bits;memcpy(&bits,&value,8);return bits; }
 int main(void) {
@@ -53,11 +53,11 @@ assert(ciglet_rs_random_draw(owner,&draw)==0);assert(ciglet_rs_random_draw(clone
 assert(ciglet_rs_random_release(&clone)==0);
 }
 {
-double output=71,expected=0;
+_Alignas(8) double output=71,expected=0;
 assert(ciglet_rs_random_uniform_from_draw_f64(1,32767,&output)==0 && bits64(output)==UINT64_C(0xbfefff7ffefffe00));
 assert(ciglet_rs_random_normal_from_draws_f64(scalar64(UINT64_C(0xbff0000000000000)),scalar64(UINT64_C(0x0)),1,0,32767,CIGLET_RS_RANDOM_LEGACY,&output)==0 && bits64(output)==UINT64_C(0xbff0000000000000));
 assert(ciglet_rs_random_white_from_draw_f64(scalar64(UINT64_C(0x0)),1,32767,&output)==0 && bits64(output)==UINT64_C(0x8000000000000000));
-uint32_t original[2]={1,0};double samples[7],reference[7];
+uint32_t original[2]={1,0};_Alignas(8) double samples[7],reference[7];
 assert(ciglet_rs_random_white_from_draws_f64(scalar64(UINT64_C(0x0)),original,2,32767,samples)==0);
 assert(bits64(samples[0])==UINT64_C(0x8000000000000000) && bits64(samples[1])==UINT64_C(0x8000000000000000));
 assert(ciglet_rs_random_clone(owner,&clone)==0);

@@ -24,7 +24,7 @@ static void check_core_reference(double actual, double expected, int host) {
     }
 }
 
-struct RootContext { double target; size_t calls; int kind; };
+struct RootContext { _Alignas(8) double target; size_t calls; int kind; };
 static float root_callback_f32(float value, void *opaque) {
     if (!opaque) return value - 0.25f;
     struct RootContext *context = opaque;
@@ -44,7 +44,7 @@ static double root_callback_f64(double value, void *opaque) {
     return value - context->target;
 }
 
-struct WindowContext { size_t calls; size_t fail_on; int nonfinite; double angles[16]; };
+struct WindowContext { size_t calls; size_t fail_on; int nonfinite; _Alignas(8) double angles[16]; };
 static uint32_t trig_f32(double angle, void *opaque, float *output) {
     struct WindowContext *context = opaque;
     if (context->calls < 16) context->angles[context->calls] = angle;
@@ -86,7 +86,7 @@ static uint32_t trig_f64(double angle, void *opaque, double *output) {
 
 int main(void) {
     float single = 9.0f;
-    double wide = 9.0;
+    _Alignas(8) double wide = 9.0;
     uint32_t single_bits = 0;
     uint64_t wide_bits = 0;
     const uint32_t nan_bits = UINT32_C(0x7fc12345);
@@ -111,7 +111,7 @@ int main(void) {
     assert(samples[2] == 6.0f);
     assert(ciglet_rs_reverse_f32(samples, 3, samples, 3) == 0);
     assert(samples[0] == 6.0f && samples[2] == 1.0f);
-    double doubles[] = {1.0, 3.0, 6.0};
+    _Alignas(8) double doubles[] = {1.0, 3.0, 6.0};
     assert(ciglet_rs_difference_f64(doubles, 3, doubles, 3) == 0);
     assert(ciglet_rs_cumulative_sum_f64(doubles, 3, doubles, 3) == 0);
     assert(ciglet_rs_reverse_f64(doubles, 3, doubles, 3) == 0);
@@ -525,12 +525,12 @@ int main(void) {
         type coefficients[] = {1,0,1}, imaginary_coefficients[] = {0,0,0}, a = 71, b = 71; \
         assert(ciglet_rs_polynomial_evaluate_##suffix(coefficients,imaginary_coefficients,3,2,1,&a,&b) == 0 && a == 4 && b == 4); \
         assert(ciglet_rs_polynomial_evaluate_real_##suffix(coefficients,3,2,1,&a,&b) == 0 && a == 4 && b == 4); \
-        type real[2], imaginary[2]; size_t iterations = 71; uint32_t converged = 71; double residual = 71; \
+        type real[2], imaginary[2]; size_t iterations = 71; uint32_t converged = 71; _Alignas(8) double residual = 71; \
         assert(ciglet_rs_polynomial_roots_##suffix(coefficients,NULL,3,real,imaginary,2,&iterations,&converged,&residual) == 0); \
         assert(iterations > 0 && iterations <= 50 && converged == 1 && residual < 1e-6); \
         for(size_t i=0;i<2;++i) assert(fabs((double)real[i]) < 1e-6 && fabs(fabs((double)imaginary[i])-1) < 1e-6); \
         type expected_real[2] = {real[0],real[1]}, expected_imaginary[2] = {imaginary[0],imaginary[1]}; \
-        size_t expected_iterations = iterations; double expected_residual = residual; \
+        size_t expected_iterations = iterations; _Alignas(8) double expected_residual = residual; \
         assert(ciglet_rs_polynomial_roots_real_##suffix(coefficients,3,real,imaginary,2,&iterations,&converged,&residual) == 0); \
         assert(iterations == expected_iterations && converged == 1 && residual == expected_residual); \
         for(size_t i=0;i<2;++i) assert(real[i] == expected_real[i] && imaginary[i] == expected_imaginary[i]); \
@@ -646,7 +646,7 @@ int main(void) {
     #undef CHECK_PREDICTION_SPECTRUM
     #define CHECK_RESONANCES(type, suffix) do { \
         type coefficients[] = {1,0,1}, frequencies[3] = {71,71,71}, real[3] = {71,71,71}, imaginary[3] = {71,71,71}; \
-        size_t count = 71, iterations = 71; uint32_t converged = 71; double residual = 71; \
+        size_t count = 71, iterations = 71; uint32_t converged = 71; _Alignas(8) double residual = 71; \
         assert(ciglet_rs_prediction_resonances_##suffix(coefficients,3,frequencies,real,imaginary,3,&count,&iterations,&converged,&residual) == 0); \
         assert(count == 1 && iterations > 0 && iterations <= 50 && converged == 1 && residual < 1e-6); \
         assert(fabs((double)frequencies[0]-0.5) < 1e-6 && fabs((double)real[0]) < 1e-6 && fabs((double)imaginary[0]-1) < 1e-6); \
@@ -1066,7 +1066,7 @@ int main(void) {
     #undef CHECK_IF_DETECTOR
     assert(CIGLET_RS_STFT_MAGNITUDE == 1 && CIGLET_RS_STFT_PHASE == 2);
     assert(CIGLET_RS_STFT_WINDOW_WEIGHT == 4 && CIGLET_RS_STFT_NORMALIZATION == 8);
-    CigletRsStftAnalysisOptions stft_defaults = {71,71,71,71};
+    _Alignas(8) CigletRsStftAnalysisOptions stft_defaults = {71,71,71,71};
     assert(ciglet_rs_stft_analysis_options_default(&stft_defaults) == 0);
     assert(stft_defaults.subtract_mean == 0 && stft_defaults.magnitude == 1 && stft_defaults.phase == 1 && stft_defaults.normalization_hop == 0);
     assert(ciglet_rs_stft_analysis_options_default(NULL) == 1);
@@ -1168,7 +1168,7 @@ int main(void) {
         {0x1.fab4d60000000p-3f,0x1.f015a40000000p-1f,0x1.62e3f80000000p-1f,0x1.5bf1000000000p+1f},
         {0x1.faaeee0000000p-3f,0x1.f0154a0000000p-1f,0x1.62e4300000000p-1f,0x1.5bf0a80000000p+1f}
     };
-    static const double core_expected_f64[3][4] = {
+    _Alignas(8) static const double core_expected_f64[3][4] = {
         {0x1.f908240000000p-3,0x1.efeb500000000p-1,0x1.773b000000000p-1,0x1.62a9000000000p+1},
         {0x1.fab4d60000000p-3,0x1.f015a40000000p-1,0x1.62e3f80000000p-1,0x1.5bf1000000000p+1},
         {0x1.faaeed4f31577p-3,0x1.f01549f7deea1p-1,0x1.62e42fefa39efp-1,0x1.5bf0a8b14576ap+1}
@@ -1705,7 +1705,7 @@ int main(void) {
     }
     { /* vfastpow */
         CigletRsFloats4 input = {{0x1.0000000000000p-3f,0x1.0000000000000p-1f,0x1.0000000000000p+1f,0x1.4000000000000p+3f}}, result;
-        CigletRsFloats4 exponent = {{-0x1.8000000000000p+1f,-0x1.0000000000000p-1f,0x0.0p+0f,0x1.8000000000000p+1f}};
+        _Alignas(8) CigletRsFloats4 exponent = {{-0x1.8000000000000p+1f,-0x1.0000000000000p-1f,0x0.0p+0f,0x1.8000000000000p+1f}};
         assert(ciglet_rs_fastapprox_power_lanes_f32(input,exponent,&result) == 0);
         const uint32_t expected[4] = {0x44000000u,0x3fb50540u,0x3f800000u,0x4479f700u}; uint32_t actual[4];
         memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
@@ -1716,7 +1716,7 @@ int main(void) {
     }
     { /* vfasterpow */
         CigletRsFloats4 input = {{0x1.0000000000000p-3f,0x1.0000000000000p-1f,0x1.0000000000000p+1f,0x1.4000000000000p+3f}}, result;
-        CigletRsFloats4 exponent = {{-0x1.8000000000000p+1f,-0x1.0000000000000p-1f,0x0.0p+0f,0x1.8000000000000p+1f}};
+        _Alignas(8) CigletRsFloats4 exponent = {{-0x1.8000000000000p+1f,-0x1.0000000000000p-1f,0x0.0p+0f,0x1.8000000000000p+1f}};
         assert(ciglet_rs_fastapprox_power_fast_lanes_f32(input,exponent,&result) == 0);
         const uint32_t expected[4] = {0x43e2a900u,0x3fb4ff80u,0x3f78aa40u,0x446eab80u}; uint32_t actual[4];
         memcpy(actual,result.values,sizeof(actual)); assert(memcmp(actual,expected,sizeof(actual)) == 0);
@@ -1964,8 +1964,8 @@ int main(void) {
         assert(ciglet_rs_fastapprox_trigonometric_tangent_full_fast_lanes_f32(input,NULL) == 1);
     }
     {
-        CigletRsBits4 bits = {{0x7fc00042u,0xffc00099u,0x80000000u,0x7f800000u}}, copied;
-        CigletRsFloats4 floats; CigletRsIntegers4 integers;
+        _Alignas(8) CigletRsBits4 bits = {{0x7fc00042u,0xffc00099u,0x80000000u,0x7f800000u}}, copied;
+        _Alignas(8) CigletRsFloats4 floats; _Alignas(8) CigletRsIntegers4 integers;
         assert(ciglet_rs_lanes_from_bits(bits,&floats) == 0);
         assert(ciglet_rs_lanes_to_bits(floats,&copied) == 0 && memcmp(bits.values,copied.values,16) == 0);
         assert(ciglet_rs_lanes_absolute(floats,&floats) == 0);
@@ -1976,7 +1976,7 @@ int main(void) {
         integers = (CigletRsIntegers4){{1,-2,INT32_MAX,INT32_MIN}};
         assert(ciglet_rs_lanes_from_integers(integers,&floats) == 0);
         assert(floats.values[0] == 1 && floats.values[1] == -2 && floats.values[2] == 2147483648.0f && floats.values[3] == -2147483648.0f);
-        CigletRsIntegers64x2 wide = {{INT64_C(0x123456789abcdef0),-1}};
+        _Alignas(8) CigletRsIntegers64x2 wide = {{INT64_C(0x123456789abcdef0),-1}};
         assert(ciglet_rs_lanes_from_integer64_lanes(wide,&integers) == 0);
         assert((uint32_t)integers.values[0] == 0x9abcdef0u && integers.values[1] == 0x12345678 && integers.values[2] == -1 && integers.values[3] == -1);
         assert(ciglet_rs_lanes_to_bits(floats,NULL) == 1);
