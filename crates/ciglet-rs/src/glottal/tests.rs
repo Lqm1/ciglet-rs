@@ -68,7 +68,7 @@ fn reference<T: Scalar>(bytes: &[u8], width: usize) {
 #[test]
 fn binary32_preparation_matches_conditioning_corpus() {
     reference::<f32>(
-        include_bytes!("../../../../tests/fixtures/glottal-preparation-endpoints-float.bin"),
+        include_bytes!("../test_data/glottal-preparation-endpoints-float.bin"),
         4,
     );
 }
@@ -76,17 +76,15 @@ fn binary32_preparation_matches_conditioning_corpus() {
 #[test]
 fn binary64_preparation_matches_conditioning_corpus() {
     reference::<f64>(
-        include_bytes!("../../../../tests/fixtures/glottal-preparation-endpoints-double.bin"),
+        include_bytes!("../test_data/glottal-preparation-endpoints-double.bin"),
         8,
     );
 }
 
 #[test]
 fn source_endpoint_fallback_changes_eight_float_preparations() {
-    let original =
-        include_bytes!("../../../../tests/fixtures/glottal-preparation-original-float.bin");
-    let corrected =
-        include_bytes!("../../../../tests/fixtures/glottal-preparation-endpoints-float.bin");
+    let original = include_bytes!("../test_data/glottal-preparation-original-float.bin");
+    let corrected = include_bytes!("../test_data/glottal-preparation-endpoints-float.bin");
     let changed: Vec<_> = original[12..]
         .chunks_exact(80)
         .zip(corrected[12..].chunks_exact(80))

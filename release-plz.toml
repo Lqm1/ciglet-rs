@@ -1,0 +1,29 @@
+[workspace]
+git_release_enable = false
+git_tag_enable = false
+publish = false
+dependencies_update = false
+features_always_increment_minor = true
+pr_branch_prefix = "release/"
+
+[[package]]
+name = "ciglet-rs"
+changelog_path = "CHANGELOG.md"
+changelog_include = ["ciglet-rs-capi", "ciglet-rs-wasm", "ciglet-rs-node", "ciglet-rs-python"]
+semver_check = true
+
+[[package]]
+name = "ciglet-rs-capi"
+release = false
+
+[[package]]
+name = "ciglet-rs-wasm"
+release = false
+
+[[package]]
+name = "ciglet-rs-node"
+release = false
+
+[[package]]
+name = "ciglet-rs-python"
+release = false
