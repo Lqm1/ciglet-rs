@@ -23,7 +23,7 @@ jobs:
     - name: Install the pinned Rust toolchain
       run: rustup toolchain install 1.94.0 --profile minimal
     - name: Check ARM arithmetic and C ABI against the original C fixtures
-      run: cargo +1.94.0 test --locked -p ciglet-rs -p ciglet-rs-capi -- --nocapture
+      run: cargo +1.94.0 test --locked --no-fail-fast -p ciglet-rs -p ciglet-rs-capi -- --nocapture
   check:
     runs-on: windows-latest
     steps:
