@@ -1,6 +1,8 @@
 # ciglet-rs
 
-This repository is a Cargo workspace containing `ciglet-rs`, `ciglet-rs-capi` and `ciglet-rs-wasm` under `crates/`. See [workspace layout](docs/workspace-layout.md) for package selection, artifact names and binding commands. See [workspace split verification](docs/workspace-split-verification.md) for migration checks and their scope.
+This repository is a Cargo workspace containing `ciglet-rs`, `ciglet-rs-capi`, `ciglet-rs-wasm`, `ciglet-rs-node` and `ciglet-rs-python` under `crates/`. See [workspace layout](docs/workspace-layout.md) for package selection, artifact names and binding commands. See [workspace split verification](docs/workspace-split-verification.md) for migration checks and their scope.
+
+Native Node.js and Python packages are implemented with napi-rs and PyO3. See [Node.js](crates/ciglet-rs-node/README.md), [Python](crates/ciglet-rs-python/README.md) and [native binding verification](docs/native-bindings.md). Builds and tests do not publish packages.
 
 A Rust reimplementation of the complete public ciglet signal-processing functionality. Upstream: https://github.com/Sleepwalking/ciglet.
 
