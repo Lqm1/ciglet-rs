@@ -139,7 +139,10 @@ fn subprocess_fixture() {
     let directory = PathBuf::from(directory);
     let mode = std::env::var("CIGLET_ABI_FIGURE_MODE").unwrap();
     if mode == "options" {
-        assert_eq!(std::env::current_dir().unwrap(), directory);
+        assert_eq!(
+            std::env::current_dir().unwrap().canonicalize().unwrap(),
+            directory.canonicalize().unwrap(),
+        );
         assert!(std::env::var_os("PATH").is_none());
         assert!(std::env::var_os("CIGLET_ABI_REMOVE").is_none());
         io::stdout().write_all(b"Options output\n").unwrap();

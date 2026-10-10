@@ -59,3 +59,15 @@ fn native(_bytes: &[u8]) -> Result<PathBuf, Error> {
         "native path representation is unavailable on this target",
     ))
 }
+
+#[cfg(all(test, unix))]
+mod tests {
+    #[test]
+    fn native_paths_preserve_non_utf8_bytes_before_filesystem_access() {
+        use std::os::unix::ffi::OsStrExt;
+        let bytes = b"wave-\xff.wav";
+        let path = super::path(bytes, super::CIGLET_RS_PATH_NATIVE).unwrap();
+        assert_eq!(path.as_os_str().as_bytes(), bytes);
+        assert!(super::path(bytes, super::CIGLET_RS_PATH_UTF8).is_err());
+    }
+}

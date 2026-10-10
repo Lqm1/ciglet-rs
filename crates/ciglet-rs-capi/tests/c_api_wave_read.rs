@@ -329,14 +329,14 @@ fn real_files_utf8_and_native_paths() {
 #[test]
 fn lossless_native_filename_representation() {
     let root = std::env::temp_dir();
-    #[cfg(unix)]
+    #[cfg(all(unix, not(target_vendor = "apple")))]
     let filename = {
         use std::{ffi::OsString, os::unix::ffi::OsStringExt};
         let mut bytes = format!("wave-native-{}-", std::process::id()).into_bytes();
         bytes.extend([0xff, b'.', b'w', b'a', b'v']);
         OsString::from_vec(bytes)
     };
-    #[cfg(windows)]
+    #[cfg(any(windows, target_vendor = "apple"))]
     let filename =
         std::ffi::OsString::from(format!("wave-native-{}-\u{1f3b5}.wav", std::process::id()));
     let path = root.join(filename);
