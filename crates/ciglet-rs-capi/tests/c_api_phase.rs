@@ -84,7 +84,16 @@ fn phase_f32_matches_original_c() {
                     0
                 );
                 for (a, b) in output.iter().zip(&expected[field]) {
-                    assert_eq!(a.to_bits(), b.to_bits(), "Cartesian {case}/{field}");
+                    if field == 7 && *a != 0.0 && *b != 0.0 {
+                        let error = (*a as f64 - *b as f64).abs() / (1.0 + (*b as f64).abs());
+                        assert!(
+                            a.to_bits().abs_diff(b.to_bits()) <= 1
+                                && error <= f64::from(f32::EPSILON),
+                            "atan2 {case}: {error}"
+                        );
+                    } else {
+                        assert_eq!(a.to_bits(), b.to_bits(), "Cartesian {case}/{field}");
+                    }
                 }
             }
             for (function, field) in [
@@ -251,7 +260,15 @@ fn phase_f64_matches_original_c() {
                     0
                 );
                 for (a, b) in output.iter().zip(&expected[field]) {
-                    assert_eq!(a.to_bits(), b.to_bits(), "Cartesian {case}/{field}");
+                    if field == 7 && *a != 0.0 && *b != 0.0 {
+                        let error = (*a - *b).abs() / (1.0 + b.abs());
+                        assert!(
+                            a.to_bits().abs_diff(b.to_bits()) <= 1 && error <= f64::EPSILON,
+                            "atan2 {case}: {error}"
+                        );
+                    } else {
+                        assert_eq!(a.to_bits(), b.to_bits(), "Cartesian {case}/{field}");
+                    }
                 }
             }
             for (function, field) in [

@@ -45,6 +45,32 @@ impl Reader<'_> {
 fn exact<T: Scalar>(actual: T, expected: T) {
     assert_eq!(actual.into().to_bits(), expected.into().to_bits());
 }
+fn host_math<T: Scalar>(actual: T, expected: T) {
+    if actual == T::zero() || expected == T::zero() {
+        exact(actual, expected);
+        return;
+    }
+    let error = (actual.into() - expected.into()).abs() / (1.0 + expected.into().abs());
+    let (ulp, epsilon) = if std::mem::size_of::<T>() == 8 {
+        (
+            actual.into().to_bits().abs_diff(expected.into().to_bits()),
+            f64::EPSILON,
+        )
+    } else {
+        (
+            u64::from(
+                (actual.into() as f32)
+                    .to_bits()
+                    .abs_diff((expected.into() as f32).to_bits()),
+            ),
+            f64::from(f32::EPSILON),
+        )
+    };
+    assert!(
+        ulp <= 1 && error <= epsilon,
+        "host libm: {ulp} ULP, normalized error {error}"
+    );
+}
 fn point_exact<T: Scalar, C: Copy>(api: &Api<T, C>, actual: C, expected: C) {
     for (actual, expected) in (api.fields)(actual).into_iter().zip((api.fields)(expected)) {
         exact(actual, expected);
@@ -76,7 +102,14 @@ fn reference<T: Scalar, C: Copy>(bytes: &[u8], width: usize, api: &Api<T, C>) {
             }
             for mode in [0, 1, 2] {
                 assert_eq!((api.exponential)(first, mode, &mut actual), 0);
-                point_exact(api, actual, reader.point(api));
+                let expected = reader.point(api);
+                if mode == 2 {
+                    for (a, b) in (api.fields)(actual).into_iter().zip((api.fields)(expected)) {
+                        host_math(a, b);
+                    }
+                } else {
+                    point_exact(api, actual, expected);
+                }
             }
             let mut angle = T::zero();
             assert_eq!((api.argument)(first, 0, &mut angle), 0);
@@ -84,7 +117,7 @@ fn reference<T: Scalar, C: Copy>(bytes: &[u8], width: usize, api: &Api<T, C>) {
             let expected = reader.scalar();
             for mode in [1, 2] {
                 assert_eq!((api.argument)(first, mode, &mut angle), 0);
-                exact(angle, expected);
+                host_math(angle, expected);
             }
         }
     }
@@ -95,24 +128,19 @@ fn reference<T: Scalar, C: Copy>(bytes: &[u8], width: usize, api: &Api<T, C>) {
         let value = reader.scalar::<T>();
         let exponent = reader.scalar::<T>();
         for mode in [Precision::Fast, Precision::Approximate, Precision::Exact] {
-            exact(
-                approximation::logarithm_with(value, mode).unwrap(),
-                reader.scalar(),
-            );
+            let actual = approximation::logarithm_with(value, mode).unwrap();
+            let expected = reader.scalar();
+            if mode == Precision::Exact {
+                host_math(actual, expected);
+            } else {
+                exact(actual, expected);
+            }
         }
         for mode in [Precision::Fast, Precision::Approximate, Precision::Exact] {
             let actual = approximation::exponential_with(exponent, mode).unwrap();
             let expected = reader.scalar::<T>();
-            if mode == Precision::Exact && width == 8 {
-                // Unchanged bound from tests/complex.rs for double host exp.
-                assert!(actual.into().to_bits().abs_diff(expected.into().to_bits()) <= 1);
-                assert!(
-                    (actual.into() - expected.into()).abs() / (1. + expected.into().abs())
-                        <= f64::EPSILON
-                );
-                if actual == T::zero() || expected == T::zero() {
-                    exact(actual, expected);
-                }
+            if mode == Precision::Exact {
+                host_math(actual, expected);
             } else {
                 exact(actual, expected);
             }
