@@ -11,7 +11,7 @@ repository.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-ciglet-rs = { path = "../ciglet-rs", version = "0.1.0" }
+ciglet-rs = { path = "../ciglet-rs", version = "0.1.0-alpha.1" }
 rand = { version = "0.10.3", default-features = false }
 rand_chacha = { version = "0.10.0", default-features = false, features = ["std"] }
 

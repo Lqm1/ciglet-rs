@@ -28,7 +28,7 @@ checksum = "4e7648175b45a9a48536d676f68d918270699102aa8dab5496df06904c914600"
 
 [[package]]
 name = "ciglet-rs"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "rand",
  "rand_chacha",
@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "ciglet-rs-capi"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "ciglet-rs",
  "rand_chacha",
@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "ciglet-rs-node"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "ciglet-rs",
  "napi",
@@ -58,7 +58,7 @@ dependencies = [
 
 [[package]]
 name = "ciglet-rs-python"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "ciglet-rs",
  "pyo3",
@@ -68,7 +68,7 @@ dependencies = [
 
 [[package]]
 name = "ciglet-rs-wasm"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 dependencies = [
  "ciglet-rs",
  "js-sys",
